@@ -9,11 +9,10 @@ export function useUser() {
   const supabase = useMemo(() => createClient(), []);
   const [user, setUser] = useState<User | null>(null);
   const [profile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(supabase));
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
       return;
     }
 

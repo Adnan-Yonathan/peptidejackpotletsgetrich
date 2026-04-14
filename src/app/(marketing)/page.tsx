@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection as FeatureCarousel } from "@/components/ui/feature-carousel";
+import { TestimonialsSection } from "@/components/ui/testimonials-columns-1";
 import { getPublishedPeptides } from "@/data/peptides";
 import { CATEGORY_HUBS } from "@/data/category-hubs";
 import { COMPATIBILITY_RULES } from "@/data/compatibility";
@@ -333,6 +334,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <TestimonialsSection />
 
       {/*  FINAL CTA  Hims-style: clean, single action, low friction  */}
       <section className="py-20 md:py-28">
