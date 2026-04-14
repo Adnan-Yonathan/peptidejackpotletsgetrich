@@ -7,56 +7,56 @@ const testimonials = [
   {
     text: "Finally a peptide site that starts with evidence and red flags instead of pushing random stacks. I can compare options fast without feeling sold to.",
     image: "https://randomuser.me/api/portraits/women/12.jpg",
-    name: "Jenna Morales",
+    name: "Lauren Mitchell",
     role: "Strength Coach",
   },
   {
     text: "The vendor notes and compliance warnings are the reason I keep using it. Most sites bury that information or pretend it does not matter.",
     image: "https://randomuser.me/api/portraits/men/18.jpg",
-    name: "Marcus Lee",
+    name: "Kevin Liu",
     role: "Independent Researcher",
   },
   {
     text: "I wanted a cleaner way to research recovery peptides without hype. The directory and goal hubs make the tradeoffs obvious.",
     image: "https://randomuser.me/api/portraits/women/24.jpg",
-    name: "Alyssa Patel",
-    role: "Physical Therapist",
+    name: "Dr. Anika Patel",
+    role: "Sports Rehab Clinician",
   },
   {
     text: "This feels closer to a decision platform than a store. The risk labels and stack warnings save time and keep the research process honest.",
     image: "https://randomuser.me/api/portraits/men/31.jpg",
-    name: "David Chen",
+    name: "Daniel Chen",
     role: "Performance Consultant",
   },
   {
     text: "The best part is seeing what not to combine. Most peptide content online skips that entirely.",
     image: "https://randomuser.me/api/portraits/women/33.jpg",
     name: "Sofia Ramirez",
-    role: "Wellness Operator",
+    role: "Wellness Clinic Operator",
   },
   {
     text: "I used the goal pages to narrow the field quickly, then the vendor section to see who actually documents what they sell.",
     image: "https://randomuser.me/api/portraits/men/41.jpg",
     name: "Noah Bennett",
-    role: "Health Content Lead",
+    role: "Health Content Editor",
   },
   {
     text: "It is one of the few sites in this category that treats regulation, WADA status, and evidence quality like first-class data.",
     image: "https://randomuser.me/api/portraits/women/45.jpg",
     name: "Priya Shah",
-    role: "Clinical Operations Advisor",
+    role: "Clinical Operations Consultant",
   },
   {
     text: "The planner gives me a much better starting point than generic forum advice. It feels structured instead of random.",
     image: "https://randomuser.me/api/portraits/men/52.jpg",
     name: "Ethan Brooks",
-    role: "Fitness Founder",
+    role: "Online Fitness Coach",
   },
   {
     text: "As soon as I saw the cautions, exclusions, and route notes in one place, I knew this was built for serious research rather than impulse buying.",
     image: "https://randomuser.me/api/portraits/women/57.jpg",
     name: "Mina Park",
-    role: "Biohacking Writer",
+    role: "Health Research Writer",
   },
 ];
 
@@ -124,11 +124,7 @@ export function TestimonialsSection() {
           viewport={{ once: true }}
           className="mx-auto flex max-w-[640px] flex-col items-center justify-center"
         >
-          <div className="flex justify-center">
-            <div className="rounded-lg border px-4 py-1">Social proof</div>
-          </div>
-
-          <h2 className="mt-5 text-center text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+          <h2 className="text-center text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
             What serious users value most
           </h2>
           <p className="mt-5 text-center text-muted-foreground">

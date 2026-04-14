@@ -3,11 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabaseConfig } from "@/lib/supabase/config";
 
 const PROTECTED_PREFIXES = [
-  "/peptides",
-  "/vendors",
-  "/stack-builder",
   "/quiz",
-  "/goals",
   "/dashboard",
   "/admin",
   "/plan",
