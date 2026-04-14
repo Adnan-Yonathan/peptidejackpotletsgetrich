@@ -51,9 +51,9 @@ const Signup1 = ({
   showGoogleButton = false,
 }: Signup1Props) => {
   return (
-    <section className="flex min-h-screen items-center justify-center bg-muted px-4 py-10">
+    <section className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="flex h-full w-full items-center justify-center">
-        <div className="flex w-full max-w-sm flex-col items-center gap-y-8 rounded-md border border-muted bg-background px-6 py-12 shadow-md">
+        <div className="flex w-full max-w-sm flex-col items-center gap-y-8 rounded-md border border-border bg-background px-6 py-12 shadow-md">
           <div className="flex flex-col items-center gap-y-2">
             <div className="flex items-center gap-2 lg:justify-start">
               <Link href={logo.url} className="flex items-center gap-2">
