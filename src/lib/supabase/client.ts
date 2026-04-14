@@ -1,0 +1,14 @@
+"use client";
+
+import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseConfig } from "@/lib/supabase/config";
+
+export function createClient() {
+  const config = getSupabaseConfig();
+  if (!config) {
+    return null;
+  }
+
+  const { supabaseUrl, supabaseAnonKey } = config;
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+}

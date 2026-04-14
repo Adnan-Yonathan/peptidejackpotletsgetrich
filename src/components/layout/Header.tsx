@@ -5,12 +5,11 @@ import { useState } from "react";
 import { Menu, X, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { AuthActions } from "@/components/layout/AuthActions";
 import { NAV_LINKS } from "@/lib/constants";
-import { useUser } from "@/hooks/useUser";
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const { user, loading } = useUser();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,24 +33,7 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          {!loading && (
-            <>
-              {user ? (
-                <Button variant="outline" size="sm" render={<Link href="/dashboard" />}>
-                  Dashboard
-                </Button>
-              ) : (
-                <>
-                  <Button variant="ghost" size="sm" render={<Link href="/login" />}>
-                    Log in
-                  </Button>
-                  <Button size="sm" render={<Link href="/signup" />}>
-                    Sign up
-                  </Button>
-                </>
-              )}
-            </>
-          )}
+          <AuthActions />
         </div>
 
         {/* Mobile Nav */}
@@ -72,20 +54,7 @@ export function Header() {
                 </Link>
               ))}
               <div className="border-t pt-4 flex flex-col gap-2">
-                {user ? (
-                  <Button variant="outline" render={<Link href="/dashboard" onClick={() => setOpen(false)} />}>
-                    Dashboard
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="ghost" render={<Link href="/login" onClick={() => setOpen(false)} />}>
-                      Log in
-                    </Button>
-                    <Button render={<Link href="/signup" onClick={() => setOpen(false)} />}>
-                      Sign up
-                    </Button>
-                  </>
-                )}
+                <AuthActions mobile onNavigate={() => setOpen(false)} />
               </div>
             </nav>
           </SheetContent>

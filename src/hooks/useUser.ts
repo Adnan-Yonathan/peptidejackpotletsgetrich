@@ -1,15 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types/database";
-
-// Stub user hook — no backend required.
-// Replace with real auth provider when ready.
+import { createClient } from "@/lib/supabase/client";
 
 export function useUser() {
-  const [user] = useState<{ id: string; email: string } | null>(null);
+  const supabase = useMemo(() => createClient(), []);
+  const [user, setUser] = useState<User | null>(null);
   const [profile] = useState<Profile | null>(null);
-  const loading = false;
+  const [loading, setLoading] = useState(true);
 
-  return { user, profile, loading };
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (!active) return;
+      setUser(data.user ?? null);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!active) return;
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  return {
+    user,
+    profile,
+    loading,
+    signOut: async () => {
+      if (!supabase) return;
+      await supabase.auth.signOut();
+    },
+  };
 }

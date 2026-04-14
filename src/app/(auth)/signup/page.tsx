@@ -2,19 +2,60 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { SITE_URL } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: wire up auth provider
-    console.log("Signup:", email);
+    if (!supabase) {
+      toast.error("Supabase auth is not configured.");
+      return;
+    }
+
+    setLoading(true);
+
+    const redirectTo =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("redirectTo") ?? "/dashboard"
+        : "/dashboard";
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${SITE_URL}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+      },
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    if (data.session) {
+      toast.success("Account created");
+      router.replace(redirectTo);
+      router.refresh();
+      return;
+    }
+
+    toast.success("Check your email to confirm your account.");
+    router.replace("/login");
   };
 
   return (
@@ -45,8 +86,8 @@ export default function SignupPage() {
               minLength={6}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Sign up
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Creating account..." : "Sign up"}
           </Button>
         </form>
         <p className="text-sm text-muted-foreground text-center mt-4">

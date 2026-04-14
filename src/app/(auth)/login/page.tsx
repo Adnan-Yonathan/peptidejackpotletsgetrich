@@ -2,19 +2,50 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: wire up auth provider
-    console.log("Login:", email);
+    if (!supabase) {
+      toast.error("Supabase auth is not configured.");
+      return;
+    }
+
+    setLoading(true);
+
+    const redirectTo =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("redirectTo") ?? "/dashboard"
+        : "/dashboard";
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success("Logged in");
+    router.replace(redirectTo);
+    router.refresh();
   };
 
   return (
@@ -44,8 +75,8 @@ export default function LoginPage() {
               required
             />
           </div>
-          <Button type="submit" className="w-full">
-            Log in
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
           </Button>
         </form>
         <p className="text-sm text-muted-foreground text-center mt-4">

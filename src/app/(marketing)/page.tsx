@@ -81,7 +81,7 @@ export default function HomePage() {
               {/* Subheadline  NerdWallet-style: position as advisor, not seller */}
               <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
                 Personalized plans, evidence-graded compounds, vendor comparison,
-                and compatibility checking - all in one place. No accounts. No paywalls.
+                and compatibility checking - all in one place. Free account required for member tools.
               </p>
 
               {/* Single primary CTA  Hims pattern: one bold action */}
@@ -134,7 +134,7 @@ export default function HomePage() {
               From question to plan in three steps.
             </h2>
             <p className="mt-4 text-muted-foreground max-w-lg mx-auto">
-              No signup required. No credit card. Just answers.
+              Create a free account, answer a few questions, and get a plan matched to your goals.
             </p>
           </div>
 
@@ -272,7 +272,7 @@ export default function HomePage() {
                   "FDA and WADA flags are visible, not hidden",
                   "Contraindicated stacks are blocked, not suggested",
                   "Vendor types are disclosed  institutional vs consumer vs Rx",
-                  "No login required. No paywall. No data harvesting.",
+                  "Account required for research tools. No paywall. No data harvesting.",
                 ].map((point) => (
                   <div key={point} className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 shrink-0" />
@@ -347,7 +347,7 @@ export default function HomePage() {
             Take the Quiz <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <p className="mt-4 text-xs text-muted-foreground">
-            No account needed &middot; No credit card &middot; No spam
+            Free account required &middot; No credit card &middot; No spam
           </p>
         </div>
       </section>
