@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { HeroSection as FeatureCarousel } from "@/components/ui/feature-carousel";
 import { getPublishedPeptides } from "@/data/peptides";
-import { GOALS } from "@/data/goals";
 import { CATEGORY_HUBS } from "@/data/category-hubs";
 import { COMPATIBILITY_RULES } from "@/data/compatibility";
 import { getActiveVendors } from "@/data/vendors";
@@ -57,7 +56,6 @@ export default function HomePage() {
   const peptideCount = getPublishedPeptides().length;
   const vendorCount = getActiveVendors().length;
   const ruleCount = COMPATIBILITY_RULES.length;
-  const goalCount = GOALS.length;
 
   return (
     <div>
@@ -95,11 +93,6 @@ export default function HomePage() {
                   Browse {peptideCount} Peptides
                 </Button>
               </div>
-
-              {/* Micro trust line  InsideTracker-style: specific numbers */}
-              <p className="mt-6 text-sm text-muted-foreground">
-                {peptideCount} compounds &middot; {vendorCount} vendors &middot; {ruleCount} compatibility rules &middot; {goalCount} research goals
-              </p>
             </div>
 
             <HeroImageArt />
