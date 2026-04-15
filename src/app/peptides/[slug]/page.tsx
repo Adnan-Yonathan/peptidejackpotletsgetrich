@@ -305,7 +305,7 @@ export default async function PeptideDetailPage({
                             variant="default"
                             size="sm"
                             render={
-                              <Link
+                              <a
                                 href={buildOutboundVendorHref(listing.vendor?.slug ?? listing.vendorId, peptide.slug, "peptide-detail")}
                                 target="_blank"
                                 rel="noreferrer"
@@ -313,9 +313,6 @@ export default async function PeptideDetailPage({
                             }
                           >
                             Visit Vendor
-                          </Button>
-                          <Button variant="outline" size="sm" render={<Link href={listing.productPageUrl} target="_blank" rel="noreferrer" />}>
-                            View Source
                           </Button>
                         </div>
                       </div>

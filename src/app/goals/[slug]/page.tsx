@@ -247,7 +247,7 @@ export default async function GoalHubPage({
                             <Button
                               size="sm"
                               render={
-                                <Link
+                                <a
                                   href={buildOutboundVendorHref(preferredVendor.vendor.slug, peptide.slug, "goal-hub")}
                                   target="_blank"
                                   rel="noreferrer"
