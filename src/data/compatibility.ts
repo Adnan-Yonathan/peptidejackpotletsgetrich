@@ -9,7 +9,10 @@ export type RationaleKey =
   | "COMMON_MARKET_STACK"
   | "LIMITED_HUMAN_DATA"
   | "HPG_AXIS_OVERLAP"
-  | "HIGH_UNCERTAINTY_HUMAN";
+  | "HIGH_UNCERTAINTY_HUMAN"
+  | "INCRETIN_OVERLAP"
+  | "VASODILATION_OVERLAP"
+  | "CNS_STACKING_UNCERTAINTY";
 
 export interface CompatibilityRuleData {
   peptideA: string;
@@ -38,6 +41,12 @@ export const RATIONALE_DESCRIPTIONS: Record<RationaleKey, string> = {
     "HPG-axis (hypothalamic-pituitary-gonadal) signaling overlap. Combining HPG-active peptides increases endocrine interaction risk.",
   HIGH_UNCERTAINTY_HUMAN:
     "High uncertainty due to limited human data. One or both compounds lack established human safety profiles, making combination risk unpredictable.",
+  INCRETIN_OVERLAP:
+    "Multiple incretin-pathway agonists in the same stack. This increases GI burden, dosing complexity, and hypoglycemia-management risk without a clear consumer rationale.",
+  VASODILATION_OVERLAP:
+    "Both compounds can shift vascular tone or lower blood pressure. Combined use raises hypotension and perfusion-management uncertainty.",
+  CNS_STACKING_UNCERTAINTY:
+    "Multiple CNS-active experimental compounds with limited human combination data. Treat stacked nootropic claims as high-uncertainty.",
 };
 
 export const COMPATIBILITY_RULES: CompatibilityRuleData[] = [
@@ -232,6 +241,154 @@ export const COMPATIBILITY_RULES: CompatibilityRuleData[] = [
     status: "caution",
     rationaleKey: "HIGH_UNCERTAINTY_HUMAN",
     rationaleSummary: "High uncertainty + growth-factor cluster.",
+  },
+
+  // Incretin / metabolic overlap
+  {
+    peptideA: "semaglutide",
+    peptideB: "tirzepatide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Do not layer GLP-1 / dual-incretin agonists in a consumer stack; GI burden and dosing complexity rise without a clear rationale.",
+  },
+  {
+    peptideA: "semaglutide",
+    peptideB: "liraglutide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Two GLP-1 agonists in the same stack creates redundant mechanism and higher side-effect burden.",
+  },
+  {
+    peptideA: "semaglutide",
+    peptideB: "retatrutide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Approved GLP-1 therapy should not be layered with an investigational multi-incretin agent.",
+  },
+  {
+    peptideA: "tirzepatide",
+    peptideB: "liraglutide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Dual incretin and GLP-1-only agonists should not be stacked in consumer protocols.",
+  },
+  {
+    peptideA: "tirzepatide",
+    peptideB: "retatrutide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Two high-potency incretin agonists compound GI and glucose-management risk.",
+  },
+  {
+    peptideA: "liraglutide",
+    peptideB: "retatrutide",
+    status: "contraindicated",
+    rationaleKey: "INCRETIN_OVERLAP",
+    rationaleSummary: "Do not layer a daily GLP-1 agonist with an investigational triple-agonist compound.",
+  },
+
+  // MK-677 and GH-axis clustering
+  {
+    peptideA: "mk-677",
+    peptideB: "cjc-1295",
+    status: "caution",
+    rationaleKey: "GH_AXIS_ADDITIVE",
+    rationaleSummary: "Oral ghrelin-receptor agonism plus GHRH analog raises GH-axis complexity and glucose-monitoring burden.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "sermorelin",
+    status: "caution",
+    rationaleKey: "GH_AXIS_ADDITIVE",
+    rationaleSummary: "MK-677 and sermorelin both push GH-axis signaling through different levers; treat as additive endocrine load.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "tesamorelin",
+    status: "caution",
+    rationaleKey: "GH_AXIS_ADDITIVE",
+    rationaleSummary: "Combining ibutamoren with tesamorelin increases GH-axis burden and glucose-management uncertainty.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "ipamorelin",
+    status: "caution",
+    rationaleKey: "GH_AXIS_MULTIPLE_GHS",
+    rationaleSummary: "MK-677 and ipamorelin both stimulate ghrelin-pathway signaling; redundancy and endocrine spillover risk rise.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "ghrp-2",
+    status: "caution",
+    rationaleKey: "GH_AXIS_MULTIPLE_GHS",
+    rationaleSummary: "Multiple ghrelin-receptor secretagogues in one stack increase endocrine noise and monitoring needs.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "ghrp-6",
+    status: "caution",
+    rationaleKey: "GH_AXIS_MULTIPLE_GHS",
+    rationaleSummary: "Redundant GHSR stimulation with added appetite and glucose-management downside.",
+  },
+  {
+    peptideA: "mk-677",
+    peptideB: "hexarelin",
+    status: "caution",
+    rationaleKey: "GH_AXIS_MULTIPLE_GHS",
+    rationaleSummary: "Hexarelin plus MK-677 creates multiple GHS-pathway inputs with limited combination safety support.",
+  },
+
+  // CNS / neuro stack uncertainty
+  {
+    peptideA: "cerebrolysin",
+    peptideB: "semax",
+    status: "caution",
+    rationaleKey: "CNS_STACKING_UNCERTAINTY",
+    rationaleSummary: "Both are CNS-active experimental agents. Combination claims are stronger than the human safety evidence.",
+  },
+  {
+    peptideA: "cerebrolysin",
+    peptideB: "selank",
+    status: "caution",
+    rationaleKey: "CNS_STACKING_UNCERTAINTY",
+    rationaleSummary: "Neuroactive stack with limited direct human interaction evidence.",
+  },
+  {
+    peptideA: "cerebrolysin",
+    peptideB: "nsi-189",
+    status: "caution",
+    rationaleKey: "CNS_STACKING_UNCERTAINTY",
+    rationaleSummary: "Two experimental neurotrophic-style agents with little human combination data.",
+  },
+  {
+    peptideA: "nsi-189",
+    peptideB: "dihexa",
+    status: "caution",
+    rationaleKey: "HIGH_UNCERTAINTY_HUMAN",
+    rationaleSummary: "Experimental nootropic stack with limited human data and unclear downside profile.",
+  },
+  {
+    peptideA: "nsi-189",
+    peptideB: "semax",
+    status: "caution",
+    rationaleKey: "CNS_STACKING_UNCERTAINTY",
+    rationaleSummary: "Mechanistically interesting but human combination data are weak; conservative caution.",
+  },
+  {
+    peptideA: "nsi-189",
+    peptideB: "selank",
+    status: "caution",
+    rationaleKey: "CNS_STACKING_UNCERTAINTY",
+    rationaleSummary: "CNS-active experimental pairing with uncertain interaction profile.",
+  },
+
+  // Vascular / blood-pressure overlap
+  {
+    peptideA: "vip",
+    peptideB: "angiotensin-1-7",
+    status: "caution",
+    rationaleKey: "VASODILATION_OVERLAP",
+    rationaleSummary: "Both can shift vascular tone; combined use raises hypotension and perfusion-management uncertainty.",
   },
 ];
 

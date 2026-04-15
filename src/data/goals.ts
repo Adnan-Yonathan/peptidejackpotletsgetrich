@@ -16,7 +16,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides studied for their roles in muscle protein synthesis, growth factor signaling, and anabolic pathways.",
     icon: "Dumbbell",
     sortOrder: 1,
-    peptideIds: ["igf-1-lr3", "mgf", "peg-mgf", "follistatin", "cjc-1295", "ipamorelin", "ghrp-2", "ghrp-6", "hexarelin"],
+    peptideIds: ["igf-1-lr3", "mgf", "peg-mgf", "follistatin", "cjc-1295", "ipamorelin", "ghrp-2", "ghrp-6", "hexarelin", "mk-677"],
   },
   {
     id: "fat_loss",
@@ -25,7 +25,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides researched for lipolytic effects, metabolic regulation, and body composition changes.",
     icon: "Flame",
     sortOrder: 2,
-    peptideIds: ["aod-9604", "cjc-1295", "ipamorelin", "tesamorelin", "mots-c", "ghrp-6", "ghrp-2"],
+    peptideIds: ["aod-9604", "cjc-1295", "ipamorelin", "tesamorelin", "mots-c", "ghrp-6", "ghrp-2", "semaglutide", "tirzepatide", "liraglutide", "retatrutide"],
   },
   {
     id: "recovery",
@@ -34,7 +34,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides studied for wound healing, soft-tissue repair, and recovery from injury in preclinical models.",
     icon: "Heart",
     sortOrder: 3,
-    peptideIds: ["bpc-157", "thymosin-beta-4", "tb-500", "ghk-cu", "ll-37", "kpv", "mgf"],
+    peptideIds: ["bpc-157", "thymosin-beta-4", "tb-500", "ghk-cu", "ll-37", "kpv", "mgf", "vip", "cerebrolysin", "thymosin-beta-1"],
   },
   {
     id: "anti_aging",
@@ -43,7 +43,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides explored in aging, senolytic, and telomere-related research contexts.",
     icon: "Clock",
     sortOrder: 4,
-    peptideIds: ["epitalon", "foxo4-dri", "humanin", "mots-c", "ghk-cu", "elamipretide", "thymosin-alpha-1"],
+    peptideIds: ["epitalon", "foxo4-dri", "humanin", "mots-c", "ghk-cu", "elamipretide", "thymosin-alpha-1", "mk-677", "pinealon", "angiotensin-1-7", "epithalon-variants"],
   },
   {
     id: "cognitive",
@@ -52,7 +52,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides studied for neurotrophic signaling, cognitive enhancement, and neuroprotective effects.",
     icon: "Brain",
     sortOrder: 5,
-    peptideIds: ["semax", "selank", "dihexa", "humanin"],
+    peptideIds: ["semax", "selank", "dihexa", "humanin", "cerebrolysin", "nsi-189"],
   },
   {
     id: "sleep",
@@ -61,7 +61,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides researched for sleep architecture, circadian biology, and relaxation effects.",
     icon: "Moon",
     sortOrder: 6,
-    peptideIds: ["dsip", "epitalon", "selank", "hexarelin"],
+    peptideIds: ["dsip", "epitalon", "selank", "hexarelin", "pinealon", "epithalon-variants"],
   },
   {
     id: "immune",
@@ -70,7 +70,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides studied for immune modulation, innate/adaptive pathway effects, and antimicrobial properties.",
     icon: "Shield",
     sortOrder: 7,
-    peptideIds: ["thymosin-alpha-1", "ll-37", "thymosin-beta-4", "kpv"],
+    peptideIds: ["thymosin-alpha-1", "ll-37", "thymosin-beta-4", "kpv", "larazotide", "vip", "thymosin-beta-1", "angiotensin-1-7"],
   },
   {
     id: "skin_hair",
@@ -97,7 +97,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides that modulate the growth hormone axis through GHRH, GHSR, or related pathways.",
     icon: "TrendingUp",
     sortOrder: 10,
-    peptideIds: ["cjc-1295", "sermorelin", "tesamorelin", "ipamorelin", "ghrp-2", "ghrp-6", "hexarelin"],
+    peptideIds: ["cjc-1295", "sermorelin", "tesamorelin", "ipamorelin", "ghrp-2", "ghrp-6", "hexarelin", "mk-677"],
   },
   {
     id: "anxiety",
@@ -106,7 +106,7 @@ export const GOALS: GoalData[] = [
     description: "Peptides studied for anxiolytic effects, social cognition, and mood modulation.",
     icon: "Leaf",
     sortOrder: 11,
-    peptideIds: ["selank", "semax", "oxytocin", "dsip"],
+    peptideIds: ["selank", "semax", "oxytocin", "dsip", "nsi-189"],
   },
 ];
 
