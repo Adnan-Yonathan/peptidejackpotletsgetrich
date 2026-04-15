@@ -12,6 +12,7 @@ import { getGoalsForPeptide } from "@/data/goals";
 import { getVendorListingsForPeptide } from "@/data/vendor-listings";
 import { getDisclaimersForPeptide } from "@/data/disclaimers";
 import { COMPATIBILITY_RULES } from "@/data/compatibility";
+import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 import { ArrowLeft, AlertTriangle, ShieldAlert, Info } from "lucide-react";
 
 export async function generateStaticParams() {
@@ -300,6 +301,17 @@ export default async function PeptideDetailPage({
                           <Badge variant="outline" className="text-xs">
                             {listing.country}
                           </Badge>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            render={
+                              <Link
+                                href={buildOutboundVendorHref(listing.vendor?.slug ?? listing.vendorId, peptide.slug, "peptide-detail")}
+                              />
+                            }
+                          >
+                            Visit Vendor
+                          </Button>
                           <Button variant="outline" size="sm" render={<Link href={listing.productPageUrl} target="_blank" rel="noreferrer" />}>
                             View Source
                           </Button>

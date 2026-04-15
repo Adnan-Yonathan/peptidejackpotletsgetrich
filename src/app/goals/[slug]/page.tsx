@@ -21,6 +21,7 @@ import {
   type RiskLevel,
 } from "@/data/peptides";
 import { getVendorListingsForPeptide } from "@/data/vendor-listings";
+import { buildOutboundVendorHref, getPreferredVendorForPeptide } from "@/lib/outbound-vendors";
 
 const EVIDENCE_PRIORITY: Record<EvidenceTier, number> = {
   A: 0,
@@ -238,9 +239,27 @@ export default async function GoalHubPage({
                         {getVendorListingsForPeptide(peptide.id).length} vendor listing
                         {getVendorListingsForPeptide(peptide.id).length === 1 ? "" : "s"}
                       </span>
-                      <Button variant="outline" size="sm" render={<Link href={`/peptides/${peptide.slug}`} />}>
-                        View profile
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const preferredVendor = getPreferredVendorForPeptide(peptide.id);
+                          if (!preferredVendor?.vendor) return null;
+                          return (
+                            <Button
+                              size="sm"
+                              render={
+                                <Link
+                                  href={buildOutboundVendorHref(preferredVendor.vendor.slug, peptide.slug, "goal-hub")}
+                                />
+                              }
+                            >
+                              Visit vendor
+                            </Button>
+                          );
+                        })()}
+                        <Button variant="outline" size="sm" render={<Link href={`/peptides/${peptide.slug}`} />}>
+                          View profile
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -336,38 +355,6 @@ export default async function GoalHubPage({
             </div>
           </section>
 
-          <section className="rounded-[1.5rem] border bg-muted/20 p-8">
-            <h2 className="text-2xl font-bold">How to use this hub</h2>
-            <div className="mt-4 grid gap-4 md:grid-cols-3">
-              <div className="rounded-xl border bg-background p-4">
-                <p className="font-medium">1. Start with the outcome</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Use this page to narrow the field around {hub.shortTitle.toLowerCase()} instead of browsing every peptide.
-                </p>
-              </div>
-              <div className="rounded-xl border bg-background p-4">
-                <p className="font-medium">2. Compare compounds</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Use evidence tier, risk level, routes, and vendor coverage to compare tradeoffs before clicking through.
-                </p>
-              </div>
-              <div className="rounded-xl border bg-background p-4">
-                <p className="font-medium">3. Review trusted vendors</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Once the compound shortlist makes sense, review the vendor pages for COA access, QC notes, and outbound sourcing context.
-                </p>
-              </div>
-            </div>
-            {goals.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {goals.map((goal) => (
-                  <Badge key={goal.id} variant="secondary">
-                    {goal.displayName}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </section>
         </div>
       </main>
       <Footer />

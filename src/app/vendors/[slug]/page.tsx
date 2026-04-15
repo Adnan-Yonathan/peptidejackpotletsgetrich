@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { getVendorBySlug, getActiveVendors } from "@/data/vendors";
 import { getVendorListingsForVendor } from "@/data/vendor-listings";
+import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 
 export async function generateStaticParams() {
   return getActiveVendors().map((vendor) => ({ slug: vendor.slug }));
@@ -77,9 +78,19 @@ export default async function VendorDetailPage({
                           {listing.country} &middot; {listing.vendorTypeLabel} &middot; {listing.captureDate}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" render={<Link href={listing.productPageUrl} target="_blank" rel="noreferrer" />}>
-                        Source
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          render={
+                            <Link href={buildOutboundVendorHref(vendor.slug, listing.peptide?.slug ?? listing.peptideId, "vendor-detail")} />
+                          }
+                        >
+                          Visit Product
+                        </Button>
+                        <Button variant="outline" size="sm" render={<Link href={listing.productPageUrl} target="_blank" rel="noreferrer" />}>
+                          Source
+                        </Button>
+                      </div>
                     </div>
                     <div className="mt-3 grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
                       <p>SKU: {listing.typicalSkuFormat}</p>
