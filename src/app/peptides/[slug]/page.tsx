@@ -11,6 +11,7 @@ import { getPeptideBySlug, getPublishedPeptides, type PeptideData } from "@/data
 import { getGoalsForPeptide } from "@/data/goals";
 import { getVendorListingsForPeptide } from "@/data/vendor-listings";
 import { getDisclaimersForPeptide } from "@/data/disclaimers";
+import { getGuidesForPeptide } from "@/data/guides";
 import { COMPATIBILITY_RULES } from "@/data/compatibility";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 import { ArrowLeft, AlertTriangle, ShieldAlert, Info } from "lucide-react";
@@ -73,6 +74,7 @@ export default async function PeptideDetailPage({
   const goals = getGoalsForPeptide(peptide.id);
   const vendorListings = getVendorListingsForPeptide(peptide.id);
   const disclaimers = getDisclaimersForPeptide(peptide.copyWarnings);
+  const relatedGuides = getGuidesForPeptide(peptide.id).slice(0, 3);
   const related = getRelatedPeptides(peptide);
   const compatNotes = getCompatibilityNotes(peptide.id);
 
@@ -328,6 +330,27 @@ export default async function PeptideDetailPage({
               )}
             </CardContent>
           </Card>
+
+          {relatedGuides.length > 0 && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Read this before you compare products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {relatedGuides.map((guide) => (
+                    <div key={guide.id} className="rounded-xl border p-4">
+                      <p className="font-medium text-sm">{guide.title}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">{guide.summary}</p>
+                      <Button className="mt-4" variant="outline" size="sm" render={<Link href={`/guides/${guide.slug}`} />}>
+                        Read guide
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Related peptides */}
           {related.length > 0 && (

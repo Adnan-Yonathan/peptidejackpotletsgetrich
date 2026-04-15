@@ -65,7 +65,7 @@ export default function VendorsPage() {
           </div>
 
           <p className="text-xs text-muted-foreground mt-8 border-t pt-4">
-            Imported records are documentation-first and may still show quote-only pricing, lot-gated COAs, or region-specific logistics. Use source links and credibility notes before treating any listing as interchangeable.
+            These imported records may still show quote-only pricing, lot-gated COAs, or region-specific shipping details. Read the source links and credibility notes before treating two listings as interchangeable.
           </p>
         </div>
       </main>
@@ -73,3 +73,4 @@ export default function VendorsPage() {
     </>
   );
 }
+

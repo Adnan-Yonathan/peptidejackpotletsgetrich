@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft } from "lucide-react";
 import { getVendorBySlug, getActiveVendors } from "@/data/vendors";
 import { getVendorListingsForVendor } from "@/data/vendor-listings";
+import { getGuideById } from "@/data/guides";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 
 export async function generateStaticParams() {
@@ -36,6 +37,12 @@ export default async function VendorDetailPage({
   if (!vendor) notFound();
 
   const listings = getVendorListingsForVendor(vendor.id);
+  const vendorGuides = [
+    getGuideById("how-to-compare-peptide-vendors"),
+    getGuideById("how-to-read-a-coa"),
+    getGuideById("lab-testing-explained"),
+    getGuideById("ruo-vs-human-use"),
+  ].filter((guide): guide is NonNullable<typeof guide> => Boolean(guide));
 
   return (
     <>
@@ -108,9 +115,25 @@ export default async function VendorDetailPage({
               )}
             </CardContent>
           </Card>
+
+          <Card className="mb-8">
+            <CardHeader><CardTitle>Read before you choose a vendor</CardTitle></CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              {vendorGuides.map((guide) => (
+                <div key={guide.id} className="rounded-xl border p-4">
+                  <p className="font-medium">{guide.title}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">{guide.summary}</p>
+                  <Button className="mt-4" variant="outline" size="sm" render={<Link href={`/guides/${guide.slug}`} />}>
+                    Read guide
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />
     </>
   );
 }
+

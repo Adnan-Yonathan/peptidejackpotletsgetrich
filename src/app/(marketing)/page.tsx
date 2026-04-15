@@ -20,6 +20,7 @@ import { TestimonialsSection } from "@/components/ui/testimonials-columns-1";
 import { getPublishedPeptides } from "@/data/peptides";
 import { CATEGORY_HUBS } from "@/data/category-hubs";
 import { COMPATIBILITY_RULES } from "@/data/compatibility";
+import { getFeaturedGuides } from "@/data/guides";
 import { getActiveVendors } from "@/data/vendors";
 import heroImage from "../../../images/ChatGPT Image Apr 13, 2026, 10_55_43 PM.png";
 
@@ -57,6 +58,7 @@ export default function HomePage() {
   const peptideCount = getPublishedPeptides().length;
   const vendorCount = getActiveVendors().length;
   const ruleCount = COMPATIBILITY_RULES.length;
+  const featuredGuides = getFeaturedGuides().slice(0, 4);
 
   return (
     <div>
@@ -210,7 +212,7 @@ export default function HomePage() {
                 icon: Shield,
                 title: "Regulatory Flag System",
                 description:
-                  "FDA compounding safety flags, WADA prohibited-list status, and Rx-only markers are first-class data  not buried footnotes.",
+                  "See FDA safety flags, WADA status, and Rx-only markers up front instead of digging through footnotes.",
                 detail: "Danger/warning/info severity levels with templated disclaimers",
               },
               {
@@ -337,6 +339,44 @@ export default function HomePage() {
 
       <TestimonialsSection />
 
+      <section className="bg-muted/20 py-20 md:py-28">
+        <div className="container mx-auto max-w-6xl px-4">
+          <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <Badge variant="secondary" className="mb-4 text-xs font-medium tracking-wide">
+                Education layer
+              </Badge>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                Start with the guides before you click into products.
+              </h2>
+              <p className="mt-4 text-muted-foreground">
+                Reconstitution, storage, COAs, RUO language, vendor comparison, and peptide safety all live in one place with the same design language as the landing page.
+              </p>
+            </div>
+            <Button variant="ghost" render={<Link href="/guides" />}>
+              Explore all guides <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+            {featuredGuides.map((guide) => (
+              <Card key={guide.id} className="border bg-background transition-shadow hover:shadow-md">
+                <CardContent className="pt-6">
+                  <Badge variant="outline" className="mb-4 capitalize">
+                    {guide.categoryId.replace(/-/g, " ")}
+                  </Badge>
+                  <h3 className="text-lg font-semibold">{guide.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{guide.summary}</p>
+                  <Button className="mt-6" variant="outline" size="sm" render={<Link href={`/guides/${guide.slug}`} />}>
+                    Read guide <ArrowRight className="ml-1 h-3 w-3" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/*  FINAL CTA  Hims-style: clean, single action, low friction  */}
       <section className="py-20 md:py-28">
         <div className="container mx-auto max-w-3xl px-4 text-center">
@@ -349,9 +389,6 @@ export default function HomePage() {
           <Button size="lg" className="text-base px-10 h-12" render={<Link href="/quiz" />}>
             Take the Quiz <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Free account required for personalized quiz &middot; No credit card &middot; No spam
-          </p>
         </div>
       </section>
 
@@ -370,3 +407,4 @@ export default function HomePage() {
     </div>
   );
 }
+

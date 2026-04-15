@@ -6,3 +6,4 @@ export * from "./affiliate-links";
 export * from "./category-hubs";
 export * from "./compatibility";
 export * from "./disclaimers";
+export * from "./guides";

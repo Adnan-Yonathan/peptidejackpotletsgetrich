@@ -13,6 +13,7 @@ import {
   getHubGoals,
   getHubPeptideIds,
 } from "@/data/category-hubs";
+import { getGuideById, getGuidesForGoal } from "@/data/guides";
 import {
   getPeptideById,
   getPublishedPeptides,
@@ -104,6 +105,18 @@ export default async function GoalHubPage({
   }
 
   const peptideIds = getHubPeptideIds(hub);
+  const educationGuides = Array.from(
+    new Map(
+      hub.goalIds
+        .flatMap((goalId) => getGuidesForGoal(goalId))
+        .concat(
+          [getGuideById("peptide-safety-basics"), getGuideById("how-to-compare-peptide-vendors")].filter(
+            (guide): guide is NonNullable<typeof guide> => Boolean(guide)
+          )
+        )
+        .map((guide) => [guide.id, guide])
+    ).values()
+  ).slice(0, 4);
   const peptides = peptideIds
     .map((peptideId) => getPeptideById(peptideId))
     .filter(isPublishedPeptide)
@@ -202,6 +215,32 @@ export default async function GoalHubPage({
               </p>
             </div>
           </section>
+
+          {educationGuides.length > 0 && (
+            <section className="mb-12">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold">Start with the guides</h2>
+                <p className="mt-2 text-muted-foreground">
+                  These guides help you understand the basics before comparing compounds or choosing a vendor.
+                </p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                {educationGuides.map((guide) => (
+                  <Card key={guide.id}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{guide.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm text-muted-foreground">{guide.summary}</p>
+                      <Button variant="outline" size="sm" render={<Link href={`/guides/${guide.slug}`} />}>
+                        Read guide
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section className="mb-12">
             <div className="mb-6 flex items-end justify-between gap-4">
@@ -363,3 +402,4 @@ export default async function GoalHubPage({
     </>
   );
 }
+

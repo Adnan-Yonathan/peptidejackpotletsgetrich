@@ -1,4 +1,4 @@
-import { getPeptideById, type PeptideData } from "@/data/peptides";
+﻿import { getPeptideById, type PeptideData } from "@/data/peptides";
 import { getVendorById, type VendorData } from "@/data/vendors";
 
 export interface VendorListingData {
@@ -38,7 +38,7 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "from ~$49.99 to ~$84.99 (variant-dependent)",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Consumer-facing vendor with on-page COA presentation. Product-level affiliate routing is available for this peptide.",
@@ -56,10 +56,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "from ~$49.99 to ~$89.99 (variant-dependent)",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Direct product page exists and is suitable for exact peptide-to-vendor routing rather than a homepage fallback.",
+      "A dedicated product page exists for this peptide, which makes it easier to review details before you buy.",
   },
   {
     peptideId: "cjc-1295",
@@ -74,10 +74,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Amino Club's current CJC lane is a CJC-IPA NO DAC blend rather than a clean standalone CJC-1295 SKU. Keep that distinction visible in UI copy.",
+      "Amino Club currently shows CJC in a CJC-IPA NO DAC blend rather than as a standalone CJC-1295 product, so compare that product carefully.",
   },
   {
     peptideId: "tesamorelin",
@@ -92,7 +92,7 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Product page uses the vendor spelling 'Tesamorlin'. Deep-link mapping should stay tied to the canonical peptide ID tesamorelin.",
@@ -110,10 +110,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Standalone product page exists, so peptide recommendations can route to the exact Amino Club SKU rather than the vendor homepage.",
+      "A dedicated Amino Club product page is available for this peptide instead of a generic vendor landing page.",
   },
   {
     peptideId: "aod-9604",
@@ -128,10 +128,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Direct product page verified. This is suitable for exact peptide-specific outbound routing.",
+      "A dedicated product page is available for this peptide and gives users a clearer place to review details.",
   },
   {
     peptideId: "pt-141",
@@ -146,10 +146,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Exact PT-141 product page exists, which is the correct target for peptide-specific vendor CTAs.",
+      "A dedicated PT-141 product page is available for people who want to review this listing directly.",
   },
   {
     peptideId: "semax",
@@ -164,10 +164,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Standalone product page exists for direct Semax routing from peptide, goal, and vendor contexts.",
+      "A dedicated Semax page is available, so users can go straight to the relevant listing.",
   },
   {
     peptideId: "selank",
@@ -182,10 +182,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Direct product page verified. This can be used for exact Selank-specific outbound routing.",
+      "A dedicated Selank page is available, so users can go straight to the relevant listing.",
   },
   {
     peptideId: "dsip",
@@ -200,10 +200,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Direct product page exists, so DSIP recommendations can route to a peptide-specific Amino Club page.",
+      "A dedicated DSIP page is available, so users can go straight to the relevant listing.",
   },
   {
     peptideId: "mots-c",
@@ -218,10 +218,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "MOTS-c product page is verified and can be used for direct affiliate-aware peptide routing.",
+      "A dedicated MOTS-c page is available, which makes the listing easier to review directly.",
   },
   {
     peptideId: "epitalon",
@@ -236,7 +236,7 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Vendor page uses the spelling 'Epithalon'. The listing is mapped back to the canonical epitalon peptide record.",
@@ -254,10 +254,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Exact product page verified. This supports direct vendor routing for Thymosin Alpha-1 research pages.",
+      "A dedicated Thymosin Alpha-1 page is available for direct review.",
   },
   {
     peptideId: "ghk-cu",
@@ -266,16 +266,16 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     vendorTypeLabel: "consumer RUO",
     productPageUrl: "https://www.aminoclub.com/us/products/ghk-cu",
     country: "US",
-    typicalSkuFormat: "50 mg topical/serum-adjacent lane (verify current variants)",
+    typicalSkuFormat: "50 mg topical or serum-style product (verify current variants)",
     coaAccessModeLabel: "product page COA viewer",
     qcMethodsListed: "third-party purity testing; product-level COA on page",
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Direct GHK-Cu product page exists. Variant details should still be checked because topical and injectable research lanes are often conflated in the market.",
+      "A dedicated GHK-Cu page is available, but it is still important to check whether the product is being presented as topical, injectable, or both.",
   },
   {
     peptideId: "kpv",
@@ -290,7 +290,7 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     typicalRetailPriceRangeUsd: "$39.99 shown",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Product-level page and COA presentation make this a good fit for exact peptide routing from peptide, goal, and vendor pages.",
@@ -302,16 +302,16 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     vendorTypeLabel: "consumer RUO",
     productPageUrl: "https://www.aminoclub.com/us/products/glp-3",
     country: "US",
-    typicalSkuFormat: "GLP-3 product lane (variant-dependent)",
+    typicalSkuFormat: "GLP-3 product page (variant-dependent)",
     coaAccessModeLabel: "product page COA viewer",
     qcMethodsListed: "third-party purity testing; product-level COA on page",
     typicalRetailPriceRangeUsd: "variant-dependent on product page",
     captureDate: "2026-04-14",
     shippingRegions: "US/ROW (verify current policy)",
-    regulatoryShippingFlags: "Consumer RUO; compliance-sensitive marketing lane",
+    regulatoryShippingFlags: "Consumer RUO; review product details carefully",
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
-      "Amino Club's current retatrutide lane appears under the GLP-3 product page. Keep that naming mismatch visible so users are not shown a false standalone SKU.",
+      "Amino Club currently appears to place retatrutide under a GLP-3 product page, so that naming mismatch should be noticed before purchase.",
   },
 ];
 
@@ -335,3 +335,4 @@ function resolveListing(listing: VendorListingData): ResolvedVendorListing {
     vendor: getVendorById(listing.vendorId),
   };
 }
+

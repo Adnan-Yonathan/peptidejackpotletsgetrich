@@ -40,6 +40,7 @@ export const STACKING_OPTIONS = [
 
 export const NAV_LINKS = [
   { href: "/peptides", label: "Peptides" },
+  { href: "/guides", label: "Guides" },
   { href: "/vendors", label: "Vendors" },
   { href: "/stack-builder", label: "Stack Builder" },
   { href: "/quiz", label: "Find Your Plan" },
