@@ -82,7 +82,11 @@ export default async function VendorDetailPage({
                         <Button
                           size="sm"
                           render={
-                            <Link href={buildOutboundVendorHref(vendor.slug, listing.peptide?.slug ?? listing.peptideId, "vendor-detail")} />
+                            <Link
+                              href={buildOutboundVendorHref(vendor.slug, listing.peptide?.slug ?? listing.peptideId, "vendor-detail")}
+                              target="_blank"
+                              rel="noreferrer"
+                            />
                           }
                         >
                           Visit Product

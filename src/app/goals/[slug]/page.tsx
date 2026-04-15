@@ -249,6 +249,8 @@ export default async function GoalHubPage({
                               render={
                                 <Link
                                   href={buildOutboundVendorHref(preferredVendor.vendor.slug, peptide.slug, "goal-hub")}
+                                  target="_blank"
+                                  rel="noreferrer"
                                 />
                               }
                             >

@@ -307,6 +307,8 @@ export default async function PeptideDetailPage({
                             render={
                               <Link
                                 href={buildOutboundVendorHref(listing.vendor?.slug ?? listing.vendorId, peptide.slug, "peptide-detail")}
+                                target="_blank"
+                                rel="noreferrer"
                               />
                             }
                           >
