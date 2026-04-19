@@ -7,3 +7,8 @@ export * from "./category-hubs";
 export * from "./compatibility";
 export * from "./disclaimers";
 export * from "./guides";
+export * from "./age-guidance";
+export * from "./monitoring-guidance";
+export * from "./goal-life-stage-fit";
+export * from "./costs";
+export * from "./sex-guidance";

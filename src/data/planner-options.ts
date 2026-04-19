@@ -2,9 +2,12 @@ import type {
   ActivityLevel,
   AgeRange,
   DeliveryPreference,
+  FemaleLifeStage,
+  MaleHormoneContext,
   MonitoringWillingness,
   PlanStyle,
   PlannerStep,
+  ReproductiveStatus,
   RoutineConsistency,
   Sex,
   StackingPreference,
@@ -36,9 +39,30 @@ export const AGE_RANGE_OPTIONS: Option<AgeRange>[] = [
 ];
 
 export const SEX_OPTIONS: Option<Sex>[] = [
-  { value: "female", label: "Female", description: "Use sex-specific cautions where relevant" },
-  { value: "male", label: "Male", description: "Use sex-specific cautions where relevant" },
-  { value: "other", label: "Other / prefer not to say", description: "Use only non-sex-specific logic" },
+  { value: "female", label: "Female", description: "Use female-specific safety and evidence notes where relevant" },
+  { value: "male", label: "Male", description: "Use male-specific safety and monitoring notes where relevant" },
+  { value: "other", label: "Other / prefer not to say", description: "Stay conservative and avoid assumptions beyond shared adult safety rules" },
+];
+
+export const REPRODUCTIVE_STATUS_OPTIONS: Option<ReproductiveStatus>[] = [
+  { value: "none", label: "No current pregnancy or fertility context", description: "No active pregnancy, breastfeeding, or conception planning that should tighten the plan." },
+  { value: "trying_to_conceive", label: "Trying to conceive / fertility-sensitive", description: "Use a more conservative screen around reproductive and hormone-active compounds." },
+  { value: "pregnant", label: "Pregnant", description: "Sharply reduce compounds with reproductive, hormonal, or unknown fetal safety issues." },
+  { value: "breastfeeding", label: "Breastfeeding / postpartum", description: "Use a more conservative screen where lactation safety is unclear." },
+];
+
+export const FEMALE_LIFE_STAGE_OPTIONS: Option<FemaleLifeStage>[] = [
+  { value: "cycling_or_unclear", label: "Cycling / premenopausal / not sure", description: "Use standard adult female logic without menopause-specific assumptions." },
+  { value: "perimenopause", label: "Perimenopause", description: "Keep a closer eye on body-composition, bone, sleep, and hormone-context tradeoffs." },
+  { value: "postmenopause", label: "Postmenopause", description: "Bias harder toward bone, metabolic, and recovery context while avoiding weak hormone claims." },
+  { value: "not_applicable", label: "Not applicable", description: "Skip female life-stage targeting." },
+];
+
+export const MALE_HORMONE_CONTEXT_OPTIONS: Option<MaleHormoneContext>[] = [
+  { value: "none_known", label: "No known male hormone or prostate concern", description: "Use standard adult male logic without extra hormone-context gating." },
+  { value: "on_trt_or_androgen_therapy", label: "On TRT or androgen therapy", description: "Treat GH-axis and reproductive-axis layering more cautiously." },
+  { value: "prostate_or_psa_monitoring", label: "Prostate history / PSA monitoring", description: "Push the plan more conservative around GH-axis and growth-signaling compounds." },
+  { value: "not_applicable", label: "Not applicable", description: "Skip male-specific hormone and prostate targeting." },
 ];
 
 export const ACTIVITY_LEVEL_OPTIONS: Option<ActivityLevel>[] = [

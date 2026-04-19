@@ -10,6 +10,7 @@ import { ArrowLeft } from "lucide-react";
 import { getVendorBySlug, getActiveVendors } from "@/data/vendors";
 import { getVendorListingsForVendor } from "@/data/vendor-listings";
 import { getGuideById } from "@/data/guides";
+import { formatCostRange, getListingCostEstimate } from "@/lib/costs";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 
 export async function generateStaticParams() {
@@ -58,6 +59,24 @@ export default async function VendorDetailPage({
             <Badge className="capitalize">{vendor.vendorType.replace(/_/g, " ")}</Badge>
             <Badge variant="outline">COA: {vendor.coaAccessMode.replace(/_/g, " ")}</Badge>
             <Badge variant="outline">{listings.length} imported listings</Badge>
+            {vendor.trustpilotRating ? (
+              <Badge variant="outline">
+                Trustpilot: {vendor.trustpilotRating}/5
+                {typeof vendor.trustpilotReviewCount === "number" ? ` (${vendor.trustpilotReviewCount})` : ""}
+              </Badge>
+            ) : null}
+            {vendor.headquarters ? <Badge variant="outline">{vendor.headquarters}</Badge> : null}
+          </div>
+
+          <div className="mb-8 flex flex-wrap gap-3">
+            <Button size="sm" render={<a href={vendor.websiteUrl} target="_blank" rel="noreferrer" />}>
+              Visit Site
+            </Button>
+            {vendor.trustpilotUrl ? (
+              <Button variant="outline" size="sm" render={<a href={vendor.trustpilotUrl} target="_blank" rel="noreferrer" />}>
+                Trustpilot Reviews
+              </Button>
+            ) : null}
           </div>
 
           <Card className="mb-8">
@@ -65,6 +84,11 @@ export default async function VendorDetailPage({
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>{vendor.description}</p>
               <p>QC methods: {vendor.qcMethods.join(", ") || "varies by listing"}</p>
+              {vendor.supportEmail ? <p>Support: {vendor.supportEmail}</p> : null}
+              {vendor.headquarters ? <p>Headquarters: {vendor.headquarters}</p> : null}
+              {vendor.orderProcessingTime ? <p>Processing time: {vendor.orderProcessingTime}</p> : null}
+              {vendor.shippingRegions ? <p>Shipping regions: {vendor.shippingRegions}</p> : null}
+              {vendor.shippingTimeframe ? <p>Shipping timeframe: {vendor.shippingTimeframe}</p> : null}
               <p>Shipping notes: {vendor.shippingNotes}</p>
               <p>Regulatory notes: {vendor.regulatoryNotes}</p>
             </CardContent>
@@ -87,6 +111,13 @@ export default async function VendorDetailPage({
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
+                          variant="outline"
+                          size="sm"
+                          render={<Link href={`/vendors?peptide=${listing.peptide?.slug ?? listing.peptideId}`} />}
+                        >
+                          Compare
+                        </Button>
+                        <Button
                           size="sm"
                           render={
                             <a
@@ -105,6 +136,17 @@ export default async function VendorDetailPage({
                       <p>Price: {listing.typicalRetailPriceRangeUsd}</p>
                       <p>COA: {listing.coaAccessModeLabel}</p>
                       <p>Shipping: {listing.shippingRegions}</p>
+                      {(() => {
+                        const estimate = getListingCostEstimate(listing.peptideId, listing);
+                        if (!estimate) return null;
+
+                        return (
+                          <>
+                            <p>Cycle cost: {formatCostRange(estimate.cycleCostLow, estimate.cycleCostHigh)}</p>
+                            <p>Monthly cost: {formatCostRange(estimate.monthlyCostLow, estimate.monthlyCostHigh)}</p>
+                          </>
+                        );
+                      })()}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">QC: {listing.qcMethodsListed}</p>
                     <p className="text-xs text-muted-foreground mt-1">Flags: {listing.regulatoryShippingFlags}</p>

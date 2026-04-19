@@ -34,6 +34,14 @@ export const AFFILIATE_VENDOR_LINKS: AffiliateVendorLinkData[] = [
     notes:
       "Base affiliate link is confirmed. Add compound-specific deep links here once vendor product URLs are available so peptide pages can route directly to the matching SKU.",
   },
+  {
+    vendorId: "xl-peptides",
+    vendorName: "XL Peptides",
+    partnerDomain: "xlpeptides.com",
+    defaultAffiliateUrl: "https://xlpeptides.com/?aff=70",
+    notes:
+      "Base affiliate link is confirmed. Add peptide-specific deep links later if you want outbound routing to land on exact product pages instead of the vendor homepage.",
+  },
 ];
 
 export function getAffiliateVendorLinkByVendorId(vendorId: string): AffiliateVendorLinkData | undefined {

@@ -1,6 +1,12 @@
 import {
+  getAgeCautionReason,
+  getAgeExclusionReason,
   getDisclaimersForPeptide,
+  getMonitoringGuidanceForPeptide,
   getPublishedPeptides,
+  getSexCautionReason,
+  getSexExclusionReason,
+  getSexRationale,
   getVendorsForPeptide,
   GOALS,
   type PeptideData,
@@ -11,11 +17,14 @@ import {
   ACTIVITY_LEVEL_OPTIONS,
   AGE_RANGE_OPTIONS,
   EXPERIENCE_OPTIONS,
+  FEMALE_LIFE_STAGE_OPTIONS,
   HEALTH_CONDITION_OPTIONS,
+  MALE_HORMONE_CONTEXT_OPTIONS,
   MEDICATION_OPTIONS,
   MONITORING_OPTIONS,
   PLAN_STYLE_OPTIONS,
   PROBLEM_OPTIONS,
+  REPRODUCTIVE_STATUS_OPTIONS,
   ROUTINE_OPTIONS,
   SEX_OPTIONS,
   STACKING_OPTIONS,
@@ -37,6 +46,26 @@ const tierScore: Record<PeptideData["evidenceTier"], number> = {
   "C-D": 4,
   D: 1,
 };
+
+const REPRODUCTIVE_HIGH_RISK_CATEGORIES = new Set<PeptideData["category"]>([
+  "gh_axis",
+  "growth_factor",
+  "reproductive",
+  "melanocortin",
+]);
+
+const REPRODUCTIVE_HIGH_RISK_IDS = new Set([
+  "semaglutide",
+  "tirzepatide",
+  "liraglutide",
+  "retatrutide",
+  "bpc-157",
+  "tb-500",
+  "mk-677",
+  "pt-141",
+  "kisspeptin",
+  "tesamorelin",
+]);
 
 export function generatePlannerResult(answers: PlannerAnswers): PlannerResult {
   const peptides = getPublishedPeptides();
@@ -146,6 +175,62 @@ function scorePeptide(peptide: PeptideData, answers: PlannerAnswers): PlannerRec
     }
   }
 
+  const ageCaution = getAgeCautionReason(peptide.id, answers.ageRange);
+  if (ageCaution) {
+    score -= 6;
+    cautions.push(ageCaution);
+  }
+
+  const sexRationale = getSexRationale(peptide.id, answers.sex);
+  if (sexRationale) {
+    score += 4;
+    rationale.push(sexRationale);
+  }
+
+  const sexCaution = getSexCautionReason(peptide.id, answers.sex);
+  if (sexCaution) {
+    score -= 4;
+    cautions.push(sexCaution);
+  }
+
+  if (answers.reproductiveStatus !== "none") {
+    if (REPRODUCTIVE_HIGH_RISK_CATEGORIES.has(peptide.category) || REPRODUCTIVE_HIGH_RISK_IDS.has(peptide.id)) {
+      score -= 10;
+      cautions.push("Your reproductive status pushes hormone-active and lower-confidence compounds into a more conservative lane.");
+    }
+  }
+
+  if (answers.sex === "male") {
+    if (answers.maleHormoneContext === "on_trt_or_androgen_therapy" && (peptide.category === "gh_axis" || peptide.category === "reproductive")) {
+      score -= 5;
+      cautions.push("Existing male hormone therapy raises the bar for layering on additional GH-axis or reproductive signaling.");
+    }
+
+    if (answers.maleHormoneContext === "prostate_or_psa_monitoring" && (peptide.category === "gh_axis" || peptide.category === "growth_factor")) {
+      score -= 9;
+      cautions.push("Prostate or PSA monitoring makes GH-axis and growth-signaling compounds a more cautious fit.");
+    }
+  }
+
+  const monitoringGuidance = getMonitoringGuidanceForPeptide(peptide.id);
+  if (monitoringGuidance) {
+    if (answers.monitoringWillingness === "minimal") {
+      if (monitoringGuidance.burden === "high") {
+        score -= 12;
+        cautions.push("Monitoring burden is high for your preferred level of tracking.");
+      } else if (monitoringGuidance.burden === "medium") {
+        score -= 5;
+      }
+    } else if (answers.monitoringWillingness === "basic" && monitoringGuidance.burden === "high") {
+      score -= 4;
+    }
+
+    if (answers.monitoringWillingness === "advanced" && monitoringGuidance.burden === "high") {
+      score += 3;
+      rationale.push("Your monitoring tolerance makes this a more realistic option to evaluate safely.");
+    }
+  }
+
   const deliveryPenalty = getDeliveryPenalty(peptide, answers.deliveryPreference);
   score += deliveryPenalty;
   if (deliveryPenalty < 0) {
@@ -181,6 +266,26 @@ function getExclusionReasons(peptide: PeptideData, answers: PlannerAnswers): str
 
   if (answers.deliveryPreference === "oral_topical_only" && hasInjectableRoute(peptide)) {
     reasons.push("Requires an injectable-first route, which conflicts with your delivery preference.");
+  }
+
+  const ageExclusion = getAgeExclusionReason(peptide.id, answers.ageRange);
+  if (ageExclusion) {
+    reasons.push(ageExclusion);
+  }
+
+  const sexExclusion = getSexExclusionReason(peptide.id, answers.sex);
+  if (sexExclusion) {
+    reasons.push(sexExclusion);
+  }
+
+  if (answers.reproductiveStatus !== "none") {
+    if (REPRODUCTIVE_HIGH_RISK_IDS.has(peptide.id) || REPRODUCTIVE_HIGH_RISK_CATEGORIES.has(peptide.category)) {
+      reasons.push(`Excluded because your reproductive status (${getLabel(REPRODUCTIVE_STATUS_OPTIONS, answers.reproductiveStatus).toLowerCase()}) requires a tighter screen around hormone-active or poorly studied compounds.`);
+    }
+  }
+
+  if (answers.sex === "male" && answers.maleHormoneContext === "prostate_or_psa_monitoring" && peptide.category === "growth_factor") {
+    reasons.push("Excluded because prostate or PSA monitoring is a poor match for added growth-signaling risk.");
   }
 
   for (const condition of HEALTH_CONDITION_OPTIONS.filter((item) =>
@@ -226,6 +331,18 @@ function buildIdentifiedNeeds(answers: PlannerAnswers): string[] {
     }
   }
 
+  if (answers.reproductiveStatus !== "none") {
+    needs.push(`Reproductive context: ${getLabel(REPRODUCTIVE_STATUS_OPTIONS, answers.reproductiveStatus)}`);
+  }
+
+  if (answers.sex === "female" && answers.femaleLifeStage && answers.femaleLifeStage !== "not_applicable") {
+    needs.push(`Female life stage: ${getLabel(FEMALE_LIFE_STAGE_OPTIONS, answers.femaleLifeStage)}`);
+  }
+
+  if (answers.sex === "male" && answers.maleHormoneContext && answers.maleHormoneContext !== "not_applicable" && answers.maleHormoneContext !== "none_known") {
+    needs.push(`Male hormone context: ${getLabel(MALE_HORMONE_CONTEXT_OPTIONS, answers.maleHormoneContext)}`);
+  }
+
   return needs.slice(0, 6);
 }
 
@@ -265,6 +382,35 @@ function buildSafetyNotes(
     notes.push("Plans were biased away from compounds that usually require heavier monitoring or interpretation.");
   }
 
+  if (answers.reproductiveStatus !== "none") {
+    notes.push("Reproductive status was treated as a hard safety gate, so hormone-active and poorly studied compounds were screened more aggressively.");
+  }
+
+  if (answers.sex === "female" && answers.femaleLifeStage === "perimenopause") {
+    notes.push("Perimenopause context was treated as a reason to stay practical about sleep, metabolic health, recovery, and bone-related tradeoffs instead of chasing aggressive hormone claims.");
+  }
+
+  if (answers.sex === "female" && answers.femaleLifeStage === "postmenopause") {
+    notes.push("Postmenopause context was treated as a reason to emphasize metabolic, recovery, and bone-health practicality over speculative endocrine optimization.");
+  }
+
+  if (answers.sex === "male" && answers.maleHormoneContext === "on_trt_or_androgen_therapy") {
+    notes.push("Existing TRT or androgen therapy was treated as a caution signal against casually layering in more endocrine-active compounds.");
+  }
+
+  if (answers.sex === "male" && answers.maleHormoneContext === "prostate_or_psa_monitoring") {
+    notes.push("Prostate or PSA monitoring pushed the planner more conservative around GH-axis and growth-signaling compounds.");
+  }
+
+  const heavierMonitoring = primary
+    .map((item) => getMonitoringGuidanceForPeptide(item.peptide.id))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .filter((item) => item.burden === "high");
+
+  if (heavierMonitoring.length > 0) {
+    notes.push("Some recommended compounds carry a heavier monitoring burden, so baseline labs and follow-up discipline matter.");
+  }
+
   if (compatibilityWarnings.length > 0) {
     notes.push("Any stack-level cautions shown below should be treated as reasons to simplify, not reasons to stack harder.");
   }
@@ -283,8 +429,23 @@ function buildProfileSummary(answers: PlannerAnswers): string {
   const activity = getLabel(ACTIVITY_LEVEL_OPTIONS, answers.activityLevel);
   const experience = getLabel(EXPERIENCE_OPTIONS, answers.experience);
   const goal = GOALS.find((item) => item.id === answers.primaryGoalId)?.displayName ?? "custom goal";
+  const profileParts = [
+    `${age}, ${sex.toLowerCase()}, ${activity.toLowerCase()}, ${experience.toLowerCase()} profile`,
+  ];
 
-  return `${age}, ${sex.toLowerCase()}, ${activity.toLowerCase()}, ${experience.toLowerCase()} profile focused on ${goal.toLowerCase()}.`;
+  if (answers.reproductiveStatus !== "none") {
+    profileParts.push(getLabel(REPRODUCTIVE_STATUS_OPTIONS, answers.reproductiveStatus).toLowerCase());
+  }
+
+  if (answers.sex === "female" && answers.femaleLifeStage && answers.femaleLifeStage !== "not_applicable") {
+    profileParts.push(getLabel(FEMALE_LIFE_STAGE_OPTIONS, answers.femaleLifeStage).toLowerCase());
+  }
+
+  if (answers.sex === "male" && answers.maleHormoneContext && answers.maleHormoneContext !== "not_applicable" && answers.maleHormoneContext !== "none_known") {
+    profileParts.push(getLabel(MALE_HORMONE_CONTEXT_OPTIONS, answers.maleHormoneContext).toLowerCase());
+  }
+
+  return `${profileParts.join(", ")} focused on ${goal.toLowerCase()}.`;
 }
 
 function buildPlanHeadline(answers: PlannerAnswers): string {

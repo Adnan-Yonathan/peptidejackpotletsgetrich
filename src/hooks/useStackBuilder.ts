@@ -22,6 +22,7 @@ interface StackBuilderState {
   items: StackItemState[];
   warnings: StackWarning[];
   setName: (name: string) => void;
+  replaceStack: (name: string, peptides: PeptideData[]) => void;
   addItem: (peptide: PeptideData) => void;
   removeItem: (peptideId: string) => void;
   updateQuantity: (peptideId: string, quantity: number) => void;
@@ -40,6 +41,16 @@ export const useStackBuilder = create<StackBuilderState>((set, get) => ({
   warnings: [],
 
   setName: (name) => set({ name }),
+
+  replaceStack: (name, peptides) =>
+    set(() => {
+      const newItems = peptides.map((peptide) => ({ peptide, quantity: 1 }));
+      return {
+        name,
+        items: newItems,
+        warnings: recalcWarnings(newItems),
+      };
+    }),
 
   addItem: (peptide) =>
     set((state) => {

@@ -17,6 +17,10 @@ export interface VendorListingData {
   regulatoryShippingFlags: string;
   affiliateProgramStatus: string;
   credibilityNote: string;
+  listedPriceLowUsd?: number;
+  listedPriceHighUsd?: number;
+  packSizeLowMg?: number;
+  packSizeHighMg?: number;
 }
 
 export interface ResolvedVendorListing extends VendorListingData {
@@ -42,6 +46,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Consumer-facing vendor with on-page COA presentation. Product-level affiliate routing is available for this peptide.",
+    listedPriceLowUsd: 49.99,
+    listedPriceHighUsd: 84.99,
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "tb-500",
@@ -60,6 +68,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated product page exists for this peptide, which makes it easier to review details before you buy.",
+    listedPriceLowUsd: 49.99,
+    listedPriceHighUsd: 89.99,
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "cjc-1295",
@@ -78,6 +90,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Amino Club currently shows CJC in a CJC-IPA NO DAC blend rather than as a standalone CJC-1295 product, so compare that product carefully.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "tesamorelin",
@@ -96,6 +110,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Product page uses the vendor spelling 'Tesamorlin'. Deep-link mapping should stay tied to the canonical peptide ID tesamorelin.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "ipamorelin",
@@ -114,6 +130,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated Amino Club product page is available for this peptide instead of a generic vendor landing page.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "aod-9604",
@@ -132,6 +150,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated product page is available for this peptide and gives users a clearer place to review details.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "pt-141",
@@ -150,6 +170,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated PT-141 product page is available for people who want to review this listing directly.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "semax",
@@ -168,6 +190,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated Semax page is available, so users can go straight to the relevant listing.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "selank",
@@ -186,6 +210,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated Selank page is available, so users can go straight to the relevant listing.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "dsip",
@@ -204,6 +230,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated DSIP page is available, so users can go straight to the relevant listing.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "mots-c",
@@ -222,6 +250,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated MOTS-c page is available, which makes the listing easier to review directly.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "epitalon",
@@ -240,6 +270,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Vendor page uses the spelling 'Epithalon'. The listing is mapped back to the canonical epitalon peptide record.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "thymosin-alpha-1",
@@ -258,6 +290,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated Thymosin Alpha-1 page is available for direct review.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
   {
     peptideId: "ghk-cu",
@@ -276,6 +310,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "A dedicated GHK-Cu page is available, but it is still important to check whether the product is being presented as topical, injectable, or both.",
+    packSizeLowMg: 50,
+    packSizeHighMg: 50,
   },
   {
     peptideId: "kpv",
@@ -294,6 +330,10 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Product-level page and COA presentation make this a good fit for exact peptide routing from peptide, goal, and vendor pages.",
+    listedPriceLowUsd: 39.99,
+    listedPriceHighUsd: 39.99,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
   },
   {
     peptideId: "retatrutide",
@@ -312,6 +352,8 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     affiliateProgramStatus: "affiliate: public program",
     credibilityNote:
       "Amino Club currently appears to place retatrutide under a GLP-3 product page, so that naming mismatch should be noticed before purchase.",
+    packSizeLowMg: 10,
+    packSizeHighMg: 20,
   },
 ];
 

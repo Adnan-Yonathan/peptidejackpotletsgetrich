@@ -14,6 +14,7 @@ import {
   getHubPeptideIds,
 } from "@/data/category-hubs";
 import { getGuideById, getGuidesForGoal } from "@/data/guides";
+import { formatCostRange, getPeptideCostEstimate } from "@/lib/costs";
 import {
   getPeptideById,
   getPublishedPeptides,
@@ -182,6 +183,16 @@ export default async function GoalHubPage({
   const goals = getHubGoals(hub);
   const peptideCount = peptides.length;
   const allPeptideCount = getPublishedPeptides().length;
+  const hubCostEstimates = featuredPeptides
+    .map((peptide) => getPeptideCostEstimate(peptide.id))
+    .filter((estimate): estimate is NonNullable<typeof estimate> => Boolean(estimate));
+  const hubCostSummary =
+    hubCostEstimates.length > 0
+      ? {
+          low: Math.min(...hubCostEstimates.map((estimate) => estimate.cycleCostLow)),
+          high: Math.max(...hubCostEstimates.map((estimate) => estimate.cycleCostHigh)),
+        }
+      : undefined;
 
   return (
     <>
@@ -212,6 +223,9 @@ export default async function GoalHubPage({
               </div>
               <p className="mt-6 text-sm text-muted-foreground">
                 {peptideCount} relevant peptides in this hub out of {allPeptideCount} published compounds.
+                {hubCostSummary && (
+                  <> Typical tracked cycle cost in this goal runs about {formatCostRange(hubCostSummary.low, hubCostSummary.high)}.</>
+                )}
               </p>
             </div>
           </section>
@@ -250,6 +264,14 @@ export default async function GoalHubPage({
                   Ranked for this goal by evidence first, then risk. This is a research starting point, not a clinical recommendation.
                 </p>
               </div>
+              {featuredPeptides.length >= 2 && (
+                <Button
+                  variant="outline"
+                  render={<Link href={`/compare/peptides?ids=${featuredPeptides.slice(0, 3).map((peptide) => peptide.slug).join(",")}`} />}
+                >
+                  Compare top options
+                </Button>
+              )}
             </div>
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {featuredPeptides.map((peptide) => (
@@ -273,6 +295,16 @@ export default async function GoalHubPage({
                     <p className="mb-4 text-sm text-muted-foreground">
                       Routes: {peptide.administrationRoutes.join(", ")}. Timeline: {peptide.onsetTimeline}
                     </p>
+                    {(() => {
+                      const costEstimate = getPeptideCostEstimate(peptide.id);
+                      if (!costEstimate) return null;
+
+                      return (
+                        <p className="mb-4 text-sm text-muted-foreground">
+                          Typical cycle cost: {formatCostRange(costEstimate.cycleCostLow, costEstimate.cycleCostHigh)}
+                        </p>
+                      );
+                    })()}
                     <div className="mt-auto flex items-center justify-between gap-3">
                       <span className="text-xs text-muted-foreground">
                         {getVendorListingsForPeptide(peptide.id).length} vendor listing

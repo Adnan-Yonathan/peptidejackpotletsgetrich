@@ -15,18 +15,22 @@ import {
   BUDGET_OPTIONS,
   DELIVERY_PREFERENCE_OPTIONS,
   EXPERIENCE_OPTIONS,
+  FEMALE_LIFE_STAGE_OPTIONS,
   HEALTH_CONDITION_OPTIONS,
+  MALE_HORMONE_CONTEXT_OPTIONS,
   MEDICATION_OPTIONS,
   MONITORING_OPTIONS,
   PLAN_STYLE_OPTIONS,
   PLANNER_STEPS,
   PROBLEM_OPTIONS,
+  REPRODUCTIVE_STATUS_OPTIONS,
   ROUTINE_OPTIONS,
   SEX_OPTIONS,
   STACKING_OPTIONS,
   TIMEFRAME_OPTIONS,
 } from "@/data/planner-options";
 import { useQuizState } from "@/hooks/useQuizState";
+import { generatePlannerResult } from "@/lib/planner-engine";
 
 export default function QuizPage() {
   const router = useRouter();
@@ -49,6 +53,14 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentStep === PLANNER_STEPS.length - 1) {
+      const plan = generatePlannerResult(answers as Parameters<typeof generatePlannerResult>[0]);
+      const topRecommendation = plan.primary[0] ?? plan.alternatives[0];
+
+      if (topRecommendation) {
+        router.push(`/peptides/${topRecommendation.peptide.slug}?fromQuiz=1`);
+        return;
+      }
+
       router.push("/quiz/results");
       return;
     }
@@ -72,7 +84,13 @@ export default function QuizPage() {
           answers.topProblems.length > 0
         );
       case "health":
-        return !!(answers.healthConditions && answers.medications);
+        return !!(
+          answers.healthConditions &&
+          answers.medications &&
+          answers.reproductiveStatus &&
+          (answers.sex !== "female" || answers.femaleLifeStage) &&
+          (answers.sex !== "male" || answers.maleHormoneContext)
+        );
       case "constraints":
         return !!(
           answers.budget &&
@@ -118,11 +136,11 @@ export default function QuizPage() {
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 {stepName === "identity" &&
-                  "Set your baseline so the planner can choose compounds that fit your age, sex, and training profile."}
+                  "Set your baseline so the planner can weigh age, sex, training profile, and the safety rules that come with them."}
                 {stepName === "goals" &&
                   "Pick a primary objective and the actual problems you want the program to address."}
                 {stepName === "health" &&
-                  "Flag the conditions and medication contexts that should push the plan more conservative."}
+                  "Flag medical context, reproductive status, and hormone-sensitive issues that should push the plan more conservative."}
                 {stepName === "constraints" &&
                   "Define budget, delivery preference, risk tolerance, and time horizon."}
                 {stepName === "style" &&
@@ -134,7 +152,35 @@ export default function QuizPage() {
               {stepName === "identity" && (
                 <>
                   <OptionSection title="Age range" options={AGE_RANGE_OPTIONS} value={answers.ageRange} onSelect={(value) => setAnswer("ageRange", value)} />
-                  <OptionSection title="Sex" options={SEX_OPTIONS} value={answers.sex} onSelect={(value) => setAnswer("sex", value)} />
+                  <OptionSection
+                    title="Sex"
+                    subtitle="We use this to apply sex-specific evidence, approval boundaries, reproductive cautions, and monitoring notes where they are actually relevant."
+                    options={SEX_OPTIONS}
+                    value={answers.sex}
+                    onSelect={(value) => {
+                      setAnswer("sex", value);
+                      if (value === "female") {
+                        setAnswer(
+                          "femaleLifeStage",
+                          answers.femaleLifeStage && answers.femaleLifeStage !== "not_applicable"
+                            ? answers.femaleLifeStage
+                            : "cycling_or_unclear"
+                        );
+                        setAnswer("maleHormoneContext", "not_applicable");
+                      } else if (value === "male") {
+                        setAnswer(
+                          "maleHormoneContext",
+                          answers.maleHormoneContext && answers.maleHormoneContext !== "not_applicable"
+                            ? answers.maleHormoneContext
+                            : "none_known"
+                        );
+                        setAnswer("femaleLifeStage", "not_applicable");
+                      } else {
+                        setAnswer("femaleLifeStage", "not_applicable");
+                        setAnswer("maleHormoneContext", "not_applicable");
+                      }
+                    }}
+                  />
                   <OptionSection title="Activity level" options={ACTIVITY_LEVEL_OPTIONS} value={answers.activityLevel} onSelect={(value) => setAnswer("activityLevel", value)} />
                   <OptionSection title="Experience level" options={EXPERIENCE_OPTIONS} value={answers.experience} onSelect={(value) => setAnswer("experience", value)} />
                 </>
@@ -225,6 +271,40 @@ export default function QuizPage() {
 
               {stepName === "health" && (
                 <>
+                  <OptionSection
+                    title="Reproductive status"
+                    subtitle="This is a hard safety gate. It helps the planner reduce compounds that do not belong in pregnancy, breastfeeding, or fertility-sensitive planning."
+                    options={REPRODUCTIVE_STATUS_OPTIONS}
+                    value={answers.reproductiveStatus}
+                    onSelect={(value) => setAnswer("reproductiveStatus", value)}
+                  />
+
+                  {answers.sex === "female" && (
+                    <OptionSection
+                      title="Female life stage"
+                      subtitle="This adds context around perimenopause, postmenopause, bone-health priorities, and hormone-related tradeoffs."
+                      options={FEMALE_LIFE_STAGE_OPTIONS}
+                      value={answers.femaleLifeStage}
+                      onSelect={(value) => setAnswer("femaleLifeStage", value)}
+                    />
+                  )}
+
+                  {answers.sex === "male" && (
+                    <OptionSection
+                      title="Male hormone and prostate context"
+                      subtitle="This helps the planner avoid getting too casual with GH-axis or growth-signaling compounds when TRT or prostate monitoring is already in the picture."
+                      options={MALE_HORMONE_CONTEXT_OPTIONS}
+                      value={answers.maleHormoneContext}
+                      onSelect={(value) => setAnswer("maleHormoneContext", value)}
+                    />
+                  )}
+
+                  {answers.sex === "other" && (
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-4 text-sm text-muted-foreground">
+                      The planner will stay conservative here and rely more heavily on your reproductive status, health conditions, and medication context instead of forcing binary sex-based assumptions.
+                    </div>
+                  )}
+
                   <div>
                     <SectionLabel
                       title="Health conditions"
@@ -360,18 +440,20 @@ function SectionLabel({ title, subtitle }: { title: string; subtitle: string }) 
 
 function OptionSection<T extends string>({
   title,
+  subtitle = "Choose the option that best matches your current situation.",
   options,
   value,
   onSelect,
 }: {
   title: string;
+  subtitle?: string;
   options: Array<{ value: T; label: string; description: string }>;
   value?: T;
   onSelect: (value: T) => void;
 }) {
   return (
     <div>
-      <SectionLabel title={title} subtitle="Choose the option that best matches your current situation." />
+      <SectionLabel title={title} subtitle={subtitle} />
       <div className="grid gap-3 md:grid-cols-2">
         {options.map((option) => (
           <button

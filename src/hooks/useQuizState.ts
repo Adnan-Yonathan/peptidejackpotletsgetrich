@@ -22,6 +22,8 @@ const defaultAnswers: Partial<PlannerAnswers> = {
   topProblems: [],
   healthConditions: [],
   medications: [],
+  femaleLifeStage: "not_applicable",
+  maleHormoneContext: "not_applicable",
   notes: "",
 };
 
@@ -57,6 +59,9 @@ export const useQuizState = create<QuizState>()(
         return !!(
           answers.ageRange &&
           answers.sex &&
+          answers.reproductiveStatus &&
+          answers.femaleLifeStage &&
+          answers.maleHormoneContext &&
           answers.activityLevel &&
           answers.experience &&
           answers.primaryGoalId &&

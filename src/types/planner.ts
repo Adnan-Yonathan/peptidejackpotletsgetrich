@@ -21,6 +21,21 @@ export type AgeRange =
   | "65+";
 
 export type Sex = "female" | "male" | "other";
+export type ReproductiveStatus =
+  | "none"
+  | "trying_to_conceive"
+  | "pregnant"
+  | "breastfeeding";
+export type FemaleLifeStage =
+  | "not_applicable"
+  | "cycling_or_unclear"
+  | "perimenopause"
+  | "postmenopause";
+export type MaleHormoneContext =
+  | "not_applicable"
+  | "none_known"
+  | "on_trt_or_androgen_therapy"
+  | "prostate_or_psa_monitoring";
 export type ActivityLevel = "low" | "moderate" | "high" | "athlete";
 export type Timeframe = "short" | "medium" | "long";
 export type StackingPreference = "single" | "basic_stack" | "advanced_stack";
@@ -32,6 +47,9 @@ export type PlanStyle = "conservative" | "balanced" | "aggressive";
 export interface PlannerAnswers {
   ageRange: AgeRange;
   sex: Sex;
+  reproductiveStatus: ReproductiveStatus;
+  femaleLifeStage: FemaleLifeStage;
+  maleHormoneContext: MaleHormoneContext;
   activityLevel: ActivityLevel;
   experience: ExperienceLevel;
   primaryGoalId: string;
