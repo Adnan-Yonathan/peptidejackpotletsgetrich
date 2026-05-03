@@ -198,14 +198,18 @@ function getSectionRows(peptides: PeptideData[]) {
           label: "Typical cycle cost",
           values: peptides.map((peptide) => {
             const estimate = getPeptideCostEstimate(peptide.id);
-            return estimate ? formatCostRange(estimate.cycleCostLow, estimate.cycleCostHigh) : "No reliable estimate yet";
+            return estimate
+              ? formatCostRange(estimate.cycleCostLow, estimate.cycleCostHigh, estimate.currencyCode)
+              : "No reliable estimate yet";
           }),
         },
         {
           label: "Estimated monthly cost",
           values: peptides.map((peptide) => {
             const estimate = getPeptideCostEstimate(peptide.id);
-            return estimate ? formatCostRange(estimate.monthlyCostLow, estimate.monthlyCostHigh) : "No reliable estimate yet";
+            return estimate
+              ? formatCostRange(estimate.monthlyCostLow, estimate.monthlyCostHigh, estimate.currencyCode)
+              : "No reliable estimate yet";
           }),
         },
         {

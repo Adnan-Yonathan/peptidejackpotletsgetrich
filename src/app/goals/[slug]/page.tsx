@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   CATEGORY_HUBS,
   getCategoryHubBySlug,
@@ -23,7 +21,12 @@ import {
   type RiskLevel,
 } from "@/data/peptides";
 import { getVendorListingsForPeptide } from "@/data/vendor-listings";
-import { buildOutboundVendorHref, getPreferredVendorForPeptide } from "@/lib/outbound-vendors";
+
+const SECTION_CARD =
+  "rounded-xl border border-stone-200 bg-white/90 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
+const DETAIL_CELL = "rounded-lg bg-stone-50 border border-stone-100 p-3";
+const DETAIL_LABEL =
+  "text-[11px] font-semibold uppercase tracking-wider text-[color:var(--primary)] mb-1";
 
 const EVIDENCE_PRIORITY: Record<EvidenceTier, number> = {
   A: 0,
@@ -71,6 +74,48 @@ function isPublishedPeptide(peptide: PeptideData | undefined): peptide is Peptid
   return Boolean(peptide && peptide.status === "published");
 }
 
+function HeroChip({
+  children,
+  tone = "ghost",
+  className = "",
+}: {
+  children: React.ReactNode;
+  tone?: "ghost" | "yellow" | "red";
+  className?: string;
+}) {
+  const base =
+    "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide";
+  const tones: Record<string, string> = {
+    ghost: "border-white/20 bg-white/[0.07] text-white/80",
+    yellow: "border-yellow-300/50 bg-yellow-300/15 text-yellow-100",
+    red: "border-red-400/50 bg-red-400/15 text-red-100",
+  };
+  return <span className={`${base} ${tones[tone]} ${className}`}>{children}</span>;
+}
+
+function StatCell({
+  value,
+  label,
+  capitalize = false,
+}: {
+  value: string;
+  label: string;
+  capitalize?: boolean;
+}) {
+  return (
+    <div className="text-center">
+      <div
+        className={`text-xl font-bold text-white leading-none ${capitalize ? "capitalize" : ""}`}
+      >
+        {value}
+      </div>
+      <div className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+        {label}
+      </div>
+    </div>
+  );
+}
+
 export async function generateStaticParams() {
   return CATEGORY_HUBS.map((hub) => ({ slug: hub.slug }));
 }
@@ -111,9 +156,10 @@ export default async function GoalHubPage({
       hub.goalIds
         .flatMap((goalId) => getGuidesForGoal(goalId))
         .concat(
-          [getGuideById("peptide-safety-basics"), getGuideById("how-to-compare-peptide-vendors")].filter(
-            (guide): guide is NonNullable<typeof guide> => Boolean(guide)
-          )
+          [
+            getGuideById("peptide-safety-basics"),
+            getGuideById("how-to-compare-peptide-vendors"),
+          ].filter((guide): guide is NonNullable<typeof guide> => Boolean(guide))
         )
         .map((guide) => [guide.id, guide])
     ).values()
@@ -174,7 +220,8 @@ export default async function GoalHubPage({
   const trustedVendors = Array.from(vendorMap.values())
     .sort((a, b) => {
       const affiliateDelta =
-        Number(b.affiliateProgramStatus.includes("affiliate")) - Number(a.affiliateProgramStatus.includes("affiliate"));
+        Number(b.affiliateProgramStatus.includes("affiliate")) -
+        Number(a.affiliateProgramStatus.includes("affiliate"));
       if (affiliateDelta !== 0) return affiliateDelta;
       return b.relevantCompounds - a.relevantCompounds;
     })
@@ -194,244 +241,483 @@ export default async function GoalHubPage({
         }
       : undefined;
 
+  const peptideStat = String(peptideCount);
+  const vendorStat = String(trustedVendors.length);
+  const guideStat = String(educationGuides.length);
+  const costStat = hubCostSummary
+    ? formatCostRange(hubCostSummary.low, hubCostSummary.high)
+    : "—";
+
+  const quickFacts: { label: string; value: string }[] = [
+    { label: "Peptides in hub", value: `${peptideCount} of ${allPeptideCount}` },
+  ];
+  if (lowerRiskPeptides.length > 0) {
+    quickFacts.push({ label: "Lower-risk options", value: String(lowerRiskPeptides.length) });
+  }
+  if (highRiskPeptides.length > 0) {
+    quickFacts.push({ label: "Higher-risk options", value: String(highRiskPeptides.length) });
+  }
+  if (trustedVendors.length > 0) {
+    quickFacts.push({ label: "Tracked vendors", value: String(trustedVendors.length) });
+  }
+  if (hubCostSummary) {
+    quickFacts.push({ label: "Cycle cost range", value: costStat });
+  }
+
   return (
     <>
       <Header />
-      <main className="flex-1 py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <section className="mb-12 rounded-[2rem] border bg-gradient-to-br from-background via-background to-primary/5 p-8 md:p-12">
-            <div className="max-w-3xl">
-              <Badge variant="secondary" className="mb-4">
-                Browse by goal
-              </Badge>
-              <h1 className="text-4xl font-bold tracking-tight md:text-5xl">{hub.title}</h1>
-              <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{hub.description}</p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {hub.outcomes.map((outcome) => (
-                  <Badge key={outcome} variant="outline" className="capitalize">
-                    {outcome}
-                  </Badge>
-                ))}
-              </div>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" render={<Link href={`/peptides?goal=${hub.goalIds[0]}`} />}>
-                  Browse matching peptides <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="lg" render={<Link href="/quiz" />}>
-                  Build a custom plan
-                </Button>
-              </div>
-              <p className="mt-6 text-sm text-muted-foreground">
-                {peptideCount} relevant peptides in this hub out of {allPeptideCount} published compounds.
-                {hubCostSummary && (
-                  <> Typical tracked cycle cost in this goal runs about {formatCostRange(hubCostSummary.low, hubCostSummary.high)}.</>
-                )}
-              </p>
-            </div>
-          </section>
+      <main className="flex-1 bg-stone-50">
+        {/* ── Hero ────────────────────────────────────────────── */}
+        <section
+          className="relative overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, #103b2c 0%, oklch(0.52 0.11 164) 100%)",
+          }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+              backgroundSize: "34px 34px",
+            }}
+          />
+          <div className="relative container mx-auto max-w-6xl px-4 sm:px-6 pt-8 pb-10">
+            <Link
+              href="/peptides"
+              className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/50 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> All Peptides
+            </Link>
 
-          {educationGuides.length > 0 && (
-            <section className="mb-12">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold">Start with the guides</h2>
-                <p className="mt-2 text-muted-foreground">
-                  These guides help you understand the basics before comparing compounds or choosing a vendor.
-                </p>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-                {educationGuides.map((guide) => (
-                  <Card key={guide.id}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg">{guide.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-muted-foreground">{guide.summary}</p>
-                      <Button variant="outline" size="sm" render={<Link href={`/guides/${guide.slug}`} />}>
-                        Read guide
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section className="mb-12">
-            <div className="mb-6 flex items-end justify-between gap-4">
+            <div className="mt-5 grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(240px,280px)] md:items-end">
               <div>
-                <h2 className="text-2xl font-bold">Best options to research first</h2>
-                <p className="mt-2 text-muted-foreground">
-                  Ranked for this goal by evidence first, then risk. This is a research starting point, not a clinical recommendation.
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/45 mb-3">
+                  Research Hub
                 </p>
+                <h1 className="text-4xl sm:text-5xl font-bold text-white leading-[1.05] tracking-tight">
+                  {hub.title}
+                </h1>
+                <p className="mt-3 max-w-[560px] text-sm text-white/65 leading-relaxed">
+                  {hub.description}
+                </p>
+                <div className="mt-5 flex flex-wrap gap-1.5">
+                  {hub.outcomes.map((outcome) => (
+                    <HeroChip key={outcome} className="capitalize">
+                      {outcome}
+                    </HeroChip>
+                  ))}
+                </div>
               </div>
-              {featuredPeptides.length >= 2 && (
-                <Button
-                  variant="outline"
-                  render={<Link href={`/compare/peptides?ids=${featuredPeptides.slice(0, 3).map((peptide) => peptide.slug).join(",")}`} />}
-                >
-                  Compare top options
-                </Button>
+
+              {/* Stats float panel */}
+              <div className="rounded-xl border border-white/12 bg-white/[0.07] p-5 backdrop-blur-sm">
+                <div className="grid grid-cols-2 gap-4">
+                  <StatCell value={peptideStat} label="Peptides" />
+                  <StatCell value={vendorStat} label="Vendors" />
+                  <StatCell value={guideStat} label="Guides" />
+                  <StatCell value={costStat} label="Cycle cost" />
+                </div>
+                <div className="mt-4 flex gap-2 border-t border-white/12 pt-3">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    render={<Link href={`/peptides?goal=${hub.goalIds[0]}`} />}
+                  >
+                    Peptides
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white"
+                    render={<Link href="/quiz" />}
+                  >
+                    Quiz
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Two-col body ────────────────────────────────────── */}
+        <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+            {/* ── Main column ── */}
+            <div className="flex flex-col gap-5">
+              {/* Overview */}
+              <div className={SECTION_CARD}>
+                <h2 className="text-lg font-semibold text-foreground mb-3">Overview</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">{hub.description}</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className={DETAIL_CELL}>
+                    <div className={DETAIL_LABEL}>Peptides tracked</div>
+                    <p className="text-sm text-foreground/80">
+                      {peptideCount} of {allPeptideCount} published compounds
+                    </p>
+                  </div>
+                  <div className={DETAIL_CELL}>
+                    <div className={DETAIL_LABEL}>Cycle cost</div>
+                    <p className="text-sm text-foreground/80">{costStat}</p>
+                  </div>
+                  <div className={DETAIL_CELL}>
+                    <div className={DETAIL_LABEL}>Goals covered</div>
+                    <p className="text-sm text-foreground/80 capitalize">
+                      {goals.length > 0
+                        ? goals.map((goal) => goal.displayName).join(", ")
+                        : hub.goalIds.join(", ")}
+                    </p>
+                  </div>
+                  <div className={DETAIL_CELL}>
+                    <div className={DETAIL_LABEL}>Outcomes</div>
+                    <p className="text-sm text-foreground/80 capitalize">
+                      {hub.outcomes.join(", ")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Best options to research first */}
+              {featuredPeptides.length > 0 && (
+                <div className={SECTION_CARD}>
+                  <div className="mb-4 flex items-end justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">
+                        Best options to research first
+                      </h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Ranked by evidence first, then risk. A research starting point, not a
+                        clinical recommendation.
+                      </p>
+                    </div>
+                    {featuredPeptides.length >= 2 && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2.5 text-xs shrink-0"
+                        render={
+                          <Link
+                            href={`/compare/peptides?ids=${featuredPeptides
+                              .slice(0, 3)
+                              .map((peptide) => peptide.slug)
+                              .join(",")}`}
+                          />
+                        }
+                      >
+                        Compare top
+                      </Button>
+                    )}
+                  </div>
+                  <div className="divide-y divide-stone-100">
+                    {featuredPeptides.map((peptide) => {
+                      const costEstimate = getPeptideCostEstimate(peptide.id);
+                      const listingCount = getVendorListingsForPeptide(peptide.id).length;
+                      return (
+                        <div
+                          key={peptide.id}
+                          className="py-4 first:pt-0 last:pb-0"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground">
+                                {peptide.name}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                {peptide.shortDescription}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2.5 text-xs"
+                                render={<Link href={`/vendors?peptide=${peptide.slug}`} />}
+                              >
+                                Vendors
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="h-7 px-2.5 text-xs"
+                                render={<Link href={`/peptides/${peptide.slug}`} />}
+                              >
+                                Profile
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex flex-wrap gap-1.5">
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${getEvidenceClasses(peptide.evidenceTier)}`}
+                            >
+                              Tier {peptide.evidenceTier}
+                            </span>
+                            <span
+                              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${getRiskClasses(peptide.riskLevel)}`}
+                            >
+                              {peptide.riskLevel} risk
+                            </span>
+                            <span className="inline-flex items-center rounded-full border border-stone-200 bg-stone-50 px-2 py-0.5 text-[11px] font-semibold capitalize text-foreground/80">
+                              {peptide.experienceLevel}
+                            </span>
+                          </div>
+                          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                            <div className={DETAIL_CELL}>
+                              <div className={DETAIL_LABEL}>Routes</div>
+                              <p className="text-xs text-foreground/80">
+                                {peptide.administrationRoutes.join(", ")}
+                              </p>
+                            </div>
+                            <div className={DETAIL_CELL}>
+                              <div className={DETAIL_LABEL}>Timeline</div>
+                              <p className="text-xs text-foreground/80">{peptide.onsetTimeline}</p>
+                            </div>
+                            {costEstimate && (
+                              <div className={DETAIL_CELL}>
+                                <div className={DETAIL_LABEL}>Cycle cost</div>
+                                <p className="text-xs text-foreground/80">
+                                  {formatCostRange(
+                                    costEstimate.cycleCostLow,
+                                    costEstimate.cycleCostHigh,
+                                    costEstimate.currencyCode
+                                  )}
+                                </p>
+                              </div>
+                            )}
+                            <div className={DETAIL_CELL}>
+                              <div className={DETAIL_LABEL}>Vendor listings</div>
+                              <p className="text-xs text-foreground/80">
+                                {listingCount} tracked
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Lower-risk + Higher-risk split */}
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div className={`${SECTION_CARD} min-w-0 overflow-hidden`}>
+                  <h2 className="text-lg font-semibold text-foreground mb-3">Lower-risk options</h2>
+                  {lowerRiskPeptides.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No low- or medium-risk compounds are currently tagged for this hub.
+                    </p>
+                  ) : (
+                    <div className="grid min-w-0 gap-2">
+                      {lowerRiskPeptides.map((peptide) => (
+                        <Link
+                          key={peptide.id}
+                          href={`/peptides/${peptide.slug}`}
+                          className={`${DETAIL_CELL} flex w-full min-w-0 items-center justify-between gap-2 overflow-hidden transition-colors hover:border-[color:var(--primary)]/40`}
+                        >
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <p className="truncate text-sm font-semibold text-foreground">
+                              {peptide.name}
+                            </p>
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              {peptide.shortDescription}
+                            </p>
+                          </div>
+                          <span
+                            className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold capitalize ${getRiskClasses(peptide.riskLevel)}`}
+                          >
+                            {peptide.riskLevel}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className={`${SECTION_CARD} min-w-0 overflow-hidden`}>
+                  <h2 className="text-lg font-semibold text-foreground mb-3">
+                    Higher-risk options
+                  </h2>
+                  {highRiskPeptides.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No high-risk compounds are currently tagged for this hub.
+                    </p>
+                  ) : (
+                    <div className="grid min-w-0 gap-2">
+                      {highRiskPeptides.map((peptide) => (
+                        <div key={peptide.id} className={`${DETAIL_CELL} min-w-0 overflow-hidden`}>
+                          <div className="flex min-w-0 items-start gap-2">
+                            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500" />
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Link
+                                  href={`/peptides/${peptide.slug}`}
+                                  className="text-sm font-semibold text-foreground hover:text-[color:var(--primary)]"
+                                >
+                                  {peptide.name}
+                                </Link>
+                                <span
+                                  className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold capitalize ${getRiskClasses(peptide.riskLevel)}`}
+                                >
+                                  {peptide.riskLevel}
+                                </span>
+                              </div>
+                              <p className="mt-1 break-words text-[11px] text-muted-foreground leading-relaxed">
+                                {peptide.adverseEffects}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Trusted vendors */}
+              {trustedVendors.length > 0 && (
+                <div className={SECTION_CARD}>
+                  <h2 className="text-lg font-semibold text-foreground mb-1">
+                    {hub.vendorHeadline}
+                  </h2>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    These vendors currently carry compounds in this goal category. Hub is the trust
+                    layer; outbound clicks happen after comparison.
+                  </p>
+                  <div className="divide-y divide-stone-100">
+                    {trustedVendors.map((vendor) => (
+                      <div key={vendor.vendorId} className="py-4 first:pt-0 last:pb-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <ShieldCheck className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
+                              <p className="text-sm font-semibold text-foreground truncate">
+                                {vendor.vendorName}
+                              </p>
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-muted-foreground">
+                              {vendor.relevantCompounds} relevant compound
+                              {vendor.relevantCompounds === 1 ? "" : "s"} in hub
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            className="shrink-0 h-7 px-2.5 text-xs"
+                            render={<Link href={`/vendors/${vendor.vendorSlug}`} />}
+                          >
+                            Review
+                          </Button>
+                        </div>
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          <div className={DETAIL_CELL}>
+                            <div className={DETAIL_LABEL}>COA</div>
+                            <p className="text-xs text-foreground/80">
+                              {vendor.coaAccessModeLabel}
+                            </p>
+                          </div>
+                          <div className={DETAIL_CELL}>
+                            <div className={DETAIL_LABEL}>QC</div>
+                            <p className="text-xs text-foreground/80">{vendor.qcMethodsListed}</p>
+                          </div>
+                          <div className={DETAIL_CELL}>
+                            <div className={DETAIL_LABEL}>Shipping</div>
+                            <p className="text-xs text-foreground/80">{vendor.shippingRegions}</p>
+                          </div>
+                          <div className={DETAIL_CELL}>
+                            <div className={DETAIL_LABEL}>Affiliate</div>
+                            <p className="text-xs text-foreground/80">
+                              {vendor.affiliateProgramStatus}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {featuredPeptides.map((peptide) => (
-                <Card key={peptide.id} className="flex flex-col">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-xl">{peptide.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{peptide.shortDescription}</p>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 flex-col">
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      <Badge variant="outline" className={getEvidenceClasses(peptide.evidenceTier)}>
-                        Tier {peptide.evidenceTier}
-                      </Badge>
-                      <Badge variant="outline" className={`capitalize ${getRiskClasses(peptide.riskLevel)}`}>
-                        {peptide.riskLevel} risk
-                      </Badge>
-                      <Badge variant="outline" className="capitalize">
-                        {peptide.experienceLevel}
-                      </Badge>
-                    </div>
-                    <p className="mb-4 text-sm text-muted-foreground">
-                      Routes: {peptide.administrationRoutes.join(", ")}. Timeline: {peptide.onsetTimeline}
-                    </p>
-                    {(() => {
-                      const costEstimate = getPeptideCostEstimate(peptide.id);
-                      if (!costEstimate) return null;
 
-                      return (
-                        <p className="mb-4 text-sm text-muted-foreground">
-                          Typical cycle cost: {formatCostRange(costEstimate.cycleCostLow, costEstimate.cycleCostHigh)}
+            {/* ── Sticky right rail ── */}
+            <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+              {/* Quick facts */}
+              {quickFacts.length > 0 && (
+                <div className={SECTION_CARD.replace("p-6", "p-5")}>
+                  <h3 className="text-base font-semibold text-foreground mb-3">Quick facts</h3>
+                  <div className="divide-y divide-stone-100">
+                    {quickFacts.map((fact) => (
+                      <div
+                        key={fact.label}
+                        className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                      >
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {fact.label}
                         </p>
-                      );
-                    })()}
-                    <div className="mt-auto flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {getVendorListingsForPeptide(peptide.id).length} vendor listing
-                        {getVendorListingsForPeptide(peptide.id).length === 1 ? "" : "s"}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const preferredVendor = getPreferredVendorForPeptide(peptide.id);
-                          if (!preferredVendor?.vendor) return null;
-                          return (
-                            <Button
-                              size="sm"
-                              render={
-                                <a
-                                  href={buildOutboundVendorHref(preferredVendor.vendor.slug, peptide.slug, "goal-hub")}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                />
-                              }
-                            >
-                              Visit vendor
-                            </Button>
-                          );
-                        })()}
-                        <Button variant="outline" size="sm" render={<Link href={`/peptides/${peptide.slug}`} />}>
-                          View profile
-                        </Button>
+                        <p className="text-xs text-foreground/90 text-right break-words min-w-0">
+                          {fact.value}
+                        </p>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-          <section className="mb-12 grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Lower-risk options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {lowerRiskPeptides.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No low- or medium-risk compounds are currently tagged for this hub.</p>
-                ) : (
-                  lowerRiskPeptides.map((peptide) => (
-                    <div key={peptide.id} className="rounded-xl border p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{peptide.name}</p>
-                          <p className="text-sm text-muted-foreground">{peptide.shortDescription}</p>
-                        </div>
-                        <Badge variant="outline" className={`capitalize ${getRiskClasses(peptide.riskLevel)}`}>
-                          {peptide.riskLevel}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
+              {/* Related goals */}
+              {goals.length > 0 && (
+                <div className={SECTION_CARD.replace("p-6", "p-5")}>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                    Goals covered
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {goals.map((goal) => (
+                      <Link
+                        key={goal.id}
+                        href={`/peptides?goal=${goal.id}`}
+                        className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs text-foreground hover:border-[color:var(--primary)] hover:text-[color:var(--primary)] transition-colors"
+                      >
+                        {goal.displayName}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Higher-risk or more advanced options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {highRiskPeptides.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No high-risk compounds are currently tagged for this hub.</p>
-                ) : (
-                  highRiskPeptides.map((peptide) => (
-                    <div key={peptide.id} className="rounded-xl border p-4">
-                      <div className="flex items-start gap-3">
-                        <TriangleAlert className="mt-0.5 h-4 w-4 text-orange-500" />
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-medium">{peptide.name}</p>
-                            <Badge variant="outline" className={`capitalize ${getRiskClasses(peptide.riskLevel)}`}>
-                              {peptide.riskLevel}
-                            </Badge>
-                          </div>
-                          <p className="mt-1 text-sm text-muted-foreground">{peptide.adverseEffects}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-          </section>
-
-          <section className="mb-12">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold">{hub.vendorHeadline}</h2>
-              <p className="mt-2 text-muted-foreground">
-                These vendors currently carry compounds in this goal category. The hub page is the trust layer; outbound vendor clicks happen after the comparison.
-              </p>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {trustedVendors.map((vendor) => (
-                <Card key={vendor.vendorId}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <CardTitle className="text-lg">{vendor.vendorName}</CardTitle>
-                      <ShieldCheck className="h-5 w-5 text-primary" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>{vendor.relevantCompounds} relevant compound listings in this hub.</p>
-                      <p>COA access: {vendor.coaAccessModeLabel}</p>
-                      <p>QC: {vendor.qcMethodsListed}</p>
-                      <p>Shipping: {vendor.shippingRegions}</p>
-                      <p>Affiliate status: {vendor.affiliateProgramStatus}</p>
-                    </div>
-                    <Button className="mt-4 w-full" variant="outline" render={<Link href={`/vendors/${vendor.vendorSlug}`} />}>
-                      Review vendor
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-
-        </div>
+              {/* Read before choosing */}
+              {educationGuides.length > 0 && (
+                <div
+                  className="rounded-xl border p-5"
+                  style={{
+                    borderColor: "oklch(0.52 0.11 164 / 0.2)",
+                    background: "oklch(0.52 0.11 164 / 0.05)",
+                  }}
+                >
+                  <p className="text-sm font-semibold text-[color:var(--primary)] mb-1">
+                    Start with the guides
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Understand the basics before comparing compounds or choosing a vendor.
+                  </p>
+                  <ul className="space-y-1.5">
+                    {educationGuides.map((guide) => (
+                      <li key={guide.id}>
+                        <Link
+                          href={`/guides/${guide.slug}`}
+                          className="group flex items-start gap-1.5 text-xs text-foreground/90 hover:text-[color:var(--primary)]"
+                        >
+                          <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-[color:var(--primary)]/60" />
+                          <span className="underline decoration-transparent group-hover:decoration-current underline-offset-2">
+                            {guide.title}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </aside>
+          </div>
+        </section>
       </main>
       <Footer />
     </>
   );
 }
-

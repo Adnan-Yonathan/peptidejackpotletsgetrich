@@ -493,7 +493,11 @@ function PeptidesDirectoryContent() {
                     <p className="text-[10px] uppercase tracking-wide text-slate-400">Typical Cycle</p>
                     <p className="mt-1 text-sm font-semibold text-slate-900">
                       {costEstimate
-                        ? formatCostRange(costEstimate.cycleCostLow, costEstimate.cycleCostHigh)
+                        ? formatCostRange(
+                            costEstimate.cycleCostLow,
+                            costEstimate.cycleCostHigh,
+                            costEstimate.currencyCode
+                          )
                         : "Varies"}
                     </p>
                   </div>

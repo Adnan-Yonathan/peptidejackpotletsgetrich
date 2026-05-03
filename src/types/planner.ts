@@ -4,13 +4,23 @@ import type {
   PeptideData,
 } from "@/data/peptides";
 import type { VendorData } from "@/data/vendors";
+import type { ShopperCountry } from "@/lib/shopper-country";
 
 export type PlannerStep =
-  | "identity"
-  | "goals"
-  | "health"
-  | "constraints"
-  | "style";
+  | "country"
+  | "ageRange"
+  | "sex"
+  | "activityLevel"
+  | "experience"
+  | "primaryGoalId"
+  | "secondaryGoalIds"
+  | "reproductiveStatus"
+  | "femaleLifeStage"
+  | "maleHormoneContext"
+  | "budget"
+  | "riskTolerance"
+  | "timeframe"
+  | "email";
 
 export type AgeRange =
   | "18-24"
@@ -45,6 +55,9 @@ export type MonitoringWillingness = "minimal" | "basic" | "advanced";
 export type PlanStyle = "conservative" | "balanced" | "aggressive";
 
 export interface PlannerAnswers {
+  name: string;
+  email: string;
+  country: ShopperCountry;
   ageRange: AgeRange;
   sex: Sex;
   reproductiveStatus: ReproductiveStatus;

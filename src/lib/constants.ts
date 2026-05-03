@@ -44,6 +44,7 @@ export const NAV_LINKS = [
   { href: "/guides", label: "Guides" },
   { href: "/vendors", label: "Vendors" },
   { href: "/quiz", label: "Find Your Plan" },
+  { href: "/protocol", label: "PeptidePros +" },
 ] as const;
 
 export const DASHBOARD_NAV = [

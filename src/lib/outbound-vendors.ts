@@ -1,7 +1,12 @@
 import { getAffiliateUrlForVendor } from "@/data/affiliate-links";
 import { getPeptideBySlug } from "@/data/peptides";
-import { getVendorListingForPeptideAndVendor, getVendorListingsForPeptide } from "@/data/vendor-listings";
+import {
+  getListingShopperRegion,
+  getVendorListingForPeptideAndVendor,
+  getVendorListingsForPeptide,
+} from "@/data/vendor-listings";
 import { getVendorById, getVendorBySlug } from "@/data/vendors";
+import { getShopperRegion, type ShopperCountry, type ShopperRegion } from "@/lib/shopper-country";
 
 export interface OutboundVendorTarget {
   url: string;
@@ -47,10 +52,24 @@ export function resolveOutboundVendorTargetFromSlugs(vendorSlug: string, peptide
   return resolveOutboundVendorTarget(vendor.id, peptide.id);
 }
 
-export function getPreferredVendorListingForPeptide(peptideId: string) {
-  const listings = getVendorListingsForPeptide(peptideId);
+function resolvePreferredRegion(country?: ShopperCountry, shopperRegion?: ShopperRegion) {
+  if (shopperRegion) return shopperRegion;
+  if (country) return getShopperRegion(country);
+  return undefined;
+}
 
-  const scored = listings
+export function getPreferredVendorListingForPeptide(
+  peptideId: string,
+  options?: { shopperCountry?: ShopperCountry; shopperRegion?: ShopperRegion }
+) {
+  const listings = getVendorListingsForPeptide(peptideId);
+  const preferredRegion = resolvePreferredRegion(options?.shopperCountry, options?.shopperRegion);
+  const filteredListings = preferredRegion
+    ? listings.filter((listing) => getListingShopperRegion(listing) === preferredRegion)
+    : listings;
+  const listingsToUse = filteredListings.length > 0 ? filteredListings : listings;
+
+  const scored = listingsToUse
     .map((listing) => {
       let score = 0;
       const target = resolveOutboundVendorTarget(listing.vendorId, peptideId);
@@ -65,12 +84,28 @@ export function getPreferredVendorListingForPeptide(peptideId: string) {
   return scored[0]?.listing;
 }
 
-export function getPreferredVendorForPeptide(peptideId: string) {
-  const listing = getPreferredVendorListingForPeptide(peptideId);
+export function getPreferredVendorForPeptide(
+  peptideId: string,
+  options?: { shopperCountry?: ShopperCountry; shopperRegion?: ShopperRegion }
+) {
+  const listing = getPreferredVendorListingForPeptide(peptideId, options);
   if (!listing) return null;
   return {
     vendor: getVendorById(listing.vendorId),
     listing,
     target: resolveOutboundVendorTarget(listing.vendorId, peptideId),
   };
+}
+
+export function getRegionalVendorOptionsForPeptide(peptideId: string) {
+  const listings = getVendorListingsForPeptide(peptideId);
+  const hasUs = listings.some((listing) => getListingShopperRegion(listing) === "us");
+  const hasInternational = listings.some(
+    (listing) => getListingShopperRegion(listing) === "international"
+  );
+  const us = hasUs ? getPreferredVendorForPeptide(peptideId, { shopperRegion: "us" }) : null;
+  const international = hasInternational
+    ? getPreferredVendorForPeptide(peptideId, { shopperRegion: "international" })
+    : null;
+  return { us, international };
 }

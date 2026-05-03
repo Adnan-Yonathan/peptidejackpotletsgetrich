@@ -1,4 +1,5 @@
 import type { ResolvedVendorListing } from "@/data/vendor-listings";
+import { getListingPriceLabel } from "@/data/vendor-listings";
 
 export type ListingMatchStatus = "exact" | "alias" | "blend" | "format-caution";
 export type NamingClarity = "clear" | "caution";
@@ -49,13 +50,13 @@ export function getDocumentationStrength(listing: ResolvedVendorListing): Docume
 }
 
 export function getPriceVisibility(listing: ResolvedVendorListing): PriceVisibility {
-  const text = listing.typicalRetailPriceRangeUsd.toLowerCase();
+  const text = getListingPriceLabel(listing).toLowerCase();
 
   if (text.includes("variant-dependent")) {
-    return text.includes("$") ? "partial" : "unclear";
+    return text.includes("$") || text.includes("€") ? "partial" : "unclear";
   }
 
-  if (text.includes("$")) {
+  if (text.includes("$") || text.includes("€")) {
     return "visible";
   }
 

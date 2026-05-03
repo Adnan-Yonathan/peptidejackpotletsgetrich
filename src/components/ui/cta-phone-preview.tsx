@@ -1,14 +1,31 @@
-import { ArrowRight, CheckCircle2, Clock3, Dumbbell, HeartPulse, Shield, Sparkles, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Calendar,
+  CalendarCheck,
+  Check,
+  CheckCircle2,
+  Clock3,
+  Dumbbell,
+  HeartPulse,
+  Layers,
+  MoreHorizontal,
+  Shield,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import IPhoneMockup from "@/components/ui/iphone-mockup";
 
-type PreviewVariant = "guides" | "stack-builder";
+type PreviewVariant = "guides" | "stack-builder" | "protocol";
 
 const WALLPAPERS: Record<PreviewVariant, string> = {
   guides:
     "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&w=900&q=80",
   "stack-builder":
     "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&q=80",
+  protocol:
+    "https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&w=900&q=80",
 };
 
 const COPY: Record<
@@ -35,10 +52,21 @@ const COPY: Record<
     cta: "Load Stack",
     chips: ["BPC-157", "Ipamorelin", "TB-500"],
   },
+  protocol: {
+    eyebrow: "Today",
+    title: "3 doses left",
+    subtitle: "Pre-bed compounds scheduled. Tap to mark complete as you go.",
+    cta: "Open PeptidePros +",
+    chips: ["Week 3", "Active phase", "86%"],
+  },
 };
 
 export function CtaPhonePreview({ variant }: { variant: PreviewVariant }) {
   const copy = COPY[variant];
+
+  if (variant === "protocol") {
+    return <ProtocolPhonePreview />;
+  }
 
   return (
     <div className="flex items-center justify-center px-2 py-1">
@@ -155,6 +183,138 @@ export function CtaPhonePreview({ variant }: { variant: PreviewVariant }) {
               </div>
               <ArrowRight className="h-4 w-4" />
             </div>
+          </div>
+        </div>
+      </IPhoneMockup>
+    </div>
+  );
+}
+
+function ProtocolPhonePreview() {
+  const doses = [
+    { t: "7:00 AM", name: "BPC-157", dose: "500 mcg", done: true },
+    { t: "7:00 AM", name: "CJC-1295", dose: "100 mcg", done: true },
+    { t: "12:00 PM", name: "Ipamorelin", dose: "100 mcg", done: false },
+    { t: "8:00 PM", name: "TB-500", dose: "2 mg", done: false },
+  ];
+
+  return (
+    <div className="flex items-center justify-center px-2 py-1">
+      <IPhoneMockup
+        model="15-pro"
+        color="natural-titanium"
+        scale={0.44}
+        screenBg="#ffffff"
+        className="drop-shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
+      >
+        <div className="relative flex h-full flex-col bg-[linear-gradient(180deg,rgba(247,249,246,0.92),rgba(247,249,246,1))] p-4 text-[#13201d]">
+          <div className="mb-3 flex items-center justify-between text-[10px] font-semibold text-slate-600">
+            <span>9:41</span>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[#0f6a52]" />
+              <span className="h-2 w-2 rounded-full bg-slate-300" />
+              <span className="h-2 w-2 rounded-full bg-slate-300" />
+            </div>
+          </div>
+
+          <div className="rounded-[24px] border border-white/70 bg-white/88 p-3 shadow-[0_20px_40px_-28px_rgba(15,23,42,0.4)] backdrop-blur">
+            <span className="rounded-full bg-[#e8f4ee] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0f6a52]">
+              Today
+            </span>
+            <h3 className="mt-3 text-[18px] font-bold tracking-[-0.02em] text-[#103b2c]">
+              3 Doses Left
+            </h3>
+            <p className="mt-1 text-[11px] leading-snug text-slate-600">
+              Next: Ipamorelin at 12:00 PM
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e8f4ee]">
+                <div className="h-full w-[40%] rounded-full bg-[#0f6a52]" />
+              </div>
+              <span className="text-[10px] font-semibold text-slate-500">
+                in 2h 15m
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 rounded-[20px] border border-white/70 bg-white/84 p-3 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
+            <div className="space-y-2">
+              {doses.map((d) => (
+                <div
+                  key={d.name}
+                  className="flex items-center justify-between rounded-2xl bg-[#f6f8f5] px-3 py-2"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full",
+                        d.done
+                          ? "bg-[#0f6a52] text-white"
+                          : "border-2 border-slate-300 bg-white",
+                      )}
+                    >
+                      {d.done ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+                    </div>
+                    <div className="leading-tight">
+                      <p
+                        className={cn(
+                          "text-[11px] font-semibold",
+                          d.done ? "text-slate-500 line-through" : "text-[#103b2c]",
+                        )}
+                      >
+                        {d.name}
+                      </p>
+                      <p className="text-[10px] text-slate-500">
+                        {d.dose} &middot; {d.t}
+                      </p>
+                    </div>
+                  </div>
+                  <CheckCircle2
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      d.done ? "text-[#0f6a52]" : "text-slate-300",
+                    )}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3 rounded-[20px] border border-white/70 bg-white/84 p-3 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.35)] backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">
+                  How are you feeling?
+                </p>
+                <p className="mt-0.5 text-[11px] font-semibold text-[#103b2c]">
+                  Log your daily notes
+                </p>
+              </div>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#e8f4ee] text-[#0f6a52]">
+                <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-auto flex items-center justify-around border-t border-slate-200/70 pt-2.5">
+            {[
+              { icon: CalendarCheck, label: "Today", active: true },
+              { icon: Layers, label: "Protocol", active: false },
+              { icon: Calendar, label: "Timeline", active: false },
+              { icon: BarChart3, label: "Insights", active: false },
+              { icon: MoreHorizontal, label: "More", active: false },
+            ].map((it) => (
+              <div
+                key={it.label}
+                className={cn(
+                  "flex flex-col items-center gap-0.5",
+                  it.active ? "text-[#0f6a52]" : "text-slate-400",
+                )}
+              >
+                <it.icon className="h-4 w-4" />
+                <span className="text-[8px] font-semibold">{it.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </IPhoneMockup>

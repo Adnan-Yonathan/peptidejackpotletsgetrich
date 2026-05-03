@@ -30,6 +30,7 @@ import {
   STACKING_OPTIONS,
   TIMEFRAME_OPTIONS,
 } from "@/data/planner-options";
+import { COUNTRY_OPTIONS } from "@/data/planner-options";
 import type {
   ExcludedCompound,
   PlannerAnswers,
@@ -321,8 +322,10 @@ function getExclusionReasons(peptide: PeptideData, answers: PlannerAnswers): str
 }
 
 function buildIdentifiedNeeds(answers: PlannerAnswers): string[] {
-  const needs = PROBLEM_OPTIONS.filter((item) => answers.topProblems.includes(item.id)).map(
+  const needs = [`Shopping region: ${getLabel(COUNTRY_OPTIONS, answers.country)}`].concat(
+    PROBLEM_OPTIONS.filter((item) => answers.topProblems.includes(item.id)).map(
     (item) => item.label
+    )
   );
 
   for (const condition of HEALTH_CONDITION_OPTIONS) {
@@ -424,6 +427,7 @@ function buildSafetyNotes(
 }
 
 function buildProfileSummary(answers: PlannerAnswers): string {
+  const country = getLabel(COUNTRY_OPTIONS, answers.country);
   const age = getLabel(AGE_RANGE_OPTIONS, answers.ageRange);
   const sex = getLabel(SEX_OPTIONS, answers.sex);
   const activity = getLabel(ACTIVITY_LEVEL_OPTIONS, answers.activityLevel);
@@ -445,7 +449,7 @@ function buildProfileSummary(answers: PlannerAnswers): string {
     profileParts.push(getLabel(MALE_HORMONE_CONTEXT_OPTIONS, answers.maleHormoneContext).toLowerCase());
   }
 
-  return `${profileParts.join(", ")} focused on ${goal.toLowerCase()}.`;
+  return `${profileParts.join(", ")} in ${country}, focused on ${goal.toLowerCase()}.`;
 }
 
 function buildPlanHeadline(answers: PlannerAnswers): string {

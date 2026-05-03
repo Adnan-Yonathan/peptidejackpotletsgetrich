@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   BadgeCheck,
-  Boxes,
   ChevronRight,
   CircleDollarSign,
   ClipboardCheck,
@@ -18,7 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getPeptideBySlug } from "@/data/peptides";
 import { getActiveVendors, type VendorData } from "@/data/vendors";
-import { getVendorListingsForPeptide, getVendorListingsForVendor, type ResolvedVendorListing } from "@/data/vendor-listings";
+import {
+  getListingCurrencyCode,
+  getListingPriceBounds,
+  getVendorListingsForPeptide,
+  getVendorListingsForVendor,
+  type ResolvedVendorListing,
+} from "@/data/vendor-listings";
 import {
   getDecisionNote,
   getDocumentationStrength,
@@ -156,10 +161,17 @@ function buildComparedVendors(vendors: VendorData[], listings: ResolvedVendorLis
   });
 
   const sorted = items.sort((a, b) => b.rankScore - a.rankScore);
+  const comparableCurrency = sorted[0]?.listing ? getListingCurrencyCode(sorted[0].listing) : undefined;
   const bestValueVendorId =
-    sorted
-      .filter((item) => item.listing?.listedPriceLowUsd)
-      .sort((a, b) => (a.listing?.listedPriceLowUsd ?? Infinity) - (b.listing?.listedPriceLowUsd ?? Infinity))[0]?.vendor.id ?? sorted[1]?.vendor.id;
+    comparableCurrency
+      ? sorted
+          .filter((item) => item.listing && getListingCurrencyCode(item.listing) === comparableCurrency)
+          .sort(
+            (a, b) =>
+              (a.listing ? getListingPriceBounds(a.listing)?.low ?? Infinity : Infinity) -
+              (b.listing ? getListingPriceBounds(b.listing)?.low ?? Infinity : Infinity)
+          )[0]?.vendor.id
+      : undefined;
   const fastestVendorId =
     [...sorted].sort(
       (a, b) =>
@@ -170,30 +182,8 @@ function buildComparedVendors(vendors: VendorData[], listings: ResolvedVendorLis
   return sorted.map((item, index) => ({
     ...item,
     rankLabel:
-      index === 0 ? "Best overall" : item.vendor.id === bestValueVendorId ? "Best value" : item.vendor.id === fastestVendorId ? "Fastest shipping" : "Worth considering",
+      index === 0 ? "Best overall" : bestValueVendorId && item.vendor.id === bestValueVendorId ? "Best value" : item.vendor.id === fastestVendorId ? "Fastest shipping" : "Worth considering",
   }));
-}
-
-function QuickPick({
-  title,
-  value,
-  href,
-}: {
-  title: string;
-  value: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="rounded-2xl border bg-white p-5 transition-colors hover:border-emerald-300 hover:bg-emerald-50/60"
-    >
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">{title}</p>
-      <p className="mt-2 text-lg font-semibold text-slate-900">
-        {value} <span className="text-emerald-700">→</span>
-      </p>
-    </Link>
-  );
 }
 
 export default async function VendorsPage({
@@ -207,11 +197,6 @@ export default async function VendorsPage({
   const peptideListings = peptide ? getVendorListingsForPeptide(peptide.id) : [];
   const vendors = peptide ? peptideListings.map((listing) => listing.vendor).filter((vendor): vendor is VendorData => Boolean(vendor)) : getActiveVendors();
   const comparedVendors = buildComparedVendors(vendors, peptideListings, peptide?.slug);
-  const bestOverall = comparedVendors[0];
-  const bestValue =
-    comparedVendors.find((item) => item.rankLabel === "Best value") ?? comparedVendors[1] ?? comparedVendors[0];
-  const fastestShipping =
-    comparedVendors.find((item) => item.rankLabel === "Fastest shipping") ?? comparedVendors[0];
 
   return (
     <>
@@ -422,49 +407,6 @@ export default async function VendorsPage({
             )}
           </section>
 
-          {comparedVendors.length > 0 ? (
-            <section className="mt-8 rounded-[1.75rem] border border-emerald-100 bg-[#eef5f0] p-6">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">Quick Picks: Best vendor for your need</p>
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <QuickPick
-                  title={peptide ? `Best for ${peptide.name}` : "Best overall"}
-                  value={bestOverall.vendor.name}
-                  href={peptide && bestOverall.listing ? buildOutboundVendorHref(bestOverall.vendor.slug, peptide.slug, "vendor-compare") : `/vendors/${bestOverall.vendor.slug}`}
-                />
-                <QuickPick
-                  title="Cheapest option"
-                  value={bestValue.vendor.name}
-                  href={peptide && bestValue.listing ? buildOutboundVendorHref(bestValue.vendor.slug, peptide.slug, "vendor-compare") : `/vendors/${bestValue.vendor.slug}`}
-                />
-                <QuickPick
-                  title="Fastest shipping"
-                  value={fastestShipping.vendor.name}
-                  href={peptide && fastestShipping.listing ? buildOutboundVendorHref(fastestShipping.vendor.slug, peptide.slug, "vendor-compare") : `/vendors/${fastestShipping.vendor.slug}`}
-                />
-              </div>
-            </section>
-          ) : null}
-
-          <section className="mt-8 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Compared vendors</p>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{comparedVendors.length}</p>
-            </div>
-            <div className="rounded-2xl border bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Tracked listings</p>
-              <p className="mt-2 flex items-center gap-2 text-3xl font-bold tracking-tight text-slate-900">
-                <Boxes className="h-7 w-7 text-emerald-700" />
-                {peptideListings.length}
-              </p>
-            </div>
-            <div className="rounded-2xl border bg-white p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Top trust signal</p>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-                {bestOverall?.vendor.trustpilotRating ?? "N/A"}
-                <span className="text-base font-medium text-slate-500">/5</span>
-              </p>
-            </div>
-          </section>
         </div>
       </main>
       <Footer />

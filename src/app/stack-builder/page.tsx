@@ -29,10 +29,22 @@ import { CtaPhonePreview } from "@/components/ui/cta-phone-preview";
 import { Input } from "@/components/ui/input";
 import { getCompatibility } from "@/data/compatibility";
 import { DISCLAIMERS } from "@/data/disclaimers";
+import { AFFILIATE_VENDOR_LINKS } from "@/data/affiliate-links";
 import { getGoalsForPeptide } from "@/data/goals";
 import { getPeptideById, getStackablePeptides, type PeptideData, type RiskLevel } from "@/data/peptides";
+import { getListingPriceBounds, type ResolvedVendorListing } from "@/data/vendor-listings";
 import { useStackBuilder } from "@/hooks/useStackBuilder";
-import { formatCostRange, getPeptideCostEstimate, getStackCostEstimate } from "@/lib/costs";
+import {
+  convertCurrencyValue,
+  formatCostRange,
+  formatUsageModelLabel,
+  getPeptideCostEstimate,
+  getStackCostEstimate,
+} from "@/lib/costs";
+import { buildOutboundVendorHref, getRegionalVendorOptionsForPeptide } from "@/lib/outbound-vendors";
+import type { ShopperRegion } from "@/lib/shopper-country";
+
+const STACK_BUILDER_CURRENCY = "USD" as const;
 
 type StackPreset = {
   id: string;
@@ -123,41 +135,47 @@ function getSummaryTone(hasContraindicated: boolean, cautionCount: number) {
   };
 }
 
-function getOverallRiskLabel(items: Array<{ peptide: PeptideData }>) {
-  if (items.length === 0) return "Moderate";
+function getCycleLength(items: Array<{ peptide: PeptideData }>) {
+  const labels = Array.from(
+    new Set(
+      items
+        .map((item) => getPeptideCostEstimate(item.peptide.id)?.cycleLabel)
+        .filter((value): value is string => Boolean(value))
+    )
+  );
 
-  const highest = items.reduce<RiskLevel>((current, item) => {
-    const order: RiskLevel[] = ["low", "medium", "med-high", "high", "extreme"];
-    return order.indexOf(item.peptide.riskLevel) > order.indexOf(current) ? item.peptide.riskLevel : current;
-  }, "low");
-
-  if (highest === "extreme" || highest === "high") return "High";
-  if (highest === "med-high") return "Moderate";
-  return "Low";
+  if (labels.length === 0) return "Protocol varies";
+  if (labels.length === 1) return labels[0];
+  if (labels.some((label) => label.includes("Continuous"))) return "Mixed, includes continuous";
+  return "Mixed protocols";
 }
 
-function getCycleLength(items: Array<{ peptide: PeptideData }>) {
-  const weeks = items
-    .map((item) => getPeptideCostEstimate(item.peptide.id)?.cycleWeeks)
-    .filter((value): value is number => Boolean(value));
+function formatListingPriceUsd(listing: ResolvedVendorListing) {
+  const bounds = getListingPriceBounds(listing);
 
-  if (weeks.length === 0) return "8 - 12 Weeks";
+  if (!bounds) {
+    return "Vendor price shown on site";
+  }
 
-  const max = Math.max(...weeks);
-  const min = Math.max(8, Math.min(...weeks));
-  return `${min} - ${Math.max(min, max)} Weeks`;
+  return `${formatCostRange(
+    convertCurrencyValue(bounds.low, bounds.currencyCode, STACK_BUILDER_CURRENCY),
+    convertCurrencyValue(bounds.high, bounds.currencyCode, STACK_BUILDER_CURRENCY),
+    STACK_BUILDER_CURRENCY
+  )} listing price`;
 }
 
 function getStartingPointDetails(preset: StackPreset) {
   const peptides = preset.peptideIds
     .map((peptideId) => getPeptideById(peptideId))
     .filter((peptide): peptide is PeptideData => Boolean(peptide));
-  const stackCost = getStackCostEstimate(peptides.map((peptide) => ({ peptideId: peptide.id, quantity: 1 })));
+  const stackCost = getStackCostEstimate(peptides.map((peptide) => ({ peptideId: peptide.id, quantity: 1 })), {
+    outputCurrency: STACK_BUILDER_CURRENCY,
+  });
 
   return {
     peptides,
     cost: stackCost
-      ? formatCostRange(stackCost.monthlyCostLow, stackCost.monthlyCostHigh)
+      ? formatCostRange(stackCost.monthlyCostLow, stackCost.monthlyCostHigh, stackCost.currencyCode)
       : "See stack",
   };
 }
@@ -176,6 +194,7 @@ export default function StackBuilderPage() {
     clear,
   } = useStackBuilder();
   const [search, setSearch] = useState("");
+  const [shopperRegion, setShopperRegion] = useState<ShopperRegion>("us");
 
   const stackablePeptides = getStackablePeptides();
   const addedIds = useMemo(() => new Set(items.map((item) => item.peptide.id)), [items]);
@@ -197,8 +216,42 @@ export default function StackBuilderPage() {
 
   const cautionPairs = warnings.filter((warning) => warning.status === "caution");
   const blockedPairs = warnings.filter((warning) => warning.status === "contraindicated");
-  const stackCost = getStackCostEstimate(items.map((item) => ({ peptideId: item.peptide.id, quantity: item.quantity })));
+  const stackCost = getStackCostEstimate(
+    items.map((item) => ({ peptideId: item.peptide.id, quantity: item.quantity })),
+    { shopperRegion, outputCurrency: STACK_BUILDER_CURRENCY }
+  );
   const compatibilityTone = getSummaryTone(hasContraindicated(), cautionPairs.length);
+  const affiliatedVendorOptions = useMemo(
+    () =>
+      items
+        .map((item) => {
+          const regionalOptions = getRegionalVendorOptionsForPeptide(item.peptide.id);
+          if (!regionalOptions.us && !regionalOptions.international) {
+            return null;
+          }
+
+          return {
+            peptide: item.peptide,
+            quantity: item.quantity,
+            us: regionalOptions.us,
+            international: regionalOptions.international,
+          };
+        })
+        .filter((option): option is NonNullable<typeof option> => Boolean(option)),
+    [items]
+  );
+  const unmappedAffiliateVendors = useMemo(
+    () =>
+      AFFILIATE_VENDOR_LINKS.filter(
+        (vendor) =>
+          !affiliatedVendorOptions.some(
+            (option) =>
+              option.us?.vendor?.id === vendor.vendorId ||
+              option.international?.vendor?.id === vendor.vendorId
+          )
+      ),
+    [affiliatedVendorOptions]
+  );
 
   const suggestedAdds = useMemo(() => {
     if (items.length === 0) return [];
@@ -398,7 +451,10 @@ export default function StackBuilderPage() {
 
                 <div className="mt-4 space-y-2">
                   {filteredPeptides.slice(0, 8).map((peptide) => {
-                    const estimate = getPeptideCostEstimate(peptide.id);
+                    const estimate = getPeptideCostEstimate(peptide.id, {
+                      shopperRegion,
+                      outputCurrency: STACK_BUILDER_CURRENCY,
+                    });
 
                     return (
                       <button
@@ -415,7 +471,16 @@ export default function StackBuilderPage() {
                             </span>
                             {estimate && (
                               <span className="rounded-full bg-[#f3f3ef] px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                                {formatCostRange(estimate.monthlyCostLow, estimate.monthlyCostHigh)}/mo
+                                {formatCostRange(
+                                  estimate.monthlyCostLow,
+                                  estimate.monthlyCostHigh,
+                                  estimate.currencyCode
+                                )}/mo
+                              </span>
+                            )}
+                            {estimate && (
+                              <span className="rounded-full bg-[#eef3ef] px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                {formatUsageModelLabel(estimate.usageModel)}
                               </span>
                             )}
                           </div>
@@ -470,6 +535,28 @@ export default function StackBuilderPage() {
                           <p className="mt-1 text-xs text-slate-600">
                             {item.peptide.studyDoseRange.split(".")[0]}
                           </p>
+                          {(() => {
+                            const estimate = getPeptideCostEstimate(item.peptide.id, {
+                              shopperRegion,
+                              outputCurrency: STACK_BUILDER_CURRENCY,
+                            });
+                            if (!estimate) return null;
+
+                            return (
+                              <>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  Approx. {formatCostRange(
+                                    estimate.monthlyCostLow * item.quantity,
+                                    estimate.monthlyCostHigh * item.quantity,
+                                    estimate.currencyCode
+                                  )}/mo
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {estimate.cycleLabel} · {formatUsageModelLabel(estimate.usageModel)}
+                                </p>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div className="flex items-center gap-1">
                           <Button
@@ -544,19 +631,41 @@ export default function StackBuilderPage() {
                     </span>
                   </div>
 
+                  <div className="mb-4 inline-flex rounded-xl border border-[#d8ddd7] bg-[#fbfaf7] p-1 text-xs font-semibold">
+                    <button
+                      onClick={() => setShopperRegion("us")}
+                      className={`rounded-lg px-3 py-1.5 ${shopperRegion === "us" ? "bg-[#0f6a52] text-white" : "text-slate-600"}`}
+                    >
+                      U.S.
+                    </button>
+                    <button
+                      onClick={() => setShopperRegion("international")}
+                      className={`rounded-lg px-3 py-1.5 ${shopperRegion === "international" ? "bg-[#0f6a52] text-white" : "text-slate-600"}`}
+                    >
+                      International
+                    </button>
+                  </div>
+
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                    <div className="rounded-[18px] border border-[#efebe4] bg-[#fcfbf8] p-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Overall Risk</p>
-                      <p className="mt-1 text-lg font-semibold text-[#13201d]">{getOverallRiskLabel(items)}</p>
-                    </div>
                     <div className="rounded-[18px] border border-[#efebe4] bg-[#fcfbf8] p-3">
                       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Est. Monthly Cost</p>
                       <p className="mt-1 text-lg font-semibold text-[#13201d]">
-                        {stackCost ? formatCostRange(stackCost.monthlyCostLow, stackCost.monthlyCostHigh) : "$172 - $234"}
+                        {stackCost
+                          ? formatCostRange(
+                              stackCost.monthlyCostLow,
+                              stackCost.monthlyCostHigh,
+                              stackCost.currencyCode
+                            )
+                          : shopperRegion === "us"
+                            ? "$172 - $234"
+                            : "See vendor cards"}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Based on tracked affiliated listing pricing for the {shopperRegion === "us" ? "U.S." : "international"} route.
                       </p>
                     </div>
                     <div className="rounded-[18px] border border-[#efebe4] bg-[#fcfbf8] p-3">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Cycle Length</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Protocol Style</p>
                       <p className="mt-1 text-lg font-semibold text-[#13201d]">{getCycleLength(items)}</p>
                     </div>
                     <div className="rounded-[18px] border border-[#efebe4] bg-[#fcfbf8] p-3">
@@ -572,16 +681,21 @@ export default function StackBuilderPage() {
                       <div>
                         <p className="text-sm font-semibold text-[#13201d]">Looks Good</p>
                         <p className="mt-1 text-xs leading-5 text-slate-600">{compatibilityTone.note}</p>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          Cost ranges only appear when we have tracked affiliated listing data for that compound.
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <Button className="mt-4 h-10 w-full rounded-xl bg-[#0f6a52] text-sm font-semibold text-white hover:bg-[#0c5944]">
-                    View Full Protocol &amp; Vendors
-                  </Button>
-                  <Button variant="ghost" className="mt-1 w-full text-[#0f6a52] hover:bg-transparent">
-                    Compare This Stack
-                  </Button>
+                  {affiliatedVendorOptions.length > 0 && (
+                    <Button
+                      className="mt-4 h-10 w-full rounded-xl bg-[#0f6a52] text-sm font-semibold text-white hover:bg-[#0c5944]"
+                      render={<a href="#affiliated-vendors" />}
+                    >
+                      View Affiliated Vendors
+                    </Button>
+                  )}
                 </div>
 
                 {(blockedPairs.length > 0 || cautionPairs.length > 0) && (
@@ -620,6 +734,114 @@ export default function StackBuilderPage() {
               </div>
             </div>
           </section>
+
+          {affiliatedVendorOptions.length > 0 && (
+            <section
+              id="affiliated-vendors"
+              className="mt-5 rounded-[28px] border border-[#e7e2d8] bg-[#fbfaf7] px-5 py-5 shadow-[0_16px_50px_-40px_rgba(15,23,42,0.35)]"
+            >
+              <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#0f6a52]">Affiliated Vendors</p>
+                  <h2 className="mt-1 text-[1.7rem] font-semibold tracking-[-0.03em] text-[#13201d]">
+                    Best Affiliate Route for Each Compound
+                  </h2>
+                  <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                    A stack usually does not map to one checkout. The cleanest flow is one best affiliated vendor route per peptide.
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Product-page affiliate links are preferred when available; otherwise the vendor-level affiliate route is used.
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {affiliatedVendorOptions.map((option) => {
+                  const estimate = getPeptideCostEstimate(option.peptide.id, {
+                    shopperRegion,
+                    outputCurrency: STACK_BUILDER_CURRENCY,
+                  });
+                  const primaryOption =
+                    shopperRegion === "us" ? option.us ?? option.international : option.international ?? option.us;
+                  const secondaryOption = shopperRegion === "us" ? option.international : option.us;
+
+                  if (!primaryOption) return null;
+
+                  return (
+                    <div
+                      key={option.peptide.id}
+                      className="rounded-[22px] border border-[#e7e2d8] bg-white p-4 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.3)]"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-base font-semibold text-[#13201d]">{option.peptide.name}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {primaryOption.vendor?.name ?? primaryOption.listing.vendorName} · {primaryOption.listing.vendorTypeLabel}
+                          </p>
+                        </div>
+                        <span className="rounded-full bg-[#eef3ef] px-2.5 py-1 text-[10px] font-semibold text-slate-600">
+                          Qty {option.quantity}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1 text-xs text-slate-600">
+                        <p>{primaryOption.listing.typicalSkuFormat}</p>
+                        <p>{formatListingPriceUsd(primaryOption.listing)}</p>
+                        {estimate && (
+                          <p>
+                            Approx. {formatCostRange(estimate.monthlyCostLow * option.quantity, estimate.monthlyCostHigh * option.quantity, estimate.currencyCode)}/mo
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-[#f3f3ef] px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                          {primaryOption.target?.mode === "affiliate_product" ? "Direct product link" : "Affiliate vendor route"}
+                        </span>
+                        <span className="rounded-full bg-[#f3f3ef] px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                          {primaryOption.listing.coaAccessModeLabel}
+                        </span>
+                      </div>
+
+                      <Button
+                        className="mt-4 h-9 w-full rounded-xl bg-[#0f6a52] px-4 text-sm font-semibold text-white hover:bg-[#0c5944]"
+                        render={
+                          <a
+                            href={buildOutboundVendorHref(primaryOption.vendor?.slug ?? primaryOption.listing.vendorId, option.peptide.slug, "stack-builder")}
+                            target="_blank"
+                            rel="noreferrer"
+                          />
+                        }
+                      >
+                        Go to {primaryOption.vendor?.name ?? primaryOption.listing.vendorName}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {unmappedAffiliateVendors.length > 0 && (
+                <div className="mt-5 rounded-[22px] border border-dashed border-[#d8ddd7] bg-white px-4 py-4">
+                  <p className="text-sm font-semibold text-[#13201d]">Other affiliated vendors</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    These vendors have affiliate links configured, but they do not show up above because the app has no peptide-level listing or product mapping for your current stack.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {unmappedAffiliateVendors.map((vendor) => (
+                      <Button
+                        key={vendor.vendorId}
+                        variant="outline"
+                        className="rounded-xl border-[#d8ddd7] bg-white text-[#13201d]"
+                        render={<a href={vendor.defaultAffiliateUrl} target="_blank" rel="noreferrer" />}
+                      >
+                        Browse {vendor.vendorName}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
 
           <section className="mt-5 rounded-[24px] border border-[#d7eadf] bg-[#e9f5ee] px-5 py-4 shadow-[0_16px_40px_-34px_rgba(15,106,82,0.35)]">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

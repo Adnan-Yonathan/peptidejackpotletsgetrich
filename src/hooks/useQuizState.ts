@@ -18,13 +18,22 @@ interface QuizState {
 }
 
 const defaultAnswers: Partial<PlannerAnswers> = {
+  name: "",
+  email: "",
+  country: "us",
   secondaryGoalIds: [],
   topProblems: [],
   healthConditions: [],
   medications: [],
+  reproductiveStatus: "none",
   femaleLifeStage: "not_applicable",
   maleHormoneContext: "not_applicable",
   notes: "",
+  deliveryPreference: "flexible",
+  stackingPreference: "basic_stack",
+  routineConsistency: "medium",
+  monitoringWillingness: "basic",
+  planStyle: "balanced",
 };
 
 export const useQuizState = create<QuizState>()(
@@ -55,8 +64,11 @@ export const useQuizState = create<QuizState>()(
       getCurrentStepName: () => PLANNER_STEPS[get().currentStep],
 
       isComplete: () => {
-        const { answers } = get();
+        const answers = { ...defaultAnswers, ...get().answers };
         return !!(
+          answers.country &&
+          answers.name &&
+          answers.email &&
           answers.ageRange &&
           answers.sex &&
           answers.reproductiveStatus &&
@@ -65,18 +77,10 @@ export const useQuizState = create<QuizState>()(
           answers.activityLevel &&
           answers.experience &&
           answers.primaryGoalId &&
-          answers.topProblems &&
-          answers.topProblems.length > 0 &&
-          answers.healthConditions &&
           answers.medications &&
           answers.budget &&
           answers.riskTolerance &&
-          answers.timeframe &&
-          answers.stackingPreference &&
-          answers.deliveryPreference &&
-          answers.routineConsistency &&
-          answers.monitoringWillingness &&
-          answers.planStyle
+          answers.timeframe
         );
       },
     }),

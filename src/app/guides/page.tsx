@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   Beaker,
-  BookOpen,
   CheckCircle2,
   ClipboardCheck,
   Clock3,
@@ -15,14 +14,18 @@ import {
   Shield,
   Sparkles,
   Syringe,
-  Zap,
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CtaPhonePreview } from "@/components/ui/cta-phone-preview";
-import { GOALS } from "@/data/goals";
-import { getGuideBySlug, getPublishedGuides, type GuideData } from "@/data/guides";
+import { getGuideBySlug, type GuideData } from "@/data/guides";
+import howToReadCoaImage from "../../../images/how to read a COA.png";
+import howToReconstitutePeptidesImage from "../../../images/how to reconstitute peptides.png";
+import howToStorePeptidesImage from "../../../images/how to store peptides.png";
+import peptideSafetyBasicsImage from "../../../images/peptide safety basics.png";
+import ruoVsHumanUseImage from "../../../images/RUO vs human use.png";
+import whatArePeptidesImage from "../../../images/what are peptides.png";
 
 export const metadata: Metadata = {
   title: "Guides",
@@ -38,7 +41,6 @@ const CATEGORY_STYLES: Record<
     badge: string;
     accent: string;
     note: string;
-    image?: string;
   }
 > = {
   basics: {
@@ -47,7 +49,6 @@ const CATEGORY_STYLES: Record<
     badge: "border-[#d9e5ff] bg-[#eef5ff] text-[#3f67b1]",
     accent: "bg-[#edf5ff]",
     note: "Why it matters: Avoid costly confusion, mistakes and hype.",
-    image: "/images/peptides/bpc-157.png",
   },
   "safety-quality": {
     label: "Safety",
@@ -62,7 +63,6 @@ const CATEGORY_STYLES: Record<
     badge: "border-[#caecd8] bg-[#e9f8ef] text-[#267c5a]",
     accent: "bg-[#f4faf7]",
     note: "Why it matters: Do it right, get accurate dosing, avoid waste.",
-    image: "/images/peptides/semaglutide.png",
   },
   "storage-handling": {
     label: "Storage",
@@ -70,7 +70,6 @@ const CATEGORY_STYLES: Record<
     badge: "border-[#d9e1d0] bg-[#eef2ea] text-[#6f7756]",
     accent: "bg-[#f7f8f4]",
     note: "Why it matters: Protect potency and prevent degradation.",
-    image: "/images/peptides/ghk-cu.png",
   },
   "legal-regulatory": {
     label: "Legal",
@@ -90,29 +89,13 @@ const FEATURED_GUIDE_SPECS = [
   "how-to-store-peptides",
 ] as const;
 
-const GOAL_PILLS = ["All", "Fat Loss", "Muscle Growth", "Recovery", "Anti-Aging"] as const;
-
-const GOAL_CARD_COPY: Record<string, { title: string; description: string; icon: LucideIcon }> = {
-  fat_loss: {
-    title: "Fat Loss Guides",
-    description: "Cut fat and optimize metabolism",
-    icon: Zap,
-  },
-  muscle_growth: {
-    title: "Muscle Growth Guides",
-    description: "Build muscle and increase strength",
-    icon: FlaskConical,
-  },
-  recovery: {
-    title: "Recovery Guides",
-    description: "Heal faster and reduce inflammation",
-    icon: Shield,
-  },
-  anti_aging: {
-    title: "Anti-Aging Guides",
-    description: "Optimize longevity and vitality",
-    icon: Sparkles,
-  },
+const FEATURED_GUIDE_IMAGES: Record<(typeof FEATURED_GUIDE_SPECS)[number], StaticImageData> = {
+  "what-are-peptides": whatArePeptidesImage,
+  "peptide-safety-basics": peptideSafetyBasicsImage,
+  "how-to-reconstitute-peptides": howToReconstitutePeptidesImage,
+  "ruo-vs-human-use": ruoVsHumanUseImage,
+  "how-to-read-a-coa": howToReadCoaImage,
+  "how-to-store-peptides": howToStorePeptidesImage,
 };
 
 function getGuideStyle(guide: GuideData) {
@@ -129,12 +112,6 @@ function getReadTime(guide: GuideData) {
 export default function GuidesPage() {
   const featuredGuides = FEATURED_GUIDE_SPECS.map((slug) => getGuideBySlug(slug)).filter(
     (guide): guide is GuideData => Boolean(guide)
-  );
-  const totalGuides = getPublishedGuides().length;
-  const goalCards = GOALS.filter((goal) => goal.id in GOAL_CARD_COPY).sort(
-    (a, b) =>
-      ["fat_loss", "muscle_growth", "recovery", "anti_aging"].indexOf(a.id) -
-      ["fat_loss", "muscle_growth", "recovery", "anti_aging"].indexOf(b.id)
   );
 
   return (
@@ -294,6 +271,7 @@ export default function GuidesPage() {
                 const style = getGuideStyle(guide);
                 const Icon = style.icon;
                 const readTime = getReadTime(guide);
+                const guideImage = FEATURED_GUIDE_IMAGES[guide.slug as keyof typeof FEATURED_GUIDE_IMAGES];
 
                 return (
                   <div
@@ -321,12 +299,12 @@ export default function GuidesPage() {
                         <p className="mt-2 text-sm leading-5 text-slate-600">{guide.summary}</p>
                       </div>
                       <div className={`relative overflow-hidden rounded-[20px] border border-[#edf0ea] ${style.accent}`}>
-                        {style.image ? (
+                        {guideImage ? (
                           <Image
-                            src={style.image}
+                            src={guideImage}
                             alt={guide.title}
                             fill
-                            className="object-contain p-2"
+                            className="object-cover"
                             sizes="96px"
                           />
                         ) : (
@@ -371,74 +349,6 @@ export default function GuidesPage() {
             </div>
           </section>
 
-          <section className="mt-5 rounded-[28px] border border-[#e7e2d8] bg-[#fbfaf7] px-5 py-5 shadow-[0_16px_50px_-40px_rgba(15,23,42,0.35)]">
-            <div className="mb-5 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#0f6a52]">Browse By Goal</p>
-                <h2 className="mt-1 text-[1.9rem] font-semibold tracking-[-0.03em] text-[#13201d]">
-                  Find Guides for Your Goals
-                </h2>
-              </div>
-              <Button variant="ghost" className="hidden text-[#0f6a52] hover:bg-transparent md:inline-flex" render={<Link href="/guides" />}>
-                View all guides <ArrowRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
-
-            <div className="mb-5 flex flex-wrap gap-2">
-              {GOAL_PILLS.map((pill) => (
-                <div
-                  key={pill}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    pill === "All"
-                      ? "border-[#0f6a52] bg-[#0f6a52] text-white"
-                      : "border-[#e5e1d8] bg-white text-slate-600"
-                  }`}
-                >
-                  {pill}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {goalCards.map((goal) => {
-                const GoalIcon = GOAL_CARD_COPY[goal.id].icon;
-
-                return (
-                  <div key={goal.id} className="rounded-[24px] border border-[#e7e2d8] bg-white p-4 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.35)]">
-                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f6f4ef] text-[#0f6a52]">
-                      <GoalIcon className="h-5 w-5" />
-                    </div>
-                    <h3 className="text-base font-semibold text-[#13201d]">{GOAL_CARD_COPY[goal.id].title}</h3>
-                    <p className="mt-2 text-sm leading-5 text-slate-600">{GOAL_CARD_COPY[goal.id].description}</p>
-                    <p className="mt-3 text-xs font-semibold text-[#0f6a52]">
-                      {Math.min(totalGuides, Math.max(6, Math.ceil(goal.peptideIds.length / 2)))} guides
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="mt-5 rounded-[24px] border border-[#e7e2d8] bg-[#fbfaf7] px-5 py-4 shadow-[0_16px_40px_-36px_rgba(15,23,42,0.35)]">
-            <div className="grid gap-4 text-center text-sm text-slate-600 md:grid-cols-4">
-              <div className="flex items-center justify-center gap-2">
-                <Shield className="h-4 w-4 text-[#0f6a52]" />
-                <span className="font-medium text-[#13201d]">Research First</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <BookOpen className="h-4 w-4 text-[#0f6a52]" />
-                <span className="font-medium text-[#13201d]">50+ Guides &amp; Resources</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <ClipboardCheck className="h-4 w-4 text-[#0f6a52]" />
-                <span className="font-medium text-[#13201d]">Updated April 2026</span>
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-[#0f6a52]" />
-                <span className="font-medium text-[#13201d]">10,000+ Active Users</span>
-              </div>
-            </div>
-          </section>
         </div>
       </main>
     </>

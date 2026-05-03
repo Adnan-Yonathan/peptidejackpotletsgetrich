@@ -14,6 +14,7 @@ import type {
   Timeframe,
 } from "@/types/planner";
 import type { BudgetTier, ExperienceLevel } from "@/data/peptides";
+import type { ShopperCountry } from "@/lib/shopper-country";
 
 type Option<T extends string> = {
   value: T;
@@ -22,11 +23,20 @@ type Option<T extends string> = {
 };
 
 export const PLANNER_STEPS: PlannerStep[] = [
-  "identity",
-  "goals",
-  "health",
-  "constraints",
-  "style",
+  "country",
+  "ageRange",
+  "sex",
+  "activityLevel",
+  "experience",
+  "primaryGoalId",
+  "secondaryGoalIds",
+  "reproductiveStatus",
+  "femaleLifeStage",
+  "maleHormoneContext",
+  "budget",
+  "riskTolerance",
+  "timeframe",
+  "email",
 ];
 
 export const AGE_RANGE_OPTIONS: Option<AgeRange>[] = [
@@ -42,6 +52,22 @@ export const SEX_OPTIONS: Option<Sex>[] = [
   { value: "female", label: "Female", description: "Use female-specific safety and evidence notes where relevant" },
   { value: "male", label: "Male", description: "Use male-specific safety and monitoring notes where relevant" },
   { value: "other", label: "Other / prefer not to say", description: "Stay conservative and avoid assumptions beyond shared adult safety rules" },
+];
+
+export const COUNTRY_OPTIONS: Option<ShopperCountry>[] = [
+  { value: "us", label: "United States", description: "Prioritize U.S. vendor routes and USD pricing." },
+  { value: "ca", label: "Canada", description: "Prefer international vendor routes with broader non-U.S. shipping." },
+  { value: "uk", label: "United Kingdom", description: "Prefer XL-style international routes and EUR pricing in-app." },
+  { value: "de", label: "Germany", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "fr", label: "France", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "es", label: "Spain", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "it", label: "Italy", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "nl", label: "Netherlands", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "ie", label: "Ireland", description: "Prefer EU-friendly vendor routes and international shipping." },
+  { value: "au", label: "Australia", description: "Prefer international vendor routes over U.S.-only recommendations." },
+  { value: "nz", label: "New Zealand", description: "Prefer international vendor routes over U.S.-only recommendations." },
+  { value: "sg", label: "Singapore", description: "Prefer international vendor routes with rest-of-world shipping." },
+  { value: "other_international", label: "Other international", description: "Use the international vendor path by default." },
 ];
 
 export const REPRODUCTIVE_STATUS_OPTIONS: Option<ReproductiveStatus>[] = [
@@ -73,9 +99,9 @@ export const ACTIVITY_LEVEL_OPTIONS: Option<ActivityLevel>[] = [
 ];
 
 export const BUDGET_OPTIONS: Option<BudgetTier>[] = [
-  { value: "budget", label: "Budget", description: "Keep the plan lean and cost-conscious" },
-  { value: "mid", label: "Mid-range", description: "Room for one premium or stack component" },
-  { value: "premium", label: "Premium", description: "Optimize for fit rather than price ceiling" },
+  { value: "budget", label: "Budget - $75-$200/mo", description: "Keep the plan lean and cost-conscious" },
+  { value: "mid", label: "Mid-range - $200-$500/mo", description: "Room for one premium or stack component" },
+  { value: "premium", label: "Premium - $500+/mo", description: "Optimize for fit rather than price ceiling" },
 ];
 
 export const EXPERIENCE_OPTIONS: Option<ExperienceLevel>[] = [
@@ -85,9 +111,9 @@ export const EXPERIENCE_OPTIONS: Option<ExperienceLevel>[] = [
 ];
 
 export const TIMEFRAME_OPTIONS: Option<Timeframe>[] = [
-  { value: "short", label: "Short", description: "I want something that feels actionable right away" },
-  { value: "medium", label: "Medium", description: "I can commit to a focused 1-3 month block" },
-  { value: "long", label: "Long", description: "I want a sustainable longer-horizon strategy" },
+  { value: "short", label: "Short - 2-4 weeks", description: "I want something that feels actionable right away" },
+  { value: "medium", label: "Medium - 1-3 months", description: "I can commit to a focused 1-3 month block" },
+  { value: "long", label: "Long - 3+ months", description: "I want a sustainable longer-horizon strategy" },
 ];
 
 export const STACKING_OPTIONS: Option<StackingPreference>[] = [
