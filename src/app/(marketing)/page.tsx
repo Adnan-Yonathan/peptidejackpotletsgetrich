@@ -108,13 +108,13 @@ export default function HomePage() {
           </div>
         </div>
         <div className="relative border-t border-white/10 bg-[#103b2c]">
-          <div className="mx-auto grid max-w-7xl gap-4 px-4 py-5 text-sm text-white/88 md:grid-cols-4 md:gap-6">
+          <div className="mx-auto grid max-w-5xl justify-center gap-4 px-4 py-5 text-sm text-white/88 md:grid-cols-3 md:gap-6">
             {[
               "We don't sell peptides - we help you choose",
               "Evidence tier on every compound",
               "Regulatory flags always surfaced",
             ].map((item) => (
-              <div key={item} className="flex items-center gap-2.5">
+              <div key={item} className="flex items-center justify-center gap-2.5 text-center">
                 <CheckCircle2 className="h-4 w-4 shrink-0 text-[#9ad9c0]" />
                 <span>{item}</span>
               </div>
