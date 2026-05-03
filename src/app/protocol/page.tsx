@@ -932,6 +932,26 @@ export default function ProtocolPage() {
             )}
           </div>
 
+          <section className="mb-4 rounded-2xl border border-[#0f6a52]/15 bg-gradient-to-r from-[#103b2c] to-[color:var(--primary)] p-5 text-white shadow-[0_18px_60px_-36px_rgba(16,59,44,0.65)]">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-white/75">
+                  Coming Soon
+                </div>
+                <h2 className="mt-2 text-xl font-bold tracking-tight md:text-2xl">
+                  PeptidePros+ is still in development.
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-white/75">
+                  This page is a preview of the protocol experience. Final access,
+                  reminders, and execution tools are not live yet.
+                </p>
+              </div>
+              <Badge className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-white hover:bg-white/10">
+                Preview Only
+              </Badge>
+            </div>
+          </section>
+
           {!hasQuizResult ? (
             <MissingPlanState />
           ) : !hasStack || !plan ? (
