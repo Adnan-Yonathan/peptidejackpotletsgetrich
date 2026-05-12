@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, Layers, User } from "lucide-react";
+import { LayoutDashboard, ClipboardList, FileText, Layers, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DASHBOARD_NAV } from "@/lib/constants";
 
 const iconMap: Record<string, React.ElementType> = {
   "layout-dashboard": LayoutDashboard,
   "clipboard-list": ClipboardList,
+  "file-text": FileText,
   layers: Layers,
   user: User,
 };

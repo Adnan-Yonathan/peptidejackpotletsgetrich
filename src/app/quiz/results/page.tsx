@@ -1,46 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
-  Clock3,
+  Copy,
   ExternalLink,
-  Layers,
-  RotateCcw,
-  Sprout,
+  Lock,
 } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { PdfPaywall } from "@/components/paywall/PdfPaywall";
+import { QuizCountdownBanner } from "@/components/paywall/QuizCountdownBanner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getGoalById } from "@/data/goals";
+import { getGoalProtocolPdfPair } from "@/data/protocol-pdfs";
+import { getVendorBySlug } from "@/data/vendors";
 import { useQuizState } from "@/hooks/useQuizState";
-import {
-  formatCostRange,
-  formatUsageModelLabel,
-  getPeptideCostEstimate,
-} from "@/lib/costs";
-import { buildOutboundVendorHref, getRegionalVendorOptionsForPeptide } from "@/lib/outbound-vendors";
 import { generatePlannerResult } from "@/lib/planner-engine";
 import { getShopperRegion } from "@/lib/shopper-country";
 import type { PlannerAnswers, PlannerRecommendation } from "@/types/planner";
-
-const ROLE_LABELS: Record<PlannerRecommendation["role"], string> = {
-  foundation: "Foundation",
-  "goal-driver": "Goal driver",
-  adjunct: "Adjunct",
-};
-
-const RISK_TONE: Record<string, string> = {
-  low: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  medium: "border-amber-200 bg-amber-50 text-amber-700",
-  "med-high": "border-orange-200 bg-orange-50 text-orange-700",
-  high: "border-red-200 bg-red-50 text-red-700",
-  extreme: "border-red-300 bg-red-100 text-red-800",
-};
 
 const PLANNER_DEFAULTS: Partial<PlannerAnswers> = {
   secondaryGoalIds: [],
@@ -58,201 +41,248 @@ const PLANNER_DEFAULTS: Partial<PlannerAnswers> = {
   planStyle: "balanced",
 };
 
-const SECTION_CARD =
-  "rounded-xl border border-stone-200 bg-white p-5 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
+const SURFACE = "rounded-[1.1rem] border border-[#103b2c]/10 bg-white shadow-sm";
 
-function getPreferredQuizVendor(recommendation: PlannerRecommendation, answers: PlannerAnswers) {
-  const options = getRegionalVendorOptionsForPeptide(recommendation.peptide.id);
-  const region = getShopperRegion(answers.country);
-  return region === "us" ? options.us ?? options.international : options.international ?? options.us;
+function formatTitleCase(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .replaceAll("-", " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function getBenefitSummary(recommendation: PlannerRecommendation) {
-  return recommendation.rationale[0] ?? recommendation.peptide.shortDescription;
+function getRiskLabel(riskTolerance: PlannerAnswers["riskTolerance"]) {
+  if (riskTolerance <= 2) return "Conservative";
+  if (riskTolerance === 3) return "Balanced";
+  return "Aggressive";
 }
 
-function SidebarStat({ value, label }: { value: string; label: string }) {
+function getCycleLabel(timeframe: PlannerAnswers["timeframe"]) {
+  if (timeframe === "short") return "4-week cycle";
+  if (timeframe === "medium") return "8-week cycle";
+  return "12-week cycle";
+}
+
+function getRouteTag(recommendations: PlannerRecommendation[]) {
+  const route = recommendations[0]?.peptide.administrationRoutes?.[0];
+  return route ? formatTitleCase(route) : "Mixed route";
+}
+
+function getCompoundClassLabel(recommendation: PlannerRecommendation) {
+  const alias = recommendation.peptide.synonyms[0];
+  const category = formatTitleCase(recommendation.peptide.category);
+  return alias ? `${alias} · ${category}` : category;
+}
+
+function getTwoSentenceDescription(recommendation: PlannerRecommendation) {
+  const short = recommendation.peptide.shortDescription.trim();
+  const effectSentence = recommendation.peptide.expectedEffects.split(".")[0]?.trim();
+  return effectSentence ? `${short} ${effectSentence}.` : short;
+}
+
+function getRegulatoryChip(recommendation: PlannerRecommendation) {
+  const status = recommendation.peptide.regulatoryStatus;
+  if (status === "rx_approved") return "Rx approved";
+  if (status === "investigational") return "Investigational";
+  if (status === "ruo_only") return "RUO only";
+  return "Not approved";
+}
+
+function getCompatibilityStatus(plan: ReturnType<typeof generatePlannerResult>) {
+  const warningCount = plan.compatibilityWarnings.length;
+  if (warningCount === 0) {
+    return {
+      label: "Strong",
+      filledDots: 7,
+      note: "Your leading compounds do not trigger a major stack conflict from the current ruleset.",
+      tone: "bg-emerald-500",
+    };
+  }
+
+  if (warningCount === 1) {
+    return {
+      label: "Moderate",
+      filledDots: 5,
+      note: "One interaction note surfaced, but the stack is still workable with closer review.",
+      tone: "bg-amber-500",
+    };
+  }
+
+  return {
+    label: "Review",
+    filledDots: 3,
+    note: "Multiple stack-level cautions surfaced. Review the full protocol before acting on the recommendation.",
+    tone: "bg-red-500",
+  };
+}
+
+function buildResultsOutboundHref(vendorSlug: string, peptideSlug: string, region: "us" | "eu") {
+  const params = new URLSearchParams({
+    sourcePage: "quiz-results-v2",
+    utm_source: "peptidepros",
+    utm_medium: "affiliate",
+    utm_campaign: `quiz-results-${region}`,
+    utm_content: vendorSlug,
+  });
+
+  return `/out/${vendorSlug}/${peptideSlug}?${params.toString()}`;
+}
+
+function TrustChip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md bg-stone-50 border border-stone-100 p-2.5 text-center">
-      <div className="text-base font-bold text-[color:var(--primary)] leading-none">{value}</div>
-      <div className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
+    <span className="rounded-full border border-[#103b2c]/10 bg-[#fbfaf7] px-2 py-1 text-[10px] font-medium text-[#103b2c]/78">
+      {children}
+    </span>
+  );
+}
+
+function FreeCompoundCard({ recommendation }: { recommendation: PlannerRecommendation }) {
+  return (
+    <div className="rounded-[1rem] border border-[#103b2c]/10 bg-white p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[15px] font-semibold tracking-tight text-black">
+            {recommendation.peptide.name}
+          </p>
+          <p className="mt-0.5 text-[12px] text-[#103b2c]/58">{getCompoundClassLabel(recommendation)}</p>
+        </div>
+        <Badge className="bg-[#0f6a52] text-white hover:bg-[#0f6a52]">
+          {recommendation.role === "goal-driver" ? "Primary" : formatTitleCase(recommendation.role)}
+        </Badge>
+      </div>
+
+      <p className="mt-2 text-[12px] leading-[1.35rem] text-[#103b2c]/72">
+        {getTwoSentenceDescription(recommendation)}
+      </p>
+
+      <div className="mt-2 flex flex-wrap gap-1">
+        <TrustChip>Tier {recommendation.peptide.evidenceTier}</TrustChip>
+        <TrustChip>{formatTitleCase(recommendation.peptide.riskLevel)} risk</TrustChip>
+        <TrustChip>{formatTitleCase(recommendation.peptide.administrationRoutes[0] ?? "mixed")}</TrustChip>
+        <TrustChip>{getRegulatoryChip(recommendation)}</TrustChip>
       </div>
     </div>
   );
 }
 
-function SidebarNavLink({
-  href,
-  icon: Icon,
-  label,
-  active = false,
-}: {
-  href: string;
-  icon: typeof Sprout;
-  label: string;
-  active?: boolean;
-}) {
+function LockedCompoundCard({ recommendation }: { recommendation: PlannerRecommendation | undefined }) {
+  const title = recommendation?.peptide.name ?? "Locked protocol compound";
+  const label = recommendation ? getCompoundClassLabel(recommendation) : "Stack-specific add-on";
+  const copy = recommendation
+    ? getTwoSentenceDescription(recommendation)
+    : "This compound is included in the full protocol only, along with the exact role it plays in your cycle.";
+
   return (
-    <a
-      href={href}
-      className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors ${
-        active
-          ? "bg-[color:var(--primary)]/10 text-[color:var(--primary)] font-semibold"
-          : "text-muted-foreground hover:bg-stone-100 hover:text-foreground"
-      }`}
-    >
-      <Icon className="h-4 w-4 shrink-0" />
-      <span>{label}</span>
-    </a>
+    <div className="relative overflow-hidden rounded-[1rem] border border-[#103b2c]/10 bg-white p-3">
+      <div className="blur-[3px]">
+        <div>
+          <p className="text-[15px] font-semibold tracking-tight text-black">{title}</p>
+          <p className="mt-0.5 text-[12px] text-[#103b2c]/58">{label}</p>
+        </div>
+        <p className="mt-2 text-[12px] leading-[1.35rem] text-[#103b2c]/72">{copy}</p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          <TrustChip>Tier {recommendation?.peptide.evidenceTier ?? "B-C"}</TrustChip>
+          <TrustChip>{formatTitleCase(recommendation?.peptide.riskLevel ?? "medium")} risk</TrustChip>
+          <TrustChip>{formatTitleCase(recommendation?.peptide.administrationRoutes[0] ?? "subcutaneous")}</TrustChip>
+          <TrustChip>{recommendation ? getRegulatoryChip(recommendation) : "Protocol only"}</TrustChip>
+        </div>
+      </div>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/65 backdrop-blur-sm">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#103b2c] text-white">
+          <Lock className="h-3.5 w-3.5" />
+        </div>
+        <p className="mt-2 text-[13px] font-semibold text-[#103b2c]">Unlock in full protocol</p>
+      </div>
+    </div>
   );
 }
 
-function RecommendationCard({
-  recommendation,
-  answers,
-  position,
+function VendorCard({
+  badge,
+  href,
+  vendorSlug,
+  isPrimary,
+  regionLabel,
 }: {
-  recommendation: PlannerRecommendation;
-  answers: PlannerAnswers;
-  position: number;
+  badge: string;
+  href: string;
+  vendorSlug: "amino-club" | "xl-peptides";
+  isPrimary: boolean;
+  regionLabel: string;
 }) {
-  const preferredVendor = getPreferredQuizVendor(recommendation, answers);
-  const estimate = getPeptideCostEstimate(recommendation.peptide.id, {
-    shopperCountry: answers.country,
-    outputCurrency: "USD",
-  });
-  const vendorName = preferredVendor?.vendor?.name ?? preferredVendor?.listing.vendorName;
-  const vendorSlug = preferredVendor?.vendor?.slug ?? preferredVendor?.listing.vendorId;
-  const outboundHref = vendorSlug
-    ? buildOutboundVendorHref(vendorSlug, recommendation.peptide.slug, "quiz-results")
-    : null;
+  const vendor = getVendorBySlug(vendorSlug);
+  if (!vendor) return null;
+
+  const coaLabel =
+    vendor.coaAccessMode === "public_pdf"
+      ? "Public COA"
+      : vendor.coaAccessMode === "unknown"
+        ? "COA varies"
+        : formatTitleCase(vendor.coaAccessMode);
 
   return (
-    <div className={SECTION_CARD}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-1.5">
-            <Badge variant="secondary">#{position}</Badge>
-            <Badge variant="outline">{ROLE_LABELS[recommendation.role]}</Badge>
-            <Badge
-              variant="outline"
-              className={
-                RISK_TONE[recommendation.peptide.riskLevel] ??
-                "border-slate-200 bg-slate-50 text-slate-700"
-              }
-            >
-              {recommendation.peptide.riskLevel} risk
-            </Badge>
-            <Badge variant="outline">Tier {recommendation.peptide.evidenceTier}</Badge>
-          </div>
-          <h3 className="text-xl font-bold tracking-tight text-foreground">
-            {recommendation.peptide.name}
-          </h3>
-          <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-            {recommendation.peptide.shortDescription}
-          </p>
-        </div>
-        <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[color:var(--primary)]/10 text-[color:var(--primary)] sm:flex">
-          <CheckCircle2 className="h-5 w-5" />
-        </div>
-      </div>
-
-      <div className="mt-4 rounded-lg border border-[color:var(--primary)]/20 bg-[color:var(--primary)]/5 p-3.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--primary)]">
-          Why this fits you
-        </p>
-        <p className="mt-1.5 text-sm leading-6 text-foreground/80">
-          {getBenefitSummary(recommendation)}
-        </p>
-        {recommendation.rationale.length > 1 && (
-          <div className="mt-2.5 space-y-1.5">
-            {recommendation.rationale.slice(1, 4).map((reason) => (
-              <div key={reason} className="flex gap-2 text-sm leading-5 text-foreground/70">
-                <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--primary)]" />
-                <span>{reason}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
-        <div className="rounded-md bg-stone-50 border border-stone-100 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--primary)]">
-            Evidence
-          </p>
-          <p className="mt-1 text-sm font-semibold text-foreground">
-            Tier {recommendation.peptide.evidenceTier}
-          </p>
-        </div>
-        <div className="rounded-md bg-stone-50 border border-stone-100 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--primary)]">
-            Monthly cost
-          </p>
-          <p className="mt-1 text-sm font-semibold text-foreground">
-            {estimate
-              ? `${formatCostRange(estimate.monthlyCostLow, estimate.monthlyCostHigh, "USD")}/mo`
-              : "No estimate"}
-          </p>
-        </div>
-        <div className="rounded-md bg-stone-50 border border-stone-100 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--primary)]">
-            Protocol style
-          </p>
-          <p className="mt-1 text-sm font-semibold text-foreground">
-            {estimate ? formatUsageModelLabel(estimate.usageModel) : "Varies"}
-          </p>
-        </div>
-      </div>
-
-      {recommendation.cautions.length > 0 && (
-        <div className="mt-4 rounded-lg border-l-[3px] border-l-amber-500 bg-amber-50/60 p-3">
-          <p className="flex items-center gap-2 text-sm font-semibold text-amber-900">
-            <AlertTriangle className="h-4 w-4" />
-            Cautions to consider
-          </p>
-          <div className="mt-1.5 space-y-1 text-sm leading-5 text-amber-900/80">
-            {recommendation.cautions.slice(0, 3).map((caution) => (
-              <p key={caution}>{caution}</p>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        {outboundHref ? (
-          <Button
-            size="sm"
-            render={<a href={outboundHref} target="_blank" rel="noreferrer" />}
+    <div
+      className={`rounded-[1.1rem] border p-3.5 ${
+        isPrimary
+          ? "border-[#0f6a52] bg-white shadow-[0_10px_30px_rgba(15,106,82,0.08)]"
+          : "border-[#103b2c]/10 bg-white"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <Badge
+            variant={isPrimary ? "default" : "outline"}
+            className={
+              isPrimary ? "bg-[#0f6a52] text-white hover:bg-[#0f6a52]" : "border-[#103b2c]/15 text-[#103b2c]"
+            }
           >
-            View at {vendorName}
-            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-        ) : (
-          <Button disabled size="sm">
-            No affiliate source linked yet
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          render={
-            <Link
-              href={`/peptides/${recommendation.peptide.slug}?fromQuiz=1&country=${answers.country}`}
-            />
-          }
-        >
-          Learn more
-        </Button>
+            {badge}
+          </Badge>
+          <p className="mt-2.5 text-lg font-semibold tracking-tight text-black">{vendor.name}</p>
+          <p className="mt-1 text-[13px] text-[#103b2c]/58">
+            {regionLabel} · {vendorSlug === "amino-club" ? "🇺🇸 United States" : "🇪🇺 UK / EU"}
+          </p>
+        </div>
       </div>
+
+      <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <TrustChip>{vendor.trustpilotRating ?? "N/A"}/5 rating</TrustChip>
+        <TrustChip>{coaLabel}</TrustChip>
+        <TrustChip>{vendorSlug === "amino-club" ? "US shipping" : "UK/EU shipping"}</TrustChip>
+      </div>
+
+      <p className="mt-2.5 text-[13px] leading-5 text-[#103b2c]/72">
+        {vendorSlug === "amino-club"
+          ? "Best fit when you want faster U.S. routing and direct product-page affiliate paths."
+          : "Best fit when you want UK/EU fulfillment and a wide international catalog for this stack."}
+      </p>
+
+      <Button
+        className={`mt-3.5 h-10 w-full ${isPrimary ? "" : "border-[#103b2c]/15 bg-white text-[#103b2c] hover:bg-[#fbfaf7]"}`}
+        variant={isPrimary ? "default" : "outline"}
+        render={<a href={href} target="_blank" rel="noreferrer" />}
+      >
+        Go to {vendor.name}
+        <ExternalLink className="ml-2 h-4 w-4" />
+      </Button>
     </div>
   );
 }
 
 export default function QuizResultsPage() {
   const router = useRouter();
-  const { answers, isComplete, reset } = useQuizState();
+  const { answers, isComplete, reset, completedAt, markCompletedNow } = useQuizState();
+  const [vendorRegion, setVendorRegion] = useState<"us" | "eu">(
+    getShopperRegion(answers.country ?? "us") === "us" ? "us" : "eu"
+  );
+  const [shareMessage, setShareMessage] = useState("Copy stack");
+
+  // Stamp the moment of first completion once the user lands here with a
+  // complete quiz. Idempotent — returning visitors keep their original timestamp.
+  const complete = isComplete();
+  useEffect(() => {
+    if (complete) markCompletedNow();
+  }, [complete, markCompletedNow]);
 
   if (!isComplete()) {
     return (
@@ -293,9 +323,7 @@ export default function QuizResultsPage() {
               <CardContent className="space-y-4 pt-6">
                 <h1 className="text-2xl font-semibold">No clear stack recommendation</h1>
                 <p className="text-muted-foreground">
-                  Your current inputs are conservative enough that the planner did not keep a strong
-                  stack recommendation. That usually means your safety filters, delivery constraints,
-                  or risk tolerance are tighter than the current catalog supports.
+                  Your current inputs are conservative enough that the planner did not keep a strong stack recommendation.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Button
@@ -305,7 +333,6 @@ export default function QuizResultsPage() {
                       router.push("/quiz");
                     }}
                   >
-                    <RotateCcw className="mr-2 h-4 w-4" />
                     Reset and retake
                   </Button>
                   <Button render={<Link href="/peptides" />}>Browse compounds manually</Button>
@@ -319,222 +346,246 @@ export default function QuizResultsPage() {
     );
   }
 
-  const safetyCount = plan.compatibilityWarnings.length + plan.safetyNotes.length;
-  const phaseCount = plan.programPhases.length;
-  const altCount = plan.alternatives.length;
+  const goal = getGoalById(completedAnswers.primaryGoalId);
+  const protocolPdfPair = getGoalProtocolPdfPair(completedAnswers.primaryGoalId);
+  const primaryProtocol = protocolPdfPair?.primary;
+  const addonProtocol = protocolPdfPair?.addon;
+  const stackName = `${goal?.displayName ?? "Personalized"} Stack`;
+  const protocolName = primaryProtocol?.name ?? `${goal?.displayName ?? "Goal"} Protocol`;
+  const protocolPrice = primaryProtocol?.priceLabel ?? "Coming soon";
+  const cycleLabel = getCycleLabel(completedAnswers.timeframe);
+  const routeTag = getRouteTag(recommendedStack);
+  const compatibility = getCompatibilityStatus(plan);
+  const visibleCompounds = recommendedStack.slice(0, 1);
+  const lockedCompounds = [
+    recommendedStack[1] ?? plan.alternatives[0],
+    recommendedStack[2] ?? plan.alternatives[1] ?? plan.alternatives[0],
+    recommendedStack[3] ?? plan.alternatives[2] ?? plan.alternatives[1] ?? plan.alternatives[0],
+  ];
+  const primaryPeptideSlug = recommendedStack[0]?.peptide.slug ?? "bpc-157";
+  const vendorOrder =
+    vendorRegion === "us"
+      ? [
+          { slug: "amino-club" as const, primary: true, badge: "Recommended for you", region: "US route" },
+          { slug: "xl-peptides" as const, primary: false, badge: "Carries your stack", region: "EU route" },
+        ]
+      : [
+          { slug: "xl-peptides" as const, primary: true, badge: "Recommended for you", region: "EU route" },
+          { slug: "amino-club" as const, primary: false, badge: "Carries your stack", region: "US route" },
+        ];
+
+  async function handleShareResults() {
+    const anonymousId = crypto.randomUUID();
+    const sharePayload = {
+      createdAt: new Date().toISOString(),
+      stackName,
+      compounds: recommendedStack.map((item) => item.peptide.slug),
+    };
+    window.localStorage.setItem(`peptidepros-shared-stack:${anonymousId}`, JSON.stringify(sharePayload));
+    const shareUrl = new URL(window.location.href);
+    shareUrl.searchParams.set("stack", anonymousId);
+
+    try {
+      await navigator.clipboard.writeText(shareUrl.toString());
+      setShareMessage("Copied");
+    } catch {
+      setShareMessage("Copy failed");
+    }
+
+    window.setTimeout(() => setShareMessage("Copy stack"), 1800);
+  }
 
   return (
     <>
       <Header />
-      <main className="flex-1 bg-stone-50">
-        <div className="grid min-h-[calc(100vh-64px)] lg:grid-cols-[260px_minmax(0,1fr)]">
-          {/* Sidebar */}
-          <aside className="border-b border-stone-200 bg-white lg:border-b-0 lg:border-r lg:sticky lg:top-16 lg:self-start lg:h-[calc(100vh-4rem)] lg:overflow-y-auto">
-            <div className="px-5 py-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Your plan
+      <QuizCountdownBanner completedAt={completedAt} />
+      <main className="flex-1 bg-[#fbfaf7] px-4 py-5 md:py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" render={<Link href="/quiz" />}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to quiz
+            </Button>
+          </div>
+
+          <section className={`${SURFACE} px-4 py-4 md:px-5`}>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f6a52]">
+              Quiz complete
+            </p>
+            <h1 className="mt-2 text-[1.7rem] font-bold tracking-tight text-black md:text-[2.15rem]">
+              {stackName}
+            </h1>
+            <p className="mt-2 text-[13px] leading-5 text-[#103b2c]/72">
+              Built for a <span className="font-semibold text-[#103b2c]">{formatTitleCase(completedAnswers.experience)}</span> researcher with a{" "}
+              <span className="font-semibold text-[#103b2c]">{getRiskLabel(completedAnswers.riskTolerance)}</span> risk profile, a{" "}
+              <span className="font-semibold text-[#103b2c]">{cycleLabel}</span>, and a{" "}
+              <span className="font-semibold text-[#103b2c]">{formatTitleCase(completedAnswers.budget)}</span> budget lane.
+            </p>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <Badge className="bg-[#0f6a52] text-white hover:bg-[#0f6a52]">✓ Compatibility checked</Badge>
+              <Badge variant="outline" className="border-[#103b2c]/15 text-[#103b2c]">
+                {goal?.displayName ?? "Goal-based stack"}
+              </Badge>
+              <Badge variant="outline" className="border-[#103b2c]/15 text-[#103b2c]">
+                {routeTag}
+              </Badge>
+              <Badge variant="outline" className="border-[#103b2c]/15 text-[#103b2c]">
+                {cycleLabel}
+              </Badge>
+              <Badge variant="outline" className="border-[#103b2c]/15 text-[#103b2c]">
+                {recommendedStack.length} compounds
+              </Badge>
+            </div>
+          </section>
+
+          <section className="space-y-2.5">
+            <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+              <FreeCompoundCard recommendation={visibleCompounds[0]} />
+              <LockedCompoundCard recommendation={lockedCompounds[0]} />
+              <LockedCompoundCard recommendation={lockedCompounds[1]} />
+              <LockedCompoundCard recommendation={lockedCompounds[2]} />
+            </div>
+
+            <div className="rounded-[1rem] border border-[#103b2c]/10 bg-white px-3 py-2.5">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-[13px] font-semibold text-[#103b2c]">Compatibility score</p>
+                  <span className="text-[13px] font-semibold text-black">{compatibility.label}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: 8 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-2 w-full rounded-full ${
+                        index < compatibility.filledDots ? compatibility.tone : "bg-[#103b2c]/10"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <p className="text-[12px] leading-[1.35rem] text-[#103b2c]/60">
+                  {compatibility.note}
+                </p>
               </div>
-              <h1 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-[#103b2c]">
-                {plan.planHeadline}
-              </h1>
-              <div className="mt-2.5 flex flex-wrap gap-1">
-                <Badge variant="secondary" className="text-[10px]">
-                  {recommendedStack.length} compound{recommendedStack.length === 1 ? "" : "s"}
-                </Badge>
+            </div>
+          </section>
+
+          <PdfPaywall
+            primaryProtocol={primaryProtocol}
+            addonProtocol={addonProtocol}
+            protocolName={protocolName}
+          />
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
+                  Vendor recommendations
+                </p>
+                <h2 className="mt-1.5 text-[1.7rem] font-bold tracking-tight text-black">
+                  Best sources for your stack
+                </h2>
               </div>
-              <p className="mt-3 text-xs leading-5 text-muted-foreground line-clamp-4">
-                {plan.profileSummary}
+            </div>
+
+            <div className="grid gap-3.5 md:grid-cols-2">
+              {vendorOrder.map((item) => (
+                <VendorCard
+                  key={item.slug}
+                  badge={item.badge}
+                  vendorSlug={item.slug}
+                  regionLabel={item.region}
+                  isPrimary={item.primary}
+                  href={buildResultsOutboundHref(item.slug, primaryPeptideSlug, vendorRegion)}
+                />
+              ))}
+            </div>
+
+            <div className="flex justify-center">
+              <div className="inline-flex rounded-full border border-[#103b2c]/10 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setVendorRegion("us")}
+                  className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                    vendorRegion === "us" ? "bg-[#103b2c] text-white" : "text-[#103b2c]/65"
+                  }`}
+                >
+                  US
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVendorRegion("eu")}
+                  className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                    vendorRegion === "eu" ? "bg-[#103b2c] text-white" : "text-[#103b2c]/65"
+                  }`}
+                >
+                  EU
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${SURFACE} grid gap-4 px-4 py-4.5 md:grid-cols-[1.25fr_0.75fr] md:px-6`}>
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
+                Protocol preview
+              </p>
+              <h2 className="mt-2.5 text-[1.7rem] font-bold tracking-tight text-black">
+                Your full protocol is ready — goal strategy, tradeoffs, and checklists are locked
+              </h2>
+              <p className="mt-2.5 max-w-2xl text-[13px] leading-5 text-[#103b2c]/72">
+                The full unlock includes the goal-specific compound map, stack logic, safety screens, timeline expectations, and workbook pages built around your quiz result.
               </p>
 
-              {/* Mini stats */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                <SidebarStat value={String(recommendedStack.length)} label="Stack" />
-                <SidebarStat value={String(phaseCount)} label="Phases" />
-                <SidebarStat value={String(safetyCount)} label="Cautions" />
-                <SidebarStat value={String(altCount)} label="Alts" />
-              </div>
-
-              <hr className="my-5 border-dashed border-stone-200" />
-
-              {/* Section nav */}
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-2">
-                Sections
-              </div>
-              <nav className="flex flex-col gap-0.5">
-                <SidebarNavLink href="#stack" icon={Layers} label="Recommended stack" active />
-                <SidebarNavLink href="#phases" icon={Clock3} label="Program phases" />
-                <SidebarNavLink href="#safety" icon={AlertTriangle} label="Safety notes" />
-                {altCount > 0 && (
-                  <SidebarNavLink href="#alternatives" icon={Sprout} label="Alternatives" />
-                )}
-              </nav>
-
-              <hr className="my-5 border-dashed border-stone-200" />
-
-              <div className="flex flex-col gap-2">
-                <Button
-                  size="sm"
-                  className="w-full"
-                  render={<Link href="/peptides" />}
-                >
-                  Browse compounds
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    reset();
-                    router.push("/quiz");
-                  }}
-                >
-                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-                  Retake quiz
-                </Button>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main */}
-          <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-              {/* Breadcrumb */}
-              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                <Link href="/quiz" className="hover:text-foreground transition-colors">
-                  ← Quiz
-                </Link>
-                <span className="mx-2 text-stone-300">/</span>
-                <span className="text-foreground">Your results</span>
-              </div>
-
-              {/* Safety flags row */}
-              {plan.compatibilityWarnings.length > 0 && (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {plan.compatibilityWarnings.slice(0, 2).map((warning) => (
-                    <div
-                      key={warning}
-                      className="flex items-start gap-3 rounded-md border-l-[3px] border-l-amber-500 bg-amber-50/60 p-3"
-                    >
-                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                      <div>
-                        <p className="text-sm font-semibold text-amber-900">Stack caution</p>
-                        <p className="mt-0.5 text-xs text-amber-900/75">{warning}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Stack */}
-              <div id="stack" className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[color:var(--primary)]/15">
-                    <Layers className="h-3.5 w-3.5 text-[color:var(--primary)]" />
+              <div className="mt-3.5 space-y-2">
+                {[
+                  "Goal lane — [blurred] conservative vs balanced vs advanced path",
+                  "Stack logic — [blurred] foundation, goal-driver, and adjunct roles",
+                  "Checkpoint — [blurred] reassessment and clinician discussion checklist",
+                ].map((line) => (
+                  <div
+                    key={line}
+                    className="rounded-[0.95rem] border border-[#103b2c]/10 bg-[#fbfaf7] px-3.5 py-2.5 text-[13px] text-[#103b2c]/55 blur-[1.5px]"
+                  >
+                    {line}
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground">Recommended stack</h2>
-                </div>
-                {recommendedStack.map((recommendation, index) => (
-                  <RecommendationCard
-                    key={recommendation.peptide.id}
-                    recommendation={recommendation}
-                    answers={completedAnswers}
-                    position={index + 1}
-                  />
                 ))}
               </div>
-
-              {/* Program phases */}
-              <div id="phases" className={SECTION_CARD}>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[color:var(--primary)]/15">
-                    <Clock3 className="h-3.5 w-3.5 text-[color:var(--primary)]" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-foreground">
-                    How to think about the plan
-                  </h2>
-                </div>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {plan.programPhases.map((phase) => (
-                    <div
-                      key={phase.title}
-                      className="rounded-md bg-stone-50 border border-stone-100 p-3"
-                    >
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-[color:var(--primary)]">
-                        {phase.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-5 text-foreground/80">
-                        {phase.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Safety notes */}
-              <div id="safety" className={SECTION_CARD}>
-                <div className="mb-3 flex items-center gap-2">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500/15">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-foreground">Safety notes</h2>
-                </div>
-                {[...plan.compatibilityWarnings, ...plan.safetyNotes].length > 0 ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {[...plan.compatibilityWarnings, ...plan.safetyNotes]
-                      .slice(0, 6)
-                      .map((note) => (
-                        <div
-                          key={note}
-                          className="rounded-md border-l-[3px] border-l-amber-500 bg-amber-50/60 p-3 text-sm leading-5 text-amber-900"
-                        >
-                          {note}
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    No major stack-level compatibility warning was generated from your quiz
-                    answers.
-                  </p>
-                )}
-              </div>
-
-              {/* Alternatives */}
-              {plan.alternatives.length > 0 && (
-                <div id="alternatives" className={SECTION_CARD}>
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[color:var(--primary)]/15">
-                      <Sprout className="h-3.5 w-3.5 text-[color:var(--primary)]" />
-                    </div>
-                    <h2 className="text-lg font-semibold text-foreground">
-                      Alternatives worth comparing
-                    </h2>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {plan.alternatives.slice(0, 4).map((recommendation) => (
-                      <Link
-                        key={recommendation.peptide.id}
-                        href={`/peptides/${recommendation.peptide.slug}?fromQuiz=1&country=${completedAnswers.country}`}
-                        className="rounded-md border border-stone-200 bg-white p-3 transition-colors hover:border-[color:var(--primary)]/40 hover:bg-[color:var(--primary)]/[0.03]"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {recommendation.peptide.name}
-                          </p>
-                          <Badge variant="outline" className="text-[10px] shrink-0">
-                            {ROLE_LABELS[recommendation.role]}
-                          </Badge>
-                        </div>
-                        <p className="mt-1.5 text-xs leading-5 text-muted-foreground line-clamp-2">
-                          {getBenefitSummary(recommendation)}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
+
+            <div className="flex items-center">
+              <Button
+                className="h-11 w-full text-[15px]"
+                size="lg"
+                disabled={!primaryProtocol}
+                {...(primaryProtocol ? { render: <Link href={`/checkout/${primaryProtocol.slug}`} /> } : {})}
+              >
+                {primaryProtocol ? `Unlock My Protocol → ${protocolPrice}` : "Protocol coming soon"}
+              </Button>
+            </div>
+          </section>
+
+          <section className="rounded-[1rem] border border-[#103b2c]/10 bg-white px-3.5 py-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[13px] font-medium text-[#103b2c]">
+                  Not ready? Copy your stack and come back when you are ready.
+                </p>
+                <p className="mt-1.5 text-[11px] text-[#103b2c]/55">
+                  For research purposes only. Not intended for human use or self-medication.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" className="h-10 border-[#103b2c]/15 bg-white text-[#103b2c]" onClick={handleShareResults}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  {shareMessage}
+                </Button>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
       <Footer />

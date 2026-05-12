@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #fff; padding: 0; display: flex; flex-direction: column; gap: 0; }
+  .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; padding: 12px 20px 4px; }
+
+  /* Header */
+  .header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 20px; border-bottom: 1px solid oklch(0.922 0 0); background: rgba(251,250,247,0.97); }
+  .logo { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: #103b2c; }
+  .flask-icon { width: 22px; height: 22px; }
+  .nav { display: flex; align-items: center; gap: 2px; }
+  .nav-link { padding: 6px 12px; border-radius: 9999px; font-size: 12px; font-weight: 500; color: #475569; cursor: pointer; }
+  .nav-link.active { background: #e7f4ee; color: #0f6a52; }
+  .nav-cta { height: 30px; padding: 0 14px; background: oklch(0.52 0.11 164); color: #fff; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid oklch(0.922 0 0); padding: 0 20px; margin-top: 16px; }
+  .tab { padding: 8px 14px; font-size: 12px; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer; }
+  .tab.active { color: oklch(0.52 0.11 164); border-bottom-color: oklch(0.52 0.11 164); font-weight: 600; }
+</style>
+</head>
+<body>
+  <p class="section-title">Header / Nav</p>
+  <div class="header">
+    <div class="logo">
+      <svg class="flask-icon" viewBox="0 0 24 24" fill="none" stroke="#0f6a52" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 2h6M10 2v7L4 19a2.5 2.5 0 0 0 2 4h12a2.5 2.5 0 0 0 2-4L14 9V2"/><line x1="6" y1="15" x2="18" y2="15"/>
+      </svg>
+      PeptidePros
+    </div>
+    <div class="nav">
+      <span class="nav-link">Peptides</span>
+      <span class="nav-link active">Stack Builder</span>
+      <span class="nav-link">Guides</span>
+      <span class="nav-link">Vendors</span>
+    </div>
+    <button class="nav-cta">Find Your Plan</button>
+  </div>
+
+  <p class="section-title" style="margin-top:10px;">Tab Bar</p>
+  <div class="tabs">
+    <div class="tab active">Overview</div>
+    <div class="tab">Mechanism</div>
+    <div class="tab">Dosing</div>
+    <div class="tab">Safety</div>
+    <div class="tab">Vendors</div>
+  </div>
+</body>
+</html>

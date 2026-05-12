@@ -48,14 +48,14 @@ export const HeroSection = React.forwardRef<HTMLDivElement, HeroProps>(
       <div
         ref={ref}
         className={cn(
-          "relative w-full overflow-x-hidden bg-background text-foreground p-4",
+          "relative w-full overflow-x-hidden bg-[#fbfaf7] p-4 text-foreground",
           className
         )}
         {...props}
       >
         <div className="absolute inset-0 z-0 opacity-20" aria-hidden="true">
-          <div className="absolute bottom-0 left-[-20%] right-0 top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(14,165,233,0.18),rgba(255,255,255,0))]" />
-          <div className="absolute bottom-0 right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(16,185,129,0.18),rgba(255,255,255,0))]" />
+          <div className="absolute bottom-0 left-[-20%] right-0 top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(14,165,233,0.18),rgba(251,250,247,0))]" />
+          <div className="absolute bottom-0 right-[-20%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[radial-gradient(circle_farthest-side,rgba(16,185,129,0.18),rgba(251,250,247,0))]" />
         </div>
 
         <div className="relative z-10 flex w-full flex-col items-center text-center">
@@ -116,7 +116,7 @@ export const HeroSection = React.forwardRef<HTMLDivElement, HeroProps>(
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-background/60 backdrop-blur-sm sm:left-8"
+              className="absolute left-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-[#fbfaf7]/80 backdrop-blur-sm sm:left-8"
               onClick={handlePrev}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -124,7 +124,7 @@ export const HeroSection = React.forwardRef<HTMLDivElement, HeroProps>(
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-background/60 backdrop-blur-sm sm:right-8"
+              className="absolute right-2 top-1/2 z-20 h-10 w-10 -translate-y-1/2 rounded-full bg-[#fbfaf7]/80 backdrop-blur-sm sm:right-8"
               onClick={handleNext}
             >
               <ChevronRight className="h-5 w-5" />

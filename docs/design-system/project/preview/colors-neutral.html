@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', system-ui, sans-serif; background: #fff; padding: 20px; }
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&display=swap');
+  .row { display: flex; gap: 8px; }
+  .swatch { flex: 1; height: 60px; border-radius: 8px; display: flex; flex-direction: column; justify-content: flex-end; padding: 6px 8px; }
+  .label { font-size: 10px; font-weight: 600; }
+  .val { font-size: 9px; opacity: 0.65; margin-top: 1px; }
+  .light .label, .light .val { color: #1a1a1a; }
+  .dark .label, .dark .val { color: #f0f0f0; }
+  .section-title { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #666; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<p class="section-title">Neutral Scale</p>
+<div class="row">
+  <div class="swatch dark" style="background: oklch(0.145 0 0);">
+    <span class="label">Foreground</span>
+    <span class="val">oklch(0.145)</span>
+  </div>
+  <div class="swatch dark" style="background: oklch(0.205 0 0);">
+    <span class="label">Secondary FG</span>
+    <span class="val">oklch(0.205)</span>
+  </div>
+  <div class="swatch dark" style="background: oklch(0.269 0 0);">
+    <span class="label">Chart-5 / Muted</span>
+    <span class="val">oklch(0.269)</span>
+  </div>
+  <div class="swatch dark" style="background: oklch(0.371 0 0);">
+    <span class="label">Chart-4</span>
+    <span class="val">oklch(0.371)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.556 0 0);">
+    <span class="label">Muted FG</span>
+    <span class="val">oklch(0.556)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.708 0 0);">
+    <span class="label">Placeholder</span>
+    <span class="val">oklch(0.708)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.87 0 0); border: 1px solid #ccc;">
+    <span class="label">Chart-1</span>
+    <span class="val">oklch(0.87)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.922 0 0); border: 1px solid #ccc;">
+    <span class="label">Border</span>
+    <span class="val">oklch(0.922)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.97 0 0); border: 1px solid #e5e5e5;">
+    <span class="label">Muted</span>
+    <span class="val">oklch(0.97)</span>
+  </div>
+  <div class="swatch light" style="background: oklch(0.985 0 0); border: 1px solid #e5e5e5;">
+    <span class="label">Background</span>
+    <span class="val">oklch(0.985)</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { BreadcrumbList } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import {
   CATEGORY_HUBS,
@@ -261,11 +263,18 @@ export default async function GoalHubPage({
     quickFacts.push({ label: "Tracked vendors", value: String(trustedVendors.length) });
   }
   if (hubCostSummary) {
-    quickFacts.push({ label: "Cycle cost range", value: costStat });
+    quickFacts.push({ label: "Cycle cost estimate", value: costStat });
   }
 
   return (
     <>
+      <BreadcrumbList
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Goals", href: "/peptides" },
+          { name: hub.title, href: `/goals/${hub.slug}` },
+        ]}
+      />
       <Header />
       <main className="flex-1 bg-stone-50">
         {/* ── Hero ────────────────────────────────────────────── */}
@@ -639,6 +648,8 @@ export default async function GoalHubPage({
 
             {/* ── Sticky right rail ── */}
             <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+              <StickyQuizCta />
+
               {/* Quick facts */}
               {quickFacts.length > 0 && (
                 <div className={SECTION_CARD.replace("p-6", "p-5")}>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #fff; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 6px; }
+  .row { display: flex; gap: 12px; align-items: flex-start; }
+  /* Input */
+  .input { height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 8px; padding: 0 10px; font-family: 'Manrope', sans-serif; font-size: 13px; color: #0f172a; outline: none; background: #fff; width: 180px; }
+  .input::placeholder { color: #94a3b8; }
+  .input:focus { border-color: oklch(0.62 0.11 164); box-shadow: 0 0 0 3px oklch(0.62 0.11 164 / 0.2); }
+  .input-err { border-color: oklch(0.577 0.245 27.325); box-shadow: 0 0 0 3px oklch(0.577 0.245 27.325 / 0.2); }
+  /* Label */
+  .label { font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 4px; display: block; }
+  /* Select */
+  .select { height: 32px; border: 1px solid oklch(0.922 0 0); border-radius: 8px; padding: 0 10px; font-family: 'Manrope', sans-serif; font-size: 13px; color: #0f172a; background: #fff; width: 180px; }
+  /* Textarea */
+  .textarea { border: 1px solid oklch(0.922 0 0); border-radius: 8px; padding: 8px 10px; font-family: 'Manrope', sans-serif; font-size: 13px; color: #0f172a; resize: none; width: 220px; height: 56px; }
+  /* Checkbox */
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox { width: 16px; height: 16px; border: 1.5px solid oklch(0.922 0 0); border-radius: 4px; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .checkbox.checked { background: oklch(0.52 0.11 164); border-color: oklch(0.52 0.11 164); }
+  .checkbox.checked::after { content: ''; width: 8px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translateY(-1px); display: block; }
+  .check-label { font-size: 13px; color: #334155; }
+</style>
+</head>
+<body>
+  <div>
+    <p class="section-title">Text Inputs</p>
+    <div class="row">
+      <div>
+        <label class="label">Email</label>
+        <input class="input" placeholder="you@example.com" />
+      </div>
+      <div>
+        <label class="label">Error State</label>
+        <input class="input input-err" value="bad@" />
+      </div>
+    </div>
+  </div>
+  <div>
+    <p class="section-title">Select + Textarea</p>
+    <div class="row">
+      <div>
+        <label class="label">Goal</label>
+        <select class="select"><option>Fat Loss</option><option>Muscle Growth</option><option>Recovery</option></select>
+      </div>
+      <div>
+        <label class="label">Notes</label>
+        <textarea class="textarea" placeholder="Additional context..."></textarea>
+      </div>
+    </div>
+  </div>
+  <div>
+    <p class="section-title">Checkboxes</p>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="checkbox-row"><div class="checkbox checked"></div><span class="check-label">Goal-based quiz & personalized plans</span></div>
+      <div class="checkbox-row"><div class="checkbox"></div><span class="check-label">Advanced protocol customization</span></div>
+      <div class="checkbox-row"><div class="checkbox checked"></div><span class="check-label">Vendor comparison tables</span></div>
+    </div>
+  </div>
+</body>
+</html>

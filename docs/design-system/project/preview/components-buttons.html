@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #fff; padding: 16px 20px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 6px; }
+  /* Base button styles */
+  .btn { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 600; border: 1px solid transparent; cursor: pointer; transition: all 150ms; padding: 0 10px; white-space: nowrap; }
+  .btn-default { height: 32px; }
+  .btn-sm { height: 28px; font-size: 12px; border-radius: 7px; }
+  .btn-lg { height: 44px; font-size: 14px; padding: 0 20px; }
+  /* Variants */
+  .btn-primary { background: oklch(0.52 0.11 164); color: #fff; }
+  .btn-outline { background: #fff; color: #0f172a; border-color: oklch(0.922 0 0); }
+  .btn-ghost { background: transparent; color: #0f172a; }
+  .btn-secondary { background: oklch(0.97 0 0); color: #334155; }
+  .btn-destructive { background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.45 0.22 27); }
+  .btn-link { background: transparent; color: oklch(0.52 0.11 164); text-decoration: underline; text-underline-offset: 4px; }
+  /* States */
+  .btn-disabled { opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+  <p class="section-title">Button Variants</p>
+  <div class="row">
+    <button class="btn btn-primary btn-default">Default Primary</button>
+    <button class="btn btn-outline btn-default">Outline</button>
+    <button class="btn btn-ghost btn-default">Ghost</button>
+    <button class="btn btn-secondary btn-default">Secondary</button>
+    <button class="btn btn-destructive btn-default">Destructive</button>
+    <button class="btn btn-link btn-default">Link</button>
+  </div>
+  <p class="section-title">Sizes</p>
+  <div class="row">
+    <button class="btn btn-primary btn-sm">Small</button>
+    <button class="btn btn-primary btn-default">Default</button>
+    <button class="btn btn-primary btn-lg">Large CTA</button>
+  </div>
+  <p class="section-title">States</p>
+  <div class="row">
+    <button class="btn btn-primary btn-default">Normal</button>
+    <button class="btn btn-primary btn-default btn-disabled">Disabled</button>
+    <button class="btn btn-outline btn-default btn-disabled">Disabled Outline</button>
+  </div>
+</body>
+</html>

@@ -9,12 +9,17 @@ export async function GET(
   const target = resolveOutboundVendorTargetFromSlugs(vendorSlug, peptideSlug);
 
   if (!target) {
-    return NextResponse.redirect(new URL("/vendors", request.url));
+    const fallback = NextResponse.redirect(new URL("/vendors", request.url));
+    fallback.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return fallback;
   }
 
   const requestUrl = new URL(request.url);
   const sourcePage = requestUrl.searchParams.get("sourcePage") ?? "unknown";
   const planId = requestUrl.searchParams.get("planId") ?? undefined;
+  const utmParams = Array.from(requestUrl.searchParams.entries()).filter(([key]) =>
+    key.startsWith("utm_")
+  );
 
   console.log("Affiliate outbound redirect:", {
     vendorId: target.vendorId,
@@ -25,5 +30,12 @@ export async function GET(
     url: target.url,
   });
 
-  return NextResponse.redirect(target.url, 307);
+  const destinationUrl = new URL(target.url);
+  for (const [key, value] of utmParams) {
+    destinationUrl.searchParams.set(key, value);
+  }
+
+  const response = NextResponse.redirect(destinationUrl, 307);
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
 }

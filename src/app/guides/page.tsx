@@ -1,25 +1,12 @@
 import type { Metadata } from "next";
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
+import { ArrowRight, Beaker, FlaskConical, Scale, Shield, Syringe } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import {
-  ArrowRight,
-  Beaker,
-  CheckCircle2,
-  ClipboardCheck,
-  Clock3,
-  FlaskConical,
-  MoveRight,
-  Scale,
-  Shield,
-  Sparkles,
-  Syringe,
-} from "lucide-react";
+import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CtaPhonePreview } from "@/components/ui/cta-phone-preview";
 import { getGuideBySlug, type GuideData } from "@/data/guides";
+import guidesHeroImage from "../../../images/guidesimage.png";
 import howToReadCoaImage from "../../../images/how to read a COA.png";
 import howToReconstitutePeptidesImage from "../../../images/how to reconstitute peptides.png";
 import howToStorePeptidesImage from "../../../images/how to store peptides.png";
@@ -33,51 +20,12 @@ export const metadata: Metadata = {
     "Foundational peptide guides on safety, reconstitution, storage, COAs, vendor comparison, and regulatory basics.",
 };
 
-const CATEGORY_STYLES: Record<
-  string,
-  {
-    label: string;
-    icon: LucideIcon;
-    badge: string;
-    accent: string;
-    note: string;
-  }
-> = {
-  basics: {
-    label: "Basics",
-    icon: Beaker,
-    badge: "border-[#d9e5ff] bg-[#eef5ff] text-[#3f67b1]",
-    accent: "bg-[#edf5ff]",
-    note: "Why it matters: Avoid costly confusion, mistakes and hype.",
-  },
-  "safety-quality": {
-    label: "Safety",
-    icon: Shield,
-    badge: "border-[#ffe0b3] bg-[#fff1df] text-[#a46907]",
-    accent: "bg-[#f8fbf9]",
-    note: "Why it matters: Protect your health and get better results.",
-  },
-  "dosing-reconstitution": {
-    label: "Dosing",
-    icon: Syringe,
-    badge: "border-[#caecd8] bg-[#e9f8ef] text-[#267c5a]",
-    accent: "bg-[#f4faf7]",
-    note: "Why it matters: Do it right, get accurate dosing, avoid waste.",
-  },
-  "storage-handling": {
-    label: "Storage",
-    icon: FlaskConical,
-    badge: "border-[#d9e1d0] bg-[#eef2ea] text-[#6f7756]",
-    accent: "bg-[#f7f8f4]",
-    note: "Why it matters: Protect potency and prevent degradation.",
-  },
-  "legal-regulatory": {
-    label: "Legal",
-    icon: Scale,
-    badge: "border-[#e1d2ff] bg-[#f4ecff] text-[#7b57b2]",
-    accent: "bg-[#f9f6ff]",
-    note: "Why it matters: Improve compliance and avoid costly surprises.",
-  },
+const CATEGORY_LABELS: Record<string, { label: string; icon: LucideIcon }> = {
+  basics: { label: "Basics", icon: Beaker },
+  "safety-quality": { label: "Safety", icon: Shield },
+  "dosing-reconstitution": { label: "Dosing", icon: Syringe },
+  "storage-handling": { label: "Storage", icon: FlaskConical },
+  "legal-regulatory": { label: "Legal", icon: Scale },
 };
 
 const FEATURED_GUIDE_SPECS = [
@@ -98,8 +46,8 @@ const FEATURED_GUIDE_IMAGES: Record<(typeof FEATURED_GUIDE_SPECS)[number], Stati
   "how-to-store-peptides": howToStorePeptidesImage,
 };
 
-function getGuideStyle(guide: GuideData) {
-  return CATEGORY_STYLES[guide.categoryId] ?? CATEGORY_STYLES.basics;
+function getCategoryMeta(guide: GuideData) {
+  return CATEGORY_LABELS[guide.categoryId] ?? CATEGORY_LABELS.basics;
 }
 
 function getReadTime(guide: GuideData) {
@@ -117,240 +65,153 @@ export default function GuidesPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 bg-[#f7f5f1] px-4 py-6 md:py-8">
-        <div className="container mx-auto max-w-7xl">
-          <section className="rounded-[32px] border border-[#e7e2d8] bg-[linear-gradient(180deg,#fbfaf7_0%,#f8f6f1_100%)] px-5 py-6 shadow-[0_18px_55px_-35px_rgba(15,23,42,0.35)] md:px-7 md:py-7">
-            <div className="grid gap-6 xl:grid-cols-[1.2fr_0.95fr]">
-              <div className="pt-1">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-[#0f6a52]">
-                  Guides &amp; Education
-                </p>
-                <h1 className="max-w-xl text-4xl font-extrabold leading-[0.95] tracking-[-0.04em] text-[#13201d] md:text-[3.55rem]">
-                  Make Smarter Decisions.
-                  <br />
-                  <span className="text-[#19906f]">Stay Safe. Get Results.</span>
-                </h1>
-                <p className="mt-4 max-w-md text-sm leading-6 text-slate-600">
-                  Evidence-based guides that cut through confusion and help you choose peptides with confidence.
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-700">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-[#0f6a52]" />
-                    <div>
-                      <p className="font-semibold text-[#13201d]">Evidence Based</p>
-                      <p className="text-xs text-slate-500">Curated &amp; Reviewed</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ClipboardCheck className="h-4 w-4 text-[#0f6a52]" />
-                    <div>
-                      <p className="font-semibold text-[#13201d]">Updated Regularly</p>
-                      <p className="text-xs text-slate-500">Latest Science &amp; Guidelines</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[#0f6a52]" />
-                    <div>
-                      <p className="font-semibold text-[#13201d]">Built for Real Results</p>
-                      <p className="text-xs text-slate-500">Safety First, Always</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid overflow-hidden rounded-[28px] border border-[#dbeadf] bg-[#eff7f2] shadow-[0_20px_45px_-30px_rgba(15,106,82,0.35)] md:grid-cols-[1.25fr_0.92fr]">
-                <div className="flex flex-col justify-between p-5 md:p-6">
-                  <Badge
-                    variant="outline"
-                    className="w-fit rounded-full border-[#cbe6d7] bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#0f6a52]"
-                  >
-                    Start Here • 2 Minutes
-                  </Badge>
-                  <div>
-                    <p className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-[#13201d]">Not sure what you need?</p>
-                    <p className="mt-2 max-w-xs text-sm leading-6 text-slate-600">
-                      Answer a few questions and get a personalized peptide plan tailored to your goals and experience.
-                    </p>
-                  </div>
-                  <Button
-                    className="mt-5 h-10 w-fit rounded-xl bg-[#0f6a52] px-4 text-sm font-semibold text-white hover:bg-[#0c5944]"
-                    render={<Link href="/quiz" />}
-                  >
-                    Find My Plan <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-
-                <div className="border-t border-[#dbeadf] bg-[#f8fbf8] p-4 md:border-t-0 md:border-l">
-                  <CtaPhonePreview variant="guides" />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-5 rounded-[28px] border border-[#e7e2d8] bg-[#f8faf8] px-5 py-5 shadow-[0_16px_50px_-40px_rgba(15,23,42,0.35)]">
-            <div className="grid gap-5 lg:grid-cols-[240px_1fr] lg:items-center">
-              <div className="flex items-start gap-4">
-                <div className="rounded-2xl border border-[#dbeadf] bg-white p-3 text-[#0f6a52]">
-                  <MoveRight className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0f6a52]">New Here? Follow This Path</p>
-                  <h2 className="mt-1 text-[1.65rem] font-semibold tracking-[-0.03em] text-[#13201d]">Get Started in 3 Simple Steps</h2>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                {[
-                  {
-                    step: "1",
-                    title: "Learn the Basics",
-                    body: "Understand what peptides are and why they work.",
-                    cta: "Start with the basics",
-                    href: `/guides/${featuredGuides[0]?.slug ?? "what-are-peptides"}`,
-                  },
-                  {
-                    step: "2",
-                    title: "Know the Risks",
-                    body: "Learn safety, legality, and how to research properly.",
-                    cta: "Read safety guides",
-                    href: `/guides/${featuredGuides[1]?.slug ?? "peptide-safety-basics"}`,
-                  },
-                  {
-                    step: "3",
-                    title: "Find Your Plan",
-                    body: "Get personalized recommendations and compare the best options.",
-                    cta: "Take the quiz",
-                    href: "/quiz",
-                  },
-                ].map((item, index) => (
-                  <div key={item.step} className="relative rounded-[24px] p-1">
-                    {index < 2 && (
-                      <div className="pointer-events-none absolute right-[-24px] top-8 hidden text-slate-300 md:block">
-                        <MoveRight className="h-5 w-5" />
-                      </div>
-                    )}
-                    <div className="min-h-[132px] rounded-[22px] bg-white p-4 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.45)]">
-                      <div className="mb-3 flex items-center gap-3">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0f6a52] text-xs font-bold text-white">
-                          {item.step}
-                        </span>
-                        <p className="text-sm font-semibold text-[#13201d]">{item.title}</p>
-                      </div>
-                      <p className="text-sm leading-5 text-slate-600">{item.body}</p>
-                      <Link href={item.href} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-[#0f6a52]">
-                        {item.cta} <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-5">
-            <div className="mb-4 flex items-center justify-between gap-4">
+      <main className="bg-[#fbfaf7]">
+        {/* HERO */}
+        <section className="bg-[#fbfaf7]">
+          <div className="container mx-auto max-w-6xl px-4 pt-6 pb-5 md:pt-8 md:pb-6">
+            <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,340px)] md:gap-8">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#0f6a52]">Most Popular Guides</p>
-                <h2 className="mt-1 text-[1.95rem] font-semibold tracking-[-0.03em] text-[#13201d]">Start With These</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  The guides our users read first and the ones most likely to prevent bad assumptions.
+                <p className="mb-3 inline-flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[#103b2c]/60">
+                  <span className="h-px w-6 bg-[#103b2c]/40" />
+                  Library
+                </p>
+                <h1 className="max-w-[620px] font-extrabold leading-[1.05] tracking-[-0.03em] text-black text-[22px] sm:text-[28px] md:text-[32px]">
+                  Understand the{" "}
+                  <span className="relative inline-block italic text-[#0f6a52]">
+                    <span className="relative z-10">science</span>
+                    <svg
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -bottom-1 left-0 h-[8px] w-full"
+                      viewBox="0 0 120 10"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M2,7 C25,3 55,8 80,5 C98,3 110,6 118,5"
+                        stroke="#0f6a52"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>{" "}
+                  behind peptides.
+                </h1>
+                <p className="mt-4 max-w-[480px] text-[16px] leading-[1.6] text-[#103b2c]/65">
+                  Mechanism breakdowns, side-effect literacy, reconstitution math, and vendor due-diligence
+                  &mdash; written without affiliate spin or hype.
                 </p>
               </div>
-              <Button
-                variant="outline"
-                className="hidden rounded-full border-[#d8ddd7] bg-white px-4 text-[#13201d] md:inline-flex"
-                render={<Link href="/guides" />}
-              >
-                View All Articles
-              </Button>
-            </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="relative mx-auto w-full max-w-[340px] md:mx-0">
+                <Image
+                  src={guidesHeroImage}
+                  alt="Peptide guides illustration"
+                  priority
+                  sizes="(min-width: 768px) 340px, 70vw"
+                  className="h-auto w-full object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* GRID */}
+        <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-16 md:py-20">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="grid gap-px bg-[#103b2c]/10 md:grid-cols-2 lg:grid-cols-3">
               {featuredGuides.map((guide) => {
-                const style = getGuideStyle(guide);
-                const Icon = style.icon;
+                const meta = getCategoryMeta(guide);
                 const readTime = getReadTime(guide);
                 const guideImage = FEATURED_GUIDE_IMAGES[guide.slug as keyof typeof FEATURED_GUIDE_IMAGES];
 
                 return (
-                  <div
+                  <Link
                     key={guide.id}
-                    className="rounded-[24px] border border-[#e7e2d8] bg-white p-4 shadow-[0_16px_50px_-38px_rgba(15,23,42,0.45)] transition-shadow hover:shadow-[0_18px_55px_-34px_rgba(15,23,42,0.5)]"
+                    href={`/guides/${guide.slug}`}
+                    className="group flex flex-col bg-[#fbfaf7] p-6 transition-colors hover:bg-white md:p-7"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <Badge
-                        variant="outline"
-                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${style.badge}`}
-                      >
-                        {style.label}
-                      </Badge>
-                      <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                        <Clock3 className="h-3 w-3" />
-                        {readTime} min read
-                      </div>
+                    <div className="relative mb-6 aspect-[16/10] overflow-hidden rounded-[12px] border border-[#103b2c]/8 bg-[#f4f1ea]">
+                      {guideImage ? (
+                        <Image
+                          src={guideImage}
+                          alt={guide.title}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                          sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <meta.icon className="h-10 w-10 text-[#103b2c]/30" strokeWidth={1.5} />
+                        </div>
+                      )}
                     </div>
 
-                    <div className="mt-4 grid grid-cols-[1fr_96px] gap-4">
-                      <div>
-                        <h3 className="text-[1.05rem] font-semibold leading-tight tracking-[-0.02em] text-[#13201d]">
-                          {guide.title}
-                        </h3>
-                        <p className="mt-2 text-sm leading-5 text-slate-600">{guide.summary}</p>
-                      </div>
-                      <div className={`relative overflow-hidden rounded-[20px] border border-[#edf0ea] ${style.accent}`}>
-                        {guideImage ? (
-                          <Image
-                            src={guideImage}
-                            alt={guide.title}
-                            fill
-                            className="object-cover"
-                            sizes="96px"
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center">
-                            <Icon className="h-11 w-11 text-slate-600" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-xl bg-[#f5f7f3] px-3 py-2 text-xs leading-5 text-slate-600">
-                      {style.note}
-                    </div>
-
-                    <Button
-                      className="mt-4 h-8 rounded-lg bg-[#0f6a52] px-3 text-xs font-semibold text-white hover:bg-[#0c5944]"
-                      size="sm"
-                      render={<Link href={`/guides/${guide.slug}`} />}
-                    >
-                      Read Guide <ArrowRight className="ml-1 h-3 w-3" />
-                    </Button>
-                  </div>
+                    <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                      {meta.label} &middot; {readTime} min
+                    </p>
+                    <h3 className="mt-2.5 text-[20px] font-semibold leading-[1.25] tracking-[-0.01em] text-[#103b2c] transition-colors group-hover:text-[#0f6a52]">
+                      {guide.title}
+                    </h3>
+                    <p className="mt-3 flex-1 text-[14px] leading-[1.6] text-[#103b2c]/65">
+                      {guide.summary}
+                    </p>
+                    <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px] transition-colors group-hover:text-[#0f6a52]">
+                      Read guide
+                      <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
+                    </span>
+                  </Link>
                 );
               })}
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="mt-5">
-            <div className="flex flex-col gap-4 rounded-[24px] border border-[#d7eadf] bg-[#e9f5ee] px-5 py-4 shadow-[0_16px_40px_-34px_rgba(15,106,82,0.35)] sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-lg font-semibold text-[#13201d]">Ready to skip the guesswork?</p>
-                <p className="mt-1 text-sm text-slate-600">
-                  Get a personalized peptide plan based on your goals, experience, and risk tolerance.
-                </p>
-              </div>
-              <Button
-                className="h-10 rounded-xl bg-[#0f6a52] px-4 text-sm font-semibold text-white hover:bg-[#0c5944]"
-                render={<Link href="/quiz" />}
+        {/* DARK CTA BAND */}
+        <section className="relative overflow-hidden bg-[#0c3226] py-20 text-white md:py-24">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 10%, #4ade80 0%, transparent 40%), radial-gradient(circle at 90% 80%, #4ade80 0%, transparent 35%)",
+            }}
+          />
+          <div className="relative container mx-auto max-w-4xl px-4 text-center">
+            <p className="mb-5 inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/55">
+              <span className="h-px w-6 bg-white/40" />
+              Skip the rabbit hole
+            </p>
+            <h2 className="font-extrabold leading-[1.04] tracking-[-0.03em] text-[36px] sm:text-[44px] md:text-[52px]">
+              Get a plan{" "}
+              <span className="relative inline-block italic text-[#4ade80]">
+                <span className="relative z-10">tailored</span>
+              </span>{" "}
+              to your research.
+            </h2>
+            <p className="mx-auto mt-6 max-w-[480px] text-[15px] leading-[1.65] text-white/65">
+              Answer a few questions and we&rsquo;ll match compounds, safety flags, and vendor options to your
+              goals, experience, and risk tolerance.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/quiz"
+                className="inline-flex h-[52px] items-center gap-2.5 whitespace-nowrap rounded-[12px] bg-white px-7 text-[15px] font-extrabold text-[#103b2c] shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-transform hover:-translate-y-0.5"
               >
-                Find My Plan <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+                Find my plan
+                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+              </Link>
+              <Link
+                href="/peptides"
+                className="group inline-flex items-center gap-2 text-[14px] font-semibold text-white underline decoration-[#4ade80] decoration-2 underline-offset-[6px] transition-colors hover:text-[#4ade80]"
+              >
+                Or browse all peptides
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
+              </Link>
             </div>
-          </section>
-
-        </div>
+          </div>
+        </section>
       </main>
+      <Footer />
     </>
   );
 }

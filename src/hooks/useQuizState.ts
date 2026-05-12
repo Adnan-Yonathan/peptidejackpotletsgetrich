@@ -8,11 +8,19 @@ import { PLANNER_STEPS } from "@/data/planner-options";
 interface QuizState {
   currentStep: number;
   answers: Partial<PlannerAnswers>;
+  /**
+   * Unix-ms timestamp of when the user first reached the completed-quiz state.
+   * Persisted so a returning visitor (hours later) can be distinguished from
+   * someone who just landed on /quiz/results — used to gate the founding-cohort
+   * urgency banner.
+   */
+  completedAt: number | null;
   setAnswer: <K extends keyof PlannerAnswers>(key: K, value: PlannerAnswers[K]) => void;
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: number) => void;
   reset: () => void;
+  markCompletedNow: () => void;
   getCurrentStepName: () => PlannerStep;
   isComplete: () => boolean;
 }
@@ -41,6 +49,7 @@ export const useQuizState = create<QuizState>()(
     (set, get) => ({
       currentStep: 0,
       answers: defaultAnswers,
+      completedAt: null,
 
       setAnswer: (key, value) =>
         set((state) => ({
@@ -59,7 +68,12 @@ export const useQuizState = create<QuizState>()(
 
       goToStep: (step) => set({ currentStep: step }),
 
-      reset: () => set({ currentStep: 0, answers: defaultAnswers }),
+      reset: () => set({ currentStep: 0, answers: defaultAnswers, completedAt: null }),
+
+      // Idempotent: only stamps the first time the user reaches a completed quiz.
+      markCompletedNow: () => {
+        if (get().completedAt === null) set({ completedAt: Date.now() });
+      },
 
       getCurrentStepName: () => PLANNER_STEPS[get().currentStep],
 
@@ -75,11 +89,17 @@ export const useQuizState = create<QuizState>()(
           answers.femaleLifeStage &&
           answers.maleHormoneContext &&
           answers.activityLevel &&
+          answers.topProblems &&
+          answers.topProblems.length > 0 &&
           answers.experience &&
           answers.primaryGoalId &&
+          answers.healthConditions &&
           answers.medications &&
           answers.budget &&
+          answers.deliveryPreference &&
+          answers.monitoringWillingness &&
           answers.riskTolerance &&
+          answers.planStyle &&
           answers.timeframe
         );
       },

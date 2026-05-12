@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { QuizFooterCta } from "@/components/marketing/QuizFooterCta";
 import { PeptideBottleArt } from "@/components/peptide/PeptideBottleArt";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import {
 } from "@/data/peptides";
 import { getGoalsForPeptide } from "@/data/goals";
 import { formatCostRange, getPeptideCostEstimate } from "@/lib/costs";
-import { ArrowRight, Search, AlertTriangle, ShieldAlert, ClipboardCheck, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, Search, AlertTriangle, ShieldAlert, CheckCircle2, XCircle } from "lucide-react";
 
 const GOAL_FILTERS = [
   { key: "all", label: "All research goals", goalIds: [] },
@@ -265,9 +266,10 @@ function PeptidesDirectoryContent() {
   const activeGoalLabel = GOAL_FILTERS.find((filter) => filter.key === activeGoal)?.label ?? "All research goals";
 
   return (
-    <main className="flex-1 bg-[#f6f7f5] px-4 py-8">
+    <main className="flex-1 bg-[#f6f7f5]">
+      <section className="px-4 py-8">
       <div className="container mx-auto max-w-7xl">
-        <div className="mb-6 grid gap-4 xl:grid-cols-[1.8fr_1fr]">
+        <div className="mb-6">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
               Peptide Database
@@ -279,25 +281,6 @@ function PeptidesDirectoryContent() {
               Evidence-based insights to help you choose smarter. {allPeptides.length} peptides. Updated April 2026.
             </p>
           </div>
-
-          <Card className="border-emerald-100 bg-emerald-50/80 shadow-none">
-            <CardContent className="flex h-full flex-col justify-between gap-4 p-5 sm:flex-row sm:items-center">
-              <div className="flex items-start gap-3">
-                <div className="rounded-xl bg-white p-3 text-emerald-700 shadow-sm">
-                  <ClipboardCheck className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Not sure where to start?</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Take our 2-minute quiz to get a personalized peptide plan.
-                  </p>
-                </div>
-              </div>
-              <Button className="bg-emerald-900 hover:bg-emerald-800" render={<Link href="/quiz" />}>
-                Find My Plan <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
         </div>
 
         {compareSlugs.length > 0 && (
@@ -557,6 +540,12 @@ function PeptidesDirectoryContent() {
           </div>
         )}
       </div>
+      </section>
+      <QuizFooterCta
+        eyebrow="Personalized peptide routing"
+        title="Find the peptide path that fits your goal."
+        body="Take the quiz before choosing a compound or PDF. We match your goal, experience, budget, and monitoring comfort to the next best step in the funnel."
+      />
     </main>
   );
 }

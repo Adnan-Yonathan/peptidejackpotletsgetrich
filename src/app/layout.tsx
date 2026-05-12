@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import Script from "next/script";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Toaster } from "@/components/ui/sonner";
-import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
+import { SITE_CANONICAL_URL, SITE_NAME, SITE_DESCRIPTION } from "@/lib/constants";
 import "./globals.css";
 
 const GOOGLE_ANALYTICS_ID = "G-J13G6B02J2";
@@ -13,12 +14,56 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_CANONICAL_URL),
   title: {
     default: SITE_NAME,
     template: `%s | ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    url: "/",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
 };
+
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": `${SITE_CANONICAL_URL}#organization`,
+  name: SITE_NAME,
+  url: SITE_CANONICAL_URL,
+  logo: `${SITE_CANONICAL_URL}/opengraph-image`,
+  description: SITE_DESCRIPTION,
+} as const;
+
+const websiteLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": `${SITE_CANONICAL_URL}#website`,
+  name: SITE_NAME,
+  url: SITE_CANONICAL_URL,
+  description: SITE_DESCRIPTION,
+  publisher: { "@id": `${SITE_CANONICAL_URL}#organization` },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_CANONICAL_URL}/peptides?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+} as const;
 
 export default function RootLayout({
   children,
@@ -31,6 +76,8 @@ export default function RootLayout({
       className={`${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <JsonLd data={organizationLd} />
+        <JsonLd data={websiteLd} />
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
           strategy="afterInteractive"

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { BreadcrumbList } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -144,6 +146,13 @@ export default async function GuideDetailPage({
 
   return (
     <>
+      <BreadcrumbList
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Guides", href: "/guides" },
+          { name: guide.title, href: `/guides/${guide.slug}` },
+        ]}
+      />
       <Header />
       <main className="flex-1 bg-stone-50">
         {/* ── Hero ────────────────────────────────────────────── */}
@@ -364,6 +373,8 @@ export default async function GuideDetailPage({
 
             {/* ── Sticky right rail ── */}
             <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+              <StickyQuizCta />
+
               {/* Related Peptides */}
               {relatedPeptides.length > 0 && (
                 <div className={SECTION_CARD.replace("p-6", "p-5")}>

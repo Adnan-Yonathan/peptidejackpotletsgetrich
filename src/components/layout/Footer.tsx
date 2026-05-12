@@ -6,8 +6,8 @@ export function Footer() {
   return (
     <footer className="border-t bg-muted/40">
       <div className="container mx-auto max-w-7xl px-4 py-12">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4">
-          <div>
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-2 md:grid-cols-5">
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 font-bold text-lg">
               <FlaskConical className="h-5 w-5 text-primary" />
               PeptidePros
@@ -20,22 +20,34 @@ export function Footer() {
             <h3 className="font-semibold text-sm mb-3">Research</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/peptides" className="hover:text-foreground transition-colors">Peptide Directory</Link></li>
-              <li><Link href="/vendors" className="hover:text-foreground transition-colors">Vendor Comparison</Link></li>
+              <li><Link href="/vendors" className="hover:text-foreground transition-colors">Vendors</Link></li>
               <li><Link href="/stack-builder" className="hover:text-foreground transition-colors">Stack Builder</Link></li>
+              <li><Link href="/compare/peptides" className="hover:text-foreground transition-colors">Compare</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-sm mb-3">Get Started</h3>
+            <h3 className="font-semibold text-sm mb-3">Learn</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/guides" className="hover:text-foreground transition-colors">Guides</Link></li>
+              <li><Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
               <li><Link href="/quiz" className="hover:text-foreground transition-colors">Find Your Plan</Link></li>
-              <li><Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link></li>
-              <li><Link href="/about" className="hover:text-foreground transition-colors">About</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold text-sm mb-3">Legal</h3>
+            <h3 className="font-semibold text-sm mb-3">By Goal</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/goals/weight-loss-metabolism" className="hover:text-foreground transition-colors">Weight Loss</Link></li>
+              <li><Link href="/goals/muscle-performance" className="hover:text-foreground transition-colors">Muscle &amp; Performance</Link></li>
+              <li><Link href="/goals/recovery-injury-support" className="hover:text-foreground transition-colors">Recovery</Link></li>
+              <li><Link href="/goals/sleep-stress" className="hover:text-foreground transition-colors">Sleep &amp; Stress</Link></li>
+              <li><Link href="/goals/focus-brain-health" className="hover:text-foreground transition-colors">Focus</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm mb-3">Company</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link href="/about" className="hover:text-foreground transition-colors">About</Link></li>
+              <li><Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link></li>
             </ul>
           </div>
         </div>

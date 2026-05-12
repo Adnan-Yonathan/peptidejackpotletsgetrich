@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #fff; padding: 16px 20px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 6px; }
+  .badge { display: inline-flex; height: 20px; align-items: center; padding: 0 8px; border-radius: 9999px; font-size: 11px; font-weight: 500; border: 1px solid transparent; white-space: nowrap; gap: 4px; }
+  .badge-default { background: oklch(0.52 0.11 164); color: #fff; }
+  .badge-secondary { background: oklch(0.97 0 0); color: #334155; border-color: oklch(0.922 0 0); }
+  .badge-outline { background: transparent; color: #0f172a; border-color: oklch(0.922 0 0); }
+  .badge-destructive { background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.45 0.22 27); }
+  .badge-warning { background: oklch(0.97 0.07 90 / 0.12); color: oklch(0.5 0.14 90); border-color: oklch(0.8 0.1 90 / 0.35); }
+  .badge-tier-a { background: oklch(0.52 0.11 164 / 0.12); color: oklch(0.4 0.11 164); border-color: oklch(0.52 0.11 164 / 0.3); }
+  .badge-tier-c { background: oklch(0.97 0.07 90 / 0.12); color: oklch(0.5 0.14 90); border-color: oklch(0.8 0.1 90 / 0.35); }
+  .badge-tier-d { background: oklch(0.577 0.245 27.325 / 0.1); color: oklch(0.45 0.22 27); border-color: oklch(0.577 0.245 27.325 / 0.25); }
+</style>
+</head>
+<body>
+  <p class="section-title">Badge Variants</p>
+  <div class="row">
+    <span class="badge badge-default">Primary</span>
+    <span class="badge badge-secondary">Secondary</span>
+    <span class="badge badge-outline">Outline</span>
+    <span class="badge badge-destructive">Destructive</span>
+    <span class="badge badge-warning">Warning</span>
+  </div>
+  <p class="section-title">Evidence Tier Badges</p>
+  <div class="row">
+    <span class="badge badge-tier-a">Evidence Tier A</span>
+    <span class="badge badge-default">Evidence Tier B</span>
+    <span class="badge badge-tier-c">Evidence Tier C</span>
+    <span class="badge badge-tier-d">Evidence Tier D</span>
+  </div>
+  <p class="section-title">Compound Tags</p>
+  <div class="row">
+    <span class="badge badge-outline">Research Use Only</span>
+    <span class="badge badge-outline">High Risk</span>
+    <span class="badge badge-outline">Intermediate</span>
+    <span class="badge badge-warning">WADA Prohibited</span>
+    <span class="badge badge-destructive">FDA Safety Flag</span>
+    <span class="badge badge-secondary">Coming Soon</span>
+  </div>
+</body>
+</html>

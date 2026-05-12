@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #fff; padding: 16px 20px; }
+  .section-title { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 8px; }
+  .spacing-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+  .space-block { background: oklch(0.52 0.11 164 / 0.15); border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 4px; }
+  .space-label { font-size: 9px; font-weight: 700; color: #64748b; }
+  .space-val { font-size: 8px; color: #94a3b8; }
+  .example-section { display: flex; gap: 20px; margin-top: 4px; }
+  .example-card { border: 1px solid oklch(0.922 0 0); border-radius: 14px; padding: 0; overflow: hidden; width: 160px; }
+  .example-header { background: oklch(0.52 0.11 164 / 0.08); padding: 10px 14px; font-size: 11px; font-weight: 600; color: #103b2c; border-bottom: 1px solid oklch(0.922 0 0); }
+  .example-body { padding: 12px 14px; font-size: 10.5px; color: #64748b; line-height: 1.5; }
+  .example-footer { background: oklch(0.97 0 0); padding: 8px 14px; border-top: 1px solid oklch(0.922 0 0); font-size: 10px; color: #94a3b8; }
+</style>
+</head>
+<body>
+  <p class="section-title">Spacing Scale (px)</p>
+  <div class="spacing-row">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:4px;"></div>
+      <div class="space-label">4</div><div class="space-val">space-1</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:8px;"></div>
+      <div class="space-label">8</div><div class="space-val">space-2</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:12px;"></div>
+      <div class="space-label">12</div><div class="space-val">space-3</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:16px;"></div>
+      <div class="space-label">16</div><div class="space-val">space-4</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:24px;"></div>
+      <div class="space-label">24</div><div class="space-val">space-6</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:32px;"></div>
+      <div class="space-label">32</div><div class="space-val">space-8</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:48px;"></div>
+      <div class="space-label">48</div><div class="space-val">space-12</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div class="space-block" style="width:16px;height:80px;"></div>
+      <div class="space-label">80</div><div class="space-val">space-20</div>
+    </div>
+  </div>
+  <p class="section-title">Spacing in Context</p>
+  <div class="example-section">
+    <div class="example-card">
+      <div class="example-header">Card Header (py-10 px-14)</div>
+      <div class="example-body">Card content area with relaxed body text and py-12 px-14 spacing.</div>
+      <div class="example-footer">Footer row · py-8</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="background: oklch(0.52 0.11 164); height:32px;width:120px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;">Button h-32</div>
+      <div style="background: oklch(0.52 0.11 164); height:44px;width:160px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;">Large CTA h-44</div>
+      <div style="height:20px;width:90px;border-radius:9999px;background:oklch(0.97 0 0);border:1px solid oklch(0.922 0 0);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#475569;">Badge h-20</div>
+    </div>
+  </div>
+</body>
+</html>

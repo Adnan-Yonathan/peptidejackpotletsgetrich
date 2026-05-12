@@ -225,12 +225,8 @@ export function getStackCostEstimate(
   };
 }
 
-export function formatCostRange(low: number, high: number, currencyCode: CurrencyCode = "USD") {
-  if (Math.abs(low - high) < 0.01) {
-    return formatCurrencyValue(low, currencyCode);
-  }
-
-  return `${formatCurrencyValue(low, currencyCode)}-${formatCurrencyValue(high, currencyCode)}`;
+export function formatCostRange(_low: number, high: number, currencyCode: CurrencyCode = "USD") {
+  return formatCurrencyValue(high, currencyCode);
 }
 
 export function formatConfidenceLabel(confidence: CostConfidence) {

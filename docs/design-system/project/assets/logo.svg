@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" fill="none">
+  
+  <g transform="translate(4, 4)">
+    <path d="M10 2h20M14 2v12L4 34a4 4 0 0 0 3.33 6h25.34A4 4 0 0 0 36 34L26 14V2" stroke="#0f6a52" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+    <path d="M6.5 28h27" stroke="#0f6a52" stroke-width="2.2" stroke-linecap="round"></path>
+  </g>
+  
+  <text x="52" y="31" font-family="Manrope, system-ui, sans-serif" font-size="20" font-weight="700" fill="#103b2c" letter-spacing="-0.3">PeptidePros</text>
+</svg>

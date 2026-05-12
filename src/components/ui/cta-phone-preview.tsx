@@ -48,7 +48,7 @@ const COPY: Record<
   "stack-builder": {
     eyebrow: "Stack Preview",
     title: "Recovery + Growth",
-    subtitle: "Balanced peptide stack with compatibility checks, cost range, and cycle guidance.",
+    subtitle: "Balanced peptide stack with compatibility checks, cost estimate, and cycle guidance.",
     cta: "Load Stack",
     chips: ["BPC-157", "Ipamorelin", "TB-500"],
   },

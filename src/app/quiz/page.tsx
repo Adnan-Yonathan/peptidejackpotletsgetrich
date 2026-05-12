@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
+import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,16 @@ import {
   AGE_RANGE_OPTIONS,
   BUDGET_OPTIONS,
   COUNTRY_OPTIONS,
+  DELIVERY_PREFERENCE_OPTIONS,
   EXPERIENCE_OPTIONS,
   FEMALE_LIFE_STAGE_OPTIONS,
+  HEALTH_CONDITION_OPTIONS,
   MALE_HORMONE_CONTEXT_OPTIONS,
+  MEDICATION_OPTIONS,
+  MONITORING_OPTIONS,
   PLANNER_STEPS,
+  PLAN_STYLE_OPTIONS,
+  PROBLEM_OPTIONS,
   REPRODUCTIVE_STATUS_OPTIONS,
   SEX_OPTIONS,
   TIMEFRAME_OPTIONS,
@@ -42,6 +49,10 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
   activityLevel: {
     title: "What is your current activity level?",
     subtitle: "Training output helps separate recovery, performance, and general wellness needs.",
+  },
+  topProblems: {
+    title: "What problems are you trying to fix first?",
+    subtitle: "Pick up to three. This helps route overlapping goals like focus, sleep, recovery, and stress.",
   },
   experience: {
     title: "How experienced are you with peptide research?",
@@ -67,13 +78,33 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     title: "What male hormone or prostate context applies?",
     subtitle: "This helps avoid casual layering of GH-axis or growth-signaling compounds.",
   },
+  healthConditions: {
+    title: "Any health context we should account for?",
+    subtitle: "Optional, but important. These answers tighten safety filters and monitoring notes.",
+  },
+  medications: {
+    title: "Any medication context we should account for?",
+    subtitle: "Optional. Medication classes can change which compounds deserve caution or exclusion.",
+  },
   budget: {
     title: "What budget lane fits best?",
     subtitle: "This helps keep the recommendation practical.",
   },
+  deliveryPreference: {
+    title: "What delivery route fits your comfort level?",
+    subtitle: "This helps avoid recommendations that look good on paper but are unrealistic for you.",
+  },
+  monitoringWillingness: {
+    title: "How much tracking are you willing to do?",
+    subtitle: "Some protocols need more symptom, lab, or progress monitoring than others.",
+  },
   riskTolerance: {
     title: "What is your risk tolerance?",
     subtitle: "1 is very conservative. 5 is open to higher-risk research compounds.",
+  },
+  planStyle: {
+    title: "What style of plan do you want?",
+    subtitle: "This separates safety appetite from execution style.",
   },
   timeframe: {
     title: "What timeline are you working with?",
@@ -84,6 +115,14 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     subtitle: "We will use this to connect your result to your saved experience later.",
   },
 };
+
+const RESULT_LOADING_STEPS = [
+  "Securing your quiz responses",
+  "Reviewing your goal and risk profile",
+  "Matching compounds to your target outcome",
+  "Checking stack fit and compatibility",
+  "Building your personalized plan",
+] as const;
 
 function getVisibleSteps(answers: Partial<PlannerAnswers>) {
   return PLANNER_STEPS.filter((step) => {
@@ -96,12 +135,32 @@ function getVisibleSteps(answers: Partial<PlannerAnswers>) {
 export default function QuizPage() {
   const router = useRouter();
   const { currentStep, answers, setAnswer, goToStep } = useQuizState();
+  const [isGeneratingResults, setIsGeneratingResults] = useState(false);
+  const [activeLoadingStep, setActiveLoadingStep] = useState(0);
   const visibleSteps = useMemo(() => getVisibleSteps(answers), [answers]);
   const stepName = visibleSteps[Math.min(currentStep, visibleSteps.length - 1)];
   const progress = ((Math.min(currentStep, visibleSteps.length - 1) + 1) / visibleSteps.length) * 100;
 
+  useEffect(() => {
+    if (!isGeneratingResults) return;
+
+    if (activeLoadingStep >= RESULT_LOADING_STEPS.length) {
+      const completeTimer = window.setTimeout(() => {
+        router.push("/quiz/results");
+      }, 450);
+
+      return () => window.clearTimeout(completeTimer);
+    }
+
+    const stepTimer = window.setTimeout(() => {
+      setActiveLoadingStep((current) => current + 1);
+    }, activeLoadingStep === 0 ? 700 : 850);
+
+    return () => window.clearTimeout(stepTimer);
+  }, [activeLoadingStep, isGeneratingResults, router]);
+
   const toggleArrayValue = (
-    key: "secondaryGoalIds",
+    key: "secondaryGoalIds" | "topProblems" | "healthConditions" | "medications",
     value: string,
     max?: number
   ) => {
@@ -116,7 +175,8 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentStep >= visibleSteps.length - 1) {
-      router.push("/quiz/results");
+      setActiveLoadingStep(0);
+      setIsGeneratingResults(true);
       return;
     }
 
@@ -124,6 +184,7 @@ export default function QuizPage() {
   };
 
   const handleBack = () => {
+    if (isGeneratingResults) return;
     goToStep(Math.max(currentStep - 1, 0));
   };
 
@@ -137,6 +198,8 @@ export default function QuizPage() {
         return Boolean(answers.sex);
       case "activityLevel":
         return Boolean(answers.activityLevel);
+      case "topProblems":
+        return (answers.topProblems?.length ?? 0) > 0;
       case "experience":
         return Boolean(answers.experience);
       case "primaryGoalId":
@@ -147,10 +210,20 @@ export default function QuizPage() {
         return Boolean(answers.femaleLifeStage);
       case "maleHormoneContext":
         return Boolean(answers.maleHormoneContext);
+      case "healthConditions":
+        return true;
+      case "medications":
+        return true;
       case "budget":
         return Boolean(answers.budget);
+      case "deliveryPreference":
+        return Boolean(answers.deliveryPreference);
+      case "monitoringWillingness":
+        return Boolean(answers.monitoringWillingness);
       case "riskTolerance":
         return Boolean(answers.riskTolerance);
+      case "planStyle":
+        return Boolean(answers.planStyle);
       case "timeframe":
         return Boolean(answers.timeframe);
       case "email":
@@ -181,25 +254,42 @@ export default function QuizPage() {
 
           <Card>
             <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl">{questionCopy.title}</CardTitle>
-              <p className="text-sm text-muted-foreground">{questionCopy.subtitle}</p>
+              <CardTitle className="text-2xl">
+                {isGeneratingResults ? "Generating your personalized plan" : questionCopy.title}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {isGeneratingResults
+                  ? "The planner is compiling your answers into a stack recommendation."
+                  : questionCopy.subtitle}
+              </p>
             </CardHeader>
 
-            <CardContent>{renderQuestion()}</CardContent>
+            <CardContent>
+              {isGeneratingResults ? renderLoadingChecklist() : renderQuestion()}
+            </CardContent>
           </Card>
 
           <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+            <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGeneratingResults}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
-            <Button onClick={handleNext} disabled={!canProceed()}>
-              {currentStep >= visibleSteps.length - 1 ? "Generate My Program" : "Next"}
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button onClick={handleNext} disabled={!canProceed() || isGeneratingResults}>
+              {isGeneratingResults
+                ? "Analyzing your responses..."
+                : currentStep >= visibleSteps.length - 1
+                  ? "Generate My Program"
+                  : "Next"}
+              {isGeneratingResults ? (
+                <LoaderCircle className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowRight className="ml-2 h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
       </main>
+      <Footer />
     </>
   );
 
@@ -260,6 +350,15 @@ export default function QuizPage() {
         return (
           <OptionGrid options={ACTIVITY_LEVEL_OPTIONS} value={answers.activityLevel} onSelect={(value) => setAnswer("activityLevel", value)} />
         );
+      case "topProblems":
+        return (
+          <MultiSelectGrid
+            options={PROBLEM_OPTIONS}
+            selectedValues={answers.topProblems ?? []}
+            onToggle={(value) => toggleArrayValue("topProblems", value, 3)}
+            max={3}
+          />
+        );
       case "experience":
         return (
           <OptionGrid options={EXPERIENCE_OPTIONS} value={answers.experience} onSelect={(value) => setAnswer("experience", value)} />
@@ -279,7 +378,9 @@ export default function QuizPage() {
         );
       case "secondaryGoalIds":
         return (
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Optional. Pick up to two.</p>
+            <div className="flex flex-wrap gap-2">
             {GOALS.filter((goal) => goal.id !== answers.primaryGoalId).map((goal) => {
               const selected = (answers.secondaryGoalIds ?? []).includes(goal.id);
               const disabled = !selected && (answers.secondaryGoalIds?.length ?? 0) >= 2;
@@ -298,6 +399,7 @@ export default function QuizPage() {
                 </Badge>
               );
             })}
+            </div>
           </div>
         );
       case "reproductiveStatus":
@@ -324,9 +426,41 @@ export default function QuizPage() {
             onSelect={(value) => setAnswer("maleHormoneContext", value)}
           />
         );
+      case "healthConditions":
+        return (
+          <OptionalMultiSelectGrid
+            options={HEALTH_CONDITION_OPTIONS}
+            selectedValues={answers.healthConditions ?? []}
+            onToggle={(value) => toggleArrayValue("healthConditions", value)}
+          />
+        );
+      case "medications":
+        return (
+          <OptionalMultiSelectGrid
+            options={MEDICATION_OPTIONS}
+            selectedValues={answers.medications ?? []}
+            onToggle={(value) => toggleArrayValue("medications", value)}
+          />
+        );
       case "budget":
         return (
           <OptionGrid options={BUDGET_OPTIONS} value={answers.budget} onSelect={(value) => setAnswer("budget", value)} />
+        );
+      case "deliveryPreference":
+        return (
+          <OptionGrid
+            options={DELIVERY_PREFERENCE_OPTIONS}
+            value={answers.deliveryPreference}
+            onSelect={(value) => setAnswer("deliveryPreference", value)}
+          />
+        );
+      case "monitoringWillingness":
+        return (
+          <OptionGrid
+            options={MONITORING_OPTIONS}
+            value={answers.monitoringWillingness}
+            onSelect={(value) => setAnswer("monitoringWillingness", value)}
+          />
         );
       case "riskTolerance":
         return (
@@ -346,6 +480,14 @@ export default function QuizPage() {
             ))}
           </div>
         );
+      case "planStyle":
+        return (
+          <OptionGrid
+            options={PLAN_STYLE_OPTIONS}
+            value={answers.planStyle}
+            onSelect={(value) => setAnswer("planStyle", value)}
+          />
+        );
       case "timeframe":
         return (
           <OptionGrid options={TIMEFRAME_OPTIONS} value={answers.timeframe} onSelect={(value) => setAnswer("timeframe", value)} />
@@ -362,6 +504,61 @@ export default function QuizPage() {
       default:
         return null;
     }
+  }
+
+  function renderLoadingChecklist() {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <LoaderCircle className="h-4 w-4 animate-spin text-[#0f6a52]" />
+            <p className="text-sm font-medium text-[#103b2c]">
+              This usually takes just a few seconds.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {RESULT_LOADING_STEPS.map((item, index) => {
+              const isComplete = index < activeLoadingStep;
+              const isActive = index === activeLoadingStep && activeLoadingStep < RESULT_LOADING_STEPS.length;
+
+              return (
+                <div
+                  key={item}
+                  className={`flex items-center gap-3 rounded-lg border px-3 py-3 transition-colors ${
+                    isComplete
+                      ? "border-emerald-200 bg-emerald-50"
+                      : isActive
+                        ? "border-[#0f6a52]/20 bg-white"
+                        : "border-stone-200 bg-white/70"
+                  }`}
+                >
+                  {isComplete ? (
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    </div>
+                  ) : isActive ? (
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#0f6a52]/10">
+                      <LoaderCircle className="h-4 w-4 animate-spin text-[#0f6a52]" />
+                    </div>
+                  ) : (
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-stone-300 bg-white">
+                      <div className="h-2 w-2 rounded-full bg-stone-300" />
+                    </div>
+                  )}
+                  <span
+                    className={`text-sm ${
+                      isComplete || isActive ? "text-[#103b2c]" : "text-muted-foreground"
+                    }`}
+                  >
+                    {item}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 
@@ -388,15 +585,68 @@ function OptionGrid<T extends string>({
   );
 }
 
+function MultiSelectGrid({
+  options,
+  selectedValues,
+  onToggle,
+  max,
+}: {
+  options: Array<{ id: string; label: string; description: string }>;
+  selectedValues: string[];
+  onToggle: (value: string) => void;
+  max?: number;
+}) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {options.map((option) => {
+        const selected = selectedValues.includes(option.id);
+        const disabled = !selected && typeof max === "number" && selectedValues.length >= max;
+
+        return (
+          <OptionButton
+            key={option.id}
+            selected={selected}
+            disabled={disabled}
+            title={option.label}
+            description={option.description}
+            onClick={() => {
+              if (!disabled) onToggle(option.id);
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function OptionalMultiSelectGrid({
+  options,
+  selectedValues,
+  onToggle,
+}: {
+  options: Array<{ id: string; label: string; description: string }>;
+  selectedValues: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">Optional. Select all that apply, or continue if none apply.</p>
+      <MultiSelectGrid options={options} selectedValues={selectedValues} onToggle={onToggle} />
+    </div>
+  );
+}
+
 function OptionButton({
   selected,
   disabled,
   title,
+  description,
   onClick,
 }: {
   selected: boolean;
   disabled?: boolean;
   title: string;
+  description?: string;
   onClick: () => void;
 }) {
   return (
@@ -408,6 +658,9 @@ function OptionButton({
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
       <div className="font-medium">{title}</div>
+      {description && (
+        <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+      )}
     </button>
   );
 }

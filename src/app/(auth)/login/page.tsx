@@ -1,14 +1,17 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Signup1 } from "@/components/ui/signup-1";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +24,6 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-
-    const redirectTo =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("redirectTo") ?? "/dashboard"
-        : "/dashboard";
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -50,7 +48,7 @@ export default function LoginPage() {
       submitText={loading ? "Logging in..." : "Log in"}
       footerText="Don&apos;t have an account?"
       footerLinkText="Sign up"
-      footerLinkUrl="/signup"
+      footerLinkUrl={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
       email={email}
       password={password}
       onEmailChange={setEmail}
@@ -59,5 +57,13 @@ export default function LoginPage() {
       loading={loading}
       showGoogleButton={false}
     />
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

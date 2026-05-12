@@ -1,5 +1,20 @@
 import { GOALS, getGoalById, type GoalData } from "@/data/goals";
 
+export interface CategoryHubPdfCta {
+  /** Headline shown on the PDF card. e.g. "The Recovery Stack Protocol" */
+  title: string;
+  /** Short pitch under the headline. */
+  description: string;
+  /** Bullet points (3–5) summarizing what's inside the PDF. */
+  bullets: string[];
+  /** Price label, e.g. "$19" or "From $9". Leave empty to hide. */
+  price?: string;
+  /** External purchase URL — set later as products go live. Use "#" as placeholder. */
+  productSlug: string;
+  /** Optional badge (e.g. "New", "Best Seller"). */
+  badge?: string;
+}
+
 export interface CategoryHubData {
   id: string;
   slug: string;
@@ -12,6 +27,8 @@ export interface CategoryHubData {
   vendorHeadline: string;
   imageSrc: string;
   imageAlt: string;
+  /** Optional PDF purchase CTA shown in the right rail of the goal hub page. */
+  pdfCta?: CategoryHubPdfCta;
 }
 
 export const CATEGORY_HUBS: CategoryHubData[] = [
@@ -28,6 +45,20 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for metabolic and body-composition research",
     imageSrc: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Athlete training with a focus on weight loss and conditioning",
+    pdfCta: {
+      title: "Fat Loss & Metabolism Protocol",
+      description:
+        "Tirzepatide and semaglutide protocol — titration math, side-effect management, and a maintenance plan that prevents rebound.",
+      bullets: [
+        "Titration schedule for tirzepatide & semaglutide (start to maintenance)",
+        "Side-effect management playbook (Ozempic face, GI, fatigue)",
+        "Maintenance dosing to keep weight off after the cycle",
+        "Vendor & cost worksheet (compounded vs. brand)",
+      ],
+      price: "$49",
+      productSlug: "fat-loss-metabolism-protocol",
+      badge: "Bestseller",
+    },
   },
   {
     id: "muscle-performance",
@@ -42,6 +73,19 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for performance and GH-axis research",
     imageSrc: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Strength training scene representing muscle and performance goals",
+    pdfCta: {
+      title: "Muscle Growth & Strength Protocol",
+      description:
+        "GH-axis stack (CJC-1295 + Ipamorelin + IGF-1 LR3), training periodization, and post-cycle recovery.",
+      bullets: [
+        "GH-secretagogue stack with full reconstitution math",
+        "Training split that pairs with the dosing schedule",
+        "Sleep, nutrition, and recovery checklist",
+        "Cycle-end taper to protect HPA-axis function",
+      ],
+      price: "$49",
+      productSlug: "muscle-growth-strength-protocol",
+    },
   },
   {
     id: "recovery-injury-support",
@@ -56,6 +100,20 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for tissue-repair research",
     imageSrc: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Recovery and mobility session focused on return to training",
+    pdfCta: {
+      title: "Tissue Repair & Recovery Protocol",
+      description:
+        "BPC-157 + TB-500 protocol for soft-tissue, tendon, and post-surgery recovery — dosing, sites, and timeline.",
+      bullets: [
+        "BPC-157 + TB-500 dosing for acute vs. chronic injury",
+        "Local vs. systemic injection-site map",
+        "8-week timeline with milestones to track progress",
+        "When to add GHK-Cu, IGF-1 LR3, or stop",
+      ],
+      price: "$49",
+      productSlug: "tissue-repair-recovery-protocol",
+      badge: "Popular",
+    },
   },
   {
     id: "sleep-stress",
@@ -70,6 +128,19 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for sleep and mood-oriented research",
     imageSrc: "https://images.unsplash.com/photo-1511295742362-92c96b1cf484?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Calm evening routine representing sleep and stress support",
+    pdfCta: {
+      title: "Sleep & Relaxation Protocol",
+      description:
+        "DSIP, Selank, and Semax protocol for deep sleep, anxiety relief, and stress resilience without traditional pharmaceuticals.",
+      bullets: [
+        "Evening DSIP dosing for deep-sleep recovery",
+        "Selank micro-dose schedule for daytime calm",
+        "Stack timing so peptides don’t fight each other",
+        "Sleep-hygiene checklist to multiply results",
+      ],
+      price: "$49",
+      productSlug: "sleep-relaxation-protocol",
+    },
   },
   {
     id: "focus-brain-health",
@@ -84,6 +155,19 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for cognitive and neuroprotection research",
     imageSrc: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Person working with intense focus for a brain health theme",
+    pdfCta: {
+      title: "Cognitive & Neuroprotection Protocol",
+      description:
+        "Semax, Selank, and Dihexa protocol for sustained focus, faster recall, and brain-fog relief.",
+      bullets: [
+        "Semax intranasal dosing for deep-work blocks",
+        "Stack pairing for focus + mood without anxiety",
+        "Cycle on/off schedule to avoid tolerance",
+        "Cognitive baseline test to track progress",
+      ],
+      price: "$49",
+      productSlug: "cognitive-neuroprotection-protocol",
+    },
   },
   {
     id: "longevity-healthy-aging",
@@ -98,6 +182,19 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for longevity-focused research",
     imageSrc: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Active healthy aging lifestyle scene outdoors",
+    pdfCta: {
+      title: "Longevity & Anti-Aging Protocol",
+      description:
+        "Epitalon, MOTS-c, and Humanin protocol for mitochondrial health, cellular resilience, and healthy-aging biomarkers.",
+      bullets: [
+        "Annual Epitalon cycle calendar",
+        "MOTS-c metabolic-flexibility protocol",
+        "Biomarker panel to actually measure results",
+        "Stack pairing with NAD+ and senolytics",
+      ],
+      price: "$49",
+      productSlug: "longevity-anti-aging-protocol",
+    },
   },
   {
     id: "skin-hair-appearance",
@@ -112,6 +209,20 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for skin and cosmetic research",
     imageSrc: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Beauty and appearance-focused portrait representing skin and hair goals",
+    pdfCta: {
+      title: "Skin & Hair Protocol",
+      description:
+        "GHK-Cu, Matrixyl, and PTD-DBM protocol for skin elasticity, hair density, and tan/pigmentation — topical + injectable.",
+      bullets: [
+        "Topical GHK-Cu serum recipe & ratios",
+        "Hair-density protocol (PTD-DBM, GHK-Cu, microneedling)",
+        "Melanotan tan-and-maintenance schedule",
+        "Side-effect watch list (moles, freckles, BP)",
+      ],
+      price: "$49",
+      productSlug: "skin-hair-protocol",
+      badge: "New",
+    },
   },
   {
     id: "libido-hormone-support",
@@ -126,6 +237,19 @@ export const CATEGORY_HUBS: CategoryHubData[] = [
     vendorHeadline: "Trusted vendors for libido and reproductive-axis research",
     imageSrc: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=900&auto=format&fit=crop&q=60",
     imageAlt: "Connected couple representing libido and hormone support goals",
+    pdfCta: {
+      title: "Sexual Health & Libido Protocol",
+      description:
+        "PT-141, Kisspeptin, and Oxytocin protocol for libido, arousal, and reproductive-axis support — for men and women.",
+      bullets: [
+        "PT-141 dosing for on-demand vs. baseline use",
+        "Kisspeptin protocol for reproductive-axis tone",
+        "Side-effect navigation (flushing, BP, nausea)",
+        "Stack timing for couples",
+      ],
+      price: "$49",
+      productSlug: "sexual-health-libido-protocol",
+    },
   },
 ];
 

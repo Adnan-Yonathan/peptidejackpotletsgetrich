@@ -1,7 +1,10 @@
 export const SITE_NAME = "PeptidePros";
 export const SITE_DESCRIPTION =
-  "Research peptides with confidence. Personalized plans, trusted vendor comparisons, and trackable stacks.";
+  "Independent peptide research and vendor comparison. Evidence-graded compound profiles, regulatory flags, and vendor purity testing. We don't sell peptides — we help researchers compare them.";
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+// Production canonical, used by sitemap/robots/llms.txt. Always points to the public domain
+// regardless of NEXT_PUBLIC_APP_URL (which may be localhost in dev or a preview URL).
+export const SITE_CANONICAL_URL = "https://peptidepros.io";
 
 export const QUIZ_STEPS = [
   "goal",
@@ -38,10 +41,12 @@ export const STACKING_OPTIONS = [
   { value: "advanced_stack", label: "Advanced Stack", description: "3–5 peptides for experienced users" },
 ] as const;
 
+// "Tools" is rendered as a hover dropdown in the header (not a flat link).
+// See ToolsDropdown.tsx and src/lib/tools.ts.
 export const NAV_LINKS = [
   { href: "/peptides", label: "Peptides" },
-  { href: "/stack-builder", label: "Stack Builder" },
   { href: "/guides", label: "Guides" },
+  { href: "/blog", label: "Blog" },
   { href: "/vendors", label: "Vendors" },
   { href: "/quiz", label: "Find Your Plan" },
   { href: "/protocol", label: "PeptidePros +" },
@@ -51,6 +56,7 @@ export const DASHBOARD_NAV = [
   { href: "/dashboard", label: "Overview", icon: "layout-dashboard" },
   { href: "/dashboard/plans", label: "My Plans", icon: "clipboard-list" },
   { href: "/dashboard/stacks", label: "My Stacks", icon: "layers" },
+  { href: "/dashboard/purchases", label: "My PDFs", icon: "file-text" },
   { href: "/dashboard/profile", label: "Profile", icon: "user" },
 ] as const;
 

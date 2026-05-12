@@ -81,7 +81,7 @@ export function TestimonialsColumn(props: {
           ease: "linear",
           repeatType: "loop",
         }}
-        className="flex flex-col gap-6 bg-background pb-6"
+        className="flex flex-col gap-6 bg-[#fbfaf7] pb-6"
       >
         {new Array(2).fill(0).map((_, index) => (
           <React.Fragment key={index}>
@@ -115,7 +115,7 @@ export function TestimonialsColumn(props: {
 
 export function TestimonialsSection() {
   return (
-    <section className="relative my-20 bg-background">
+    <section className="relative my-20 bg-[#fbfaf7]">
       <div className="container z-10 mx-auto max-w-6xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

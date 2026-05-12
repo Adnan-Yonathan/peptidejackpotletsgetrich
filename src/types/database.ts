@@ -143,6 +143,23 @@ export interface Subscription {
   created_at: string;
 }
 
+export interface Purchase {
+  id: string;
+  user_id: string;
+  product_slug: string;
+  stripe_checkout_session_id: string;
+  stripe_payment_intent_id: string | null;
+  stripe_customer_id: string | null;
+  status: "pending" | "completed" | "failed" | "refunded";
+  amount_total: number | null;
+  currency: string | null;
+  receipt_email: string | null;
+  metadata: Record<string, unknown>;
+  purchased_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AffiliateEvent {
   id: string;
   user_id: string | null;

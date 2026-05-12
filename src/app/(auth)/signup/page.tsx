@@ -1,15 +1,18 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Signup1 } from "@/components/ui/signup-1";
 import { SITE_URL } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,11 +25,6 @@ export default function SignupPage() {
     }
 
     setLoading(true);
-
-    const redirectTo =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("redirectTo") ?? "/dashboard"
-        : "/dashboard";
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -60,7 +58,7 @@ export default function SignupPage() {
       submitText={loading ? "Creating account..." : "Create an account"}
       footerText="Already have an account?"
       footerLinkText="Log in"
-      footerLinkUrl="/login"
+      footerLinkUrl={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
       email={email}
       password={password}
       onEmailChange={setEmail}
@@ -69,5 +67,13 @@ export default function SignupPage() {
       loading={loading}
       showGoogleButton={false}
     />
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }

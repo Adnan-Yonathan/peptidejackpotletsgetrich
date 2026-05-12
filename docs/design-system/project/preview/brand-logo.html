@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: #0e2e1f; padding: 24px; display: flex; gap: 16px; align-items: stretch; }
+  .cell { display: flex; flex-direction: column; gap: 10px; }
+  .label { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); }
+  .swatch { border-radius: 12px; padding: 20px 24px; display: flex; align-items: center; gap: 12px; flex: 1; }
+
+  /* Flask icon SVG path reused inline */
+  .logo-text-dark  { font-size: 20px; font-weight: 700; color: #e7f4ee; letter-spacing: -0.02em; }
+  .logo-text-mid   { font-size: 20px; font-weight: 700; color: #103b2c; letter-spacing: -0.02em; }
+  .logo-text-light { font-size: 20px; font-weight: 700; color: #103b2c; letter-spacing: -0.02em; }
+
+  .tagline { font-size: 10px; font-weight: 500; color: rgba(231,244,238,0.5); margin-top: 3px; letter-spacing: 0.01em; }
+  .tagline-mid   { font-size: 10px; font-weight: 500; color: #64748b; margin-top: 3px; }
+  .tagline-light { font-size: 10px; font-weight: 500; color: #94a3b8; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+  <!-- 1: Full dark lockup — the hero -->
+  <div class="cell" style="flex:1.2;">
+    <p class="label">Full lockup</p>
+    <div class="swatch" style="background:#103b2c; border:1px solid rgba(255,255,255,0.08);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 2h6M10 2v7L4 19a2.5 2.5 0 0 0 2 4h12a2.5 2.5 0 0 0 2-4L14 9V2"/>
+        <line x1="6" y1="15" x2="18" y2="15"/>
+      </svg>
+      <div>
+        <div class="logo-text-dark">PeptidePros</div>
+        <div class="tagline">Research-grade decision support</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: Mid-tone — warm cream (marketing header) -->
+  <div class="cell" style="flex:1.2;">
+    <p class="label">Marketing header</p>
+    <div class="swatch" style="background:#fbfaf7; border:1px solid rgba(0,0,0,0.07);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0f6a52" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 2h6M10 2v7L4 19a2.5 2.5 0 0 0 2 4h12a2.5 2.5 0 0 0 2-4L14 9V2"/>
+        <line x1="6" y1="15" x2="18" y2="15"/>
+      </svg>
+      <div>
+        <div class="logo-text-mid">PeptidePros</div>
+        <div class="tagline-mid">Research-grade decision support</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3: Icon-only mark -->
+  <div class="cell">
+    <p class="label">Mark only</p>
+    <div class="swatch" style="background:#103b2c; border:1px solid rgba(255,255,255,0.08); justify-content:center; padding:20px 28px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 2h6M10 2v7L4 19a2.5 2.5 0 0 0 2 4h12a2.5 2.5 0 0 0 2-4L14 9V2"/>
+        <line x1="6" y1="15" x2="18" y2="15"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 4: Compact nav size -->
+  <div class="cell">
+    <p class="label">Compact nav</p>
+    <div class="swatch" style="background:#0e2e1f; border:1px solid rgba(255,255,255,0.06); padding:14px 20px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 2h6M10 2v7L4 19a2.5 2.5 0 0 0 2 4h12a2.5 2.5 0 0 0 2-4L14 9V2"/>
+        <line x1="6" y1="15" x2="18" y2="15"/>
+      </svg>
+      <span style="font-size:15px;font-weight:700;color:#e7f4ee;letter-spacing:-0.02em;">PeptidePros</span>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -3,6 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { QuizFooterCta } from "@/components/marketing/QuizFooterCta";
+import { BreadcrumbList, JsonLd } from "@/components/seo/JsonLd";
+import { SITE_CANONICAL_URL } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -39,9 +42,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const peptide = getPeptideBySlug(slug);
   if (!peptide) return { title: "Peptide Not Found" };
+  const synonyms = peptide.synonyms.length ? ` (${peptide.synonyms.slice(0, 2).join(", ")})` : "";
   return {
-    title: `${peptide.name} - PeptidePros`,
+    title: `${peptide.name}${synonyms}`,
     description: peptide.shortDescription,
+    alternates: {
+      canonical: `/peptides/${peptide.slug}`,
+    },
   };
 }
 
@@ -108,6 +115,20 @@ export default async function PeptideDetailPage({
   const regionalVendors = getRegionalVendorOptionsForPeptide(peptide.id);
   const showQuizRecommendation = fromQuiz === "1";
 
+  const drugSchema = {
+    "@context": "https://schema.org",
+    "@type": "Drug",
+    name: peptide.name,
+    alternateName: peptide.synonyms,
+    description: peptide.shortDescription,
+    mechanismOfAction: peptide.mechanism,
+    administrationRoute: peptide.administrationRoutes,
+    legalStatus: peptide.regulatoryStatus.replace(/_/g, " "),
+    isProprietary: false,
+    url: `${SITE_CANONICAL_URL}/peptides/${peptide.slug}`,
+    proprietaryName: peptide.synonyms[0] ?? peptide.name,
+  };
+
   const flagDisclaimers = disclaimers.slice(1);
   const primaryRoute = peptide.administrationRoutes[0] ?? "—";
   const tierStat = `Tier ${peptide.evidenceTier}`;
@@ -117,6 +138,14 @@ export default async function PeptideDetailPage({
 
   return (
     <>
+      <BreadcrumbList
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Peptides", href: "/peptides" },
+          { name: peptide.name, href: `/peptides/${peptide.slug}` },
+        ]}
+      />
+      <JsonLd data={drugSchema} />
       <Header />
       <main className="flex-1 bg-stone-50">
         {/* ── Hero ────────────────────────────────────────────── */}
@@ -780,6 +809,11 @@ export default async function PeptideDetailPage({
             {disclaimers[0].text}
           </p>
         </section>
+        <QuizFooterCta
+          eyebrow="Personalized peptide routing"
+          title={`Find the right path for ${peptide.name}.`}
+          body="Take the quiz before choosing a compound, vendor, or PDF. We match your goal, experience, budget, and monitoring comfort to the next best step in the funnel."
+        />
       </main>
       <Footer />
     </>

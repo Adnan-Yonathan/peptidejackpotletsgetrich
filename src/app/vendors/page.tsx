@@ -1,25 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  BadgeCheck,
-  ChevronRight,
-  CircleDollarSign,
-  ClipboardCheck,
-  Globe,
-  ShieldCheck,
-  Star,
-  Truck,
-} from "lucide-react";
+import { ArrowRight, Check, Globe, ShieldCheck, Truck } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { getPeptideBySlug } from "@/data/peptides";
 import { getActiveVendors, type VendorData } from "@/data/vendors";
 import {
-  getListingCurrencyCode,
-  getListingPriceBounds,
   getVendorListingsForPeptide,
   getVendorListingsForVendor,
   type ResolvedVendorListing,
@@ -31,10 +18,12 @@ import {
   getPriceVisibility,
 } from "@/lib/compare-vendors";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
+import landingHeroImage from "../../../images/idktoomany.png";
 
 export const metadata: Metadata = {
-  title: "Vendor Comparison",
-  description: "Compare peptide vendors by Trustpilot rating, shipping speed, documentation quality, and product coverage.",
+  title: "Best Peptide Vendors",
+  description:
+    "Independent peptide vendor rankings based on trust signals, shipping clarity, documentation strength, and product coverage.",
 };
 
 type ComparedVendor = {
@@ -51,6 +40,7 @@ type ComparedVendor = {
 
 const DOC_RANK = { basic: 1, solid: 2, strong: 3 } as const;
 const PRICE_RANK = { unclear: 0, partial: 1, visible: 2 } as const;
+const UPDATED_AT = "May 2026";
 
 function getShippingLeadDays(value?: string) {
   if (!value) return null;
@@ -61,20 +51,6 @@ function getShippingLeadDays(value?: string) {
 
   const singleMatch = value.match(/(\d+)\s*(?:business )?day/);
   return singleMatch ? Number(singleMatch[1]) : null;
-}
-
-function getCoverageText(item: ComparedVendor) {
-  if (item.listing) {
-    return item.listing.shippingRegions;
-  }
-
-  if (item.vendor.shippingRegions) {
-    return item.vendor.shippingRegions;
-  }
-
-  return item.listings.length > 0
-    ? item.listings.slice(0, 3).map((entry) => entry.peptide?.name ?? entry.peptideId).join(", ")
-    : "Vendor profile available";
 }
 
 function getVendorHeadline(item: ComparedVendor) {
@@ -92,6 +68,52 @@ function getVendorHeadline(item: ComparedVendor) {
   const shippingLeadDays = getShippingLeadDays(item.vendor.shippingTimeframe);
   if (shippingLeadDays !== null && shippingLeadDays <= 2) return "Fast shipping profile";
   return "Vendor profile worth checking";
+}
+
+function getCoverageSummary(item: ComparedVendor) {
+  if (item.listings.length > 0) {
+    return `${item.listings.length}+ mapped listings`;
+  }
+
+  return `${item.vendor.peptideIds.length}+ tracked peptides`;
+}
+
+function getShippingSummary(item: ComparedVendor) {
+  return item.vendor.shippingTimeframe ?? item.listing?.shippingRegions ?? "Verify on site";
+}
+
+function getRegionSummary(item: ComparedVendor) {
+  return item.listing?.country ?? item.vendor.headquarters ?? "Global";
+}
+
+function getRatingText(vendor: VendorData) {
+  if (!vendor.trustpilotRating) return "No Trustpilot data";
+  return typeof vendor.trustpilotReviewCount === "number"
+    ? `${vendor.trustpilotRating}/5 · ${vendor.trustpilotReviewCount} reviews`
+    : `${vendor.trustpilotRating}/5`;
+}
+
+function getMethodologyPoints(peptideName?: string) {
+  return [
+    {
+      eyebrow: "Documentation",
+      body: peptideName
+        ? `${peptideName} listing quality, COA access, and test visibility.`
+        : "COA access, listing depth, and testing visibility.",
+    },
+    {
+      eyebrow: "Reputation",
+      body: "Trustpilot rating and review depth where available.",
+    },
+    {
+      eyebrow: "Operations",
+      body: "Shipping windows, order handling, and regional coverage.",
+    },
+    {
+      eyebrow: "Confidence",
+      body: "Exact product-page listings beat vague vendor-level routing.",
+    },
+  ];
 }
 
 function buildComparedVendors(vendors: VendorData[], listings: ResolvedVendorListing[], peptideSlug?: string): ComparedVendor[] {
@@ -125,7 +147,7 @@ function buildComparedVendors(vendors: VendorData[], listings: ResolvedVendorLis
 
     const strengths = [
       vendor.trustpilotRating
-        ? `Trustpilot ${vendor.trustpilotRating}/5${trustReviews ? ` from ${trustReviews} reviews` : ""}`
+        ? `Trustpilot ${vendor.trustpilotRating}/5${trustReviews ? ` · ${trustReviews} reviews` : ""}`
         : "No Trustpilot data stored",
       listing ? `Docs: ${getDocumentationStrength(listing)}` : `COA access: ${vendor.coaAccessMode.replace(/_/g, " ")}`,
       listing ? `Shipping: ${listing.shippingRegions}` : `Shipping: ${vendor.shippingTimeframe ?? "verify on site"}`,
@@ -161,28 +183,29 @@ function buildComparedVendors(vendors: VendorData[], listings: ResolvedVendorLis
   });
 
   const sorted = items.sort((a, b) => b.rankScore - a.rankScore);
-  const comparableCurrency = sorted[0]?.listing ? getListingCurrencyCode(sorted[0].listing) : undefined;
-  const bestValueVendorId =
-    comparableCurrency
-      ? sorted
-          .filter((item) => item.listing && getListingCurrencyCode(item.listing) === comparableCurrency)
-          .sort(
-            (a, b) =>
-              (a.listing ? getListingPriceBounds(a.listing)?.low ?? Infinity : Infinity) -
-              (b.listing ? getListingPriceBounds(b.listing)?.low ?? Infinity : Infinity)
-          )[0]?.vendor.id
-      : undefined;
   const fastestVendorId =
     [...sorted].sort(
       (a, b) =>
         (getShippingLeadDays(a.listing?.shippingRegions ?? a.vendor.shippingTimeframe) ?? Infinity) -
         (getShippingLeadDays(b.listing?.shippingRegions ?? b.vendor.shippingTimeframe) ?? Infinity)
     )[0]?.vendor.id;
+  const strongestDocsVendorId =
+    [...sorted].sort((a, b) => {
+      const aScore = a.listing ? DOC_RANK[getDocumentationStrength(a.listing)] : a.vendor.coaAccessMode === "public_pdf" ? 2 : 0;
+      const bScore = b.listing ? DOC_RANK[getDocumentationStrength(b.listing)] : b.vendor.coaAccessMode === "public_pdf" ? 2 : 0;
+      return bScore - aScore;
+    })[0]?.vendor.id;
 
   return sorted.map((item, index) => ({
     ...item,
     rankLabel:
-      index === 0 ? "Best overall" : bestValueVendorId && item.vendor.id === bestValueVendorId ? "Best value" : item.vendor.id === fastestVendorId ? "Fastest shipping" : "Worth considering",
+      index === 0
+        ? "Best overall"
+        : item.vendor.id === strongestDocsVendorId
+          ? "Best documentation"
+          : item.vendor.id === fastestVendorId
+            ? "Fastest shipping"
+            : "Worth considering",
   }));
 }
 
@@ -195,219 +218,278 @@ export default async function VendorsPage({
   const peptideSlug = Array.isArray(peptideParam) ? peptideParam[0] : peptideParam;
   const peptide = peptideSlug ? getPeptideBySlug(peptideSlug) : undefined;
   const peptideListings = peptide ? getVendorListingsForPeptide(peptide.id) : [];
-  const vendors = peptide ? peptideListings.map((listing) => listing.vendor).filter((vendor): vendor is VendorData => Boolean(vendor)) : getActiveVendors();
+  const vendors = peptide
+    ? peptideListings.map((listing) => listing.vendor).filter((vendor): vendor is VendorData => Boolean(vendor))
+    : getActiveVendors();
   const comparedVendors = buildComparedVendors(vendors, peptideListings, peptide?.slug);
+  const methodologyPoints = getMethodologyPoints(peptide?.name);
 
   return (
     <>
       <Header />
-      <main className="flex-1 bg-[#f6f8f6] px-4 py-12">
-        <div className="container mx-auto max-w-7xl">
-          <section className="grid gap-6 rounded-[2rem] border border-emerald-100 bg-white p-8 shadow-sm lg:grid-cols-[1.25fr_0.75fr] lg:p-10">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">Vendor Comparison</p>
-              <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
-                {peptide ? `Best ${peptide.name} vendors in 2026` : "Best peptide vendors in 2026"}
-              </h1>
-              <p className="mt-2 text-3xl font-medium tracking-tight text-emerald-800">
-                Tested, ranked & reviewed
-              </p>
-              <p className="mt-5 max-w-3xl text-lg text-slate-600">
-                We compare vendor trust signals, shipping speed, documentation quality, and product coverage so you do not have to guess who to trust.
-              </p>
+      <main className="bg-[#fbfaf7]">
+        {/* HERO */}
+        <section className="bg-[#fbfaf7]">
+          <div className="container mx-auto max-w-6xl px-4 pt-6 pb-5 md:pt-8 md:pb-6">
+            <div className="grid items-center gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,340px)] md:gap-8">
+              <div>
+                <p className="mb-3 inline-flex items-center gap-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-[#103b2c]/60">
+                  <span className="h-px w-6 bg-[#103b2c]/40" />
+                  Vendors &middot; Updated {UPDATED_AT}
+                </p>
+                <h1 className="max-w-[620px] font-extrabold leading-[1.05] tracking-[-0.03em] text-black text-[22px] sm:text-[28px] md:text-[32px]">
+                  {peptide ? "Top-rated " : "The peptide vendors "}
+                  <span className="relative inline-block italic text-[#0f6a52]">
+                    <span className="relative z-10">
+                      {peptide ? peptide.name : "actually worth"}
+                    </span>
+                    <svg
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -bottom-1 left-0 h-[8px] w-full"
+                      viewBox="0 0 120 10"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M2,7 C25,3 55,8 80,5 C98,3 110,6 118,5"
+                        stroke="#0f6a52"
+                        strokeWidth="4"
+                        fill="none"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>{" "}
+                  {peptide ? "providers." : "checking out."}
+                </h1>
+                <p className="mt-4 max-w-[480px] text-[16px] leading-[1.6] text-[#103b2c]/65">
+                  Independent rankings based on documentation quality, trust signals, shipping clarity,
+                  and real product coverage. Strongest options first.
+                </p>
+              </div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                  <ClipboardCheck className="mt-0.5 h-5 w-5 text-emerald-700" />
-                  <div>
-                    <p className="font-semibold text-slate-900">Evidence-based</p>
-                    <p className="text-sm text-slate-600">COAs, testing notes, and exact listing context.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                  <Star className="mt-0.5 h-5 w-5 text-emerald-700" />
-                  <div>
-                    <p className="font-semibold text-slate-900">Trustpilot highlighted</p>
-                    <p className="text-sm text-slate-600">Third-party reputation is visible on every vendor card.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                  <BadgeCheck className="mt-0.5 h-5 w-5 text-emerald-700" />
-                  <div>
-                    <p className="font-semibold text-slate-900">Quality shipping</p>
-                    <p className="text-sm text-slate-600">We prioritize vendors with clear delivery windows and reliable fulfillment notes.</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
-                  <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-700" />
-                  <div>
-                    <p className="font-semibold text-slate-900">Updated regularly</p>
-                    <p className="text-sm text-slate-600">Shipping, pricing, and listing quality are reviewed often.</p>
-                  </div>
-                </div>
+              <div className="relative mx-auto w-full max-w-[340px] md:mx-0">
+                <Image
+                  src={landingHeroImage}
+                  alt="Doctor reviewing peptide vendor options"
+                  priority
+                  sizes="(min-width: 768px) 340px, 70vw"
+                  className="h-auto w-full object-contain"
+                />
               </div>
             </div>
+          </div>
+        </section>
 
-            <Card className="border-emerald-100 bg-[#f2f8f4] shadow-none">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full bg-emerald-600/10 p-4 text-emerald-700">
-                    <ShieldCheck className="h-10 w-10" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">What Vendors We Rank</p>
-                    <p className="mt-2 text-sm text-slate-600">We focus on vendors that clear baseline trust and operations checks before they make this page.</p>
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-3 text-sm text-slate-700">
-                  <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
-                    <span className="flex items-center gap-2"><Star className="h-4 w-4 text-emerald-700" /> Minimum 4.0-star Trustpilot profile</span>
-                    <span className="font-semibold">Required</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
-                    <span className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-emerald-700" /> COA access and testing visibility</span>
-                    <span className="font-semibold">Required</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
-                    <span className="flex items-center gap-2"><Truck className="h-4 w-4 text-emerald-700" /> Clear shipping windows and regional coverage</span>
-                    <span className="font-semibold">Required</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3">
-                    <span className="flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-emerald-700" /> Transparent pricing and product coverage</span>
-                    <span className="font-semibold">Required</span>
-                  </div>
-                </div>
-
-                <Button className="mt-6 w-full" variant="outline" render={<Link href="/guides/how-to-compare-peptide-vendors" />}>
-                  Learn our process <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-          </section>
-
-          <section className="mt-10">
-            <div className="mb-5 flex items-center gap-3">
-              <Star className="h-5 w-5 text-emerald-700" />
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                {peptide ? `Top vendors for ${peptide.name}` : "Top vendors"}
-              </h2>
-            </div>
-
+        {/* VENDOR LIST */}
+        <section className="bg-[#fbfaf7] py-12 md:py-16">
+          <div className="container mx-auto max-w-6xl px-4">
             {comparedVendors.length === 0 ? (
-              <Card className="rounded-[1.75rem] border border-emerald-100 bg-white p-8 shadow-none">
-                <CardContent className="p-0 text-sm text-slate-600">
-                  No vendor cards are available for this peptide yet. Go back to the peptide page or review the vendor guide before clicking through.
-                </CardContent>
-              </Card>
+              <div className="border-y border-[#103b2c]/15 px-6 py-16 text-center">
+                <p className="text-[15px] font-semibold text-[#103b2c]">
+                  No ranked vendors available yet.
+                </p>
+                <p className="mx-auto mt-2 max-w-[400px] text-[13.5px] leading-[1.6] text-[#103b2c]/60">
+                  Review the vendor guide first or return to the peptide page.
+                </p>
+              </div>
             ) : (
-              <div className="grid gap-6 xl:grid-cols-2">
+              <ol className="border-t border-[#103b2c]/15">
                 {comparedVendors.map((item, index) => {
                   const targetHref =
                     peptide && item.listing
                       ? buildOutboundVendorHref(item.vendor.slug, peptide.slug, "vendor-compare")
                       : `/vendors/${item.vendor.slug}`;
+                  const ctaLabel =
+                    peptide && item.listing ? `Visit ${item.vendor.name}` : `Review ${item.vendor.name}`;
 
                   return (
-                    <Card key={item.vendor.id} className="rounded-[1.75rem] border border-emerald-100 bg-white shadow-sm">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <Badge className="bg-emerald-700 text-white hover:bg-emerald-700">#{index + 1}</Badge>
-                              <Badge variant="outline" className="border-emerald-200 text-emerald-800">
-                                {item.rankLabel}
-                              </Badge>
-                            </div>
-                            <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{item.vendor.name}</h3>
-                            <p className="text-lg font-medium text-emerald-800">{item.headline}</p>
-                          </div>
-
-                          <div className="text-right">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Trustpilot</p>
-                            <p className="text-3xl font-bold tracking-tight text-slate-900">
-                              {item.vendor.trustpilotRating ?? "N/A"}
-                              <span className="text-base font-medium text-slate-500">/5</span>
-                            </p>
-                            {typeof item.vendor.trustpilotReviewCount === "number" ? (
-                              <p className="text-xs text-slate-500">{item.vendor.trustpilotReviewCount} reviews</p>
-                            ) : null}
-                          </div>
+                    <li
+                      key={item.vendor.id}
+                      className="border-b border-[#103b2c]/15 py-8 md:py-10"
+                    >
+                      <div className="grid gap-8 md:grid-cols-[80px_minmax(0,1fr)_minmax(0,260px)] md:gap-10">
+                        {/* Rank */}
+                        <div>
+                          <span className="font-mono text-[14px] font-medium tabular-nums text-[#103b2c]/40 md:text-[16px]">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                            {item.rankLabel}
+                          </p>
                         </div>
 
-                        <p className="mt-4 text-sm leading-6 text-slate-600">{item.vendor.description}</p>
+                        {/* Body */}
+                        <div>
+                          <h2 className="font-extrabold leading-[1.05] tracking-[-0.02em] text-[#103b2c] text-[28px] md:text-[34px]">
+                            {item.vendor.name}
+                          </h2>
+                          <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-[#103b2c]/55">
+                            {item.headline}
+                          </p>
+                          <p className="mt-4 max-w-[560px] text-[14.5px] leading-[1.6] text-[#103b2c]/70">
+                            {item.vendor.description}
+                          </p>
 
-                        <div className="mt-5 grid gap-4 md:grid-cols-2">
-                          <div className="rounded-2xl bg-emerald-50 p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Best for</p>
-                            <div className="mt-3 space-y-2 text-sm text-slate-700">
-                              {item.bestFor.map((point) => (
-                                <p key={point} className="flex gap-2">
-                                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                                  <span>{point}</span>
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="rounded-2xl bg-slate-50 p-4">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">Strengths</p>
-                            <div className="mt-3 space-y-2 text-sm text-slate-700">
-                              {item.strengths.map((point) => (
-                                <p key={point} className="flex gap-2">
-                                  <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                                  <span>{point}</span>
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-amber-800">Considerations</p>
-                          <div className="mt-3 space-y-2 text-sm text-slate-700">
-                            {item.considerations.map((point) => (
-                              <p key={point} className="flex gap-2">
-                                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                          <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+                            {item.strengths.slice(0, 4).map((point) => (
+                              <li
+                                key={point}
+                                className="flex items-start gap-2 text-[13px] leading-[1.5] text-[#103b2c]/72"
+                              >
+                                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f6a52]" strokeWidth={2.5} />
                                 <span>{point}</span>
-                              </p>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
 
-                        <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 sm:grid-cols-3">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Coverage</p>
-                            <p className="mt-2 text-sm font-medium text-slate-900">{getCoverageText(item)}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Region</p>
-                            <p className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-900">
-                              <Globe className="h-4 w-4 text-emerald-700" />
-                              {item.listing?.country ?? item.vendor.headquarters ?? "Global"}
+                        {/* Meta + CTA */}
+                        <div className="flex flex-col">
+                          <div className="border-t border-[#103b2c]/10 pt-4 md:border-0 md:pt-0">
+                            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#103b2c]/45">
+                              Trust signal
+                            </p>
+                            <p className="mt-1.5 text-[28px] font-extrabold tracking-[-0.02em] text-[#103b2c]">
+                              {item.vendor.trustpilotRating ?? "—"}
+                              {item.vendor.trustpilotRating && (
+                                <span className="ml-1 text-[14px] font-semibold text-[#103b2c]/50">/5</span>
+                              )}
+                            </p>
+                            <p className="mt-0.5 text-[12px] text-[#103b2c]/55">
+                              {getRatingText(item.vendor)}
                             </p>
                           </div>
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Shipping window</p>
-                            <p className="mt-2 flex items-center gap-2 text-sm font-medium text-slate-900">
-                              <Truck className="h-4 w-4 text-emerald-700" />
-                              {item.vendor.shippingTimeframe ?? item.listing?.shippingRegions ?? "Verify on site"}
-                            </p>
-                          </div>
-                        </div>
 
-                        <Button className="mt-6 w-full" render={<Link href={targetHref} />}>
-                          {peptide && item.listing ? "View Products & Deals" : "View Vendor Profile"} <ChevronRight className="ml-1 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
+                          <dl className="mt-5 space-y-2.5 text-[12.5px] text-[#103b2c]/72">
+                            <div className="flex items-start gap-2">
+                              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f6a52]" strokeWidth={2.5} />
+                              <span>{getCoverageSummary(item)}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f6a52]" strokeWidth={2.5} />
+                              <span>{getRegionSummary(item)}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <Truck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f6a52]" strokeWidth={2.5} />
+                              <span>{getShippingSummary(item)}</span>
+                            </div>
+                          </dl>
+
+                          <Link
+                            href={targetHref}
+                            className="group mt-6 inline-flex items-center justify-between gap-2 rounded-[10px] border border-[#103b2c] bg-[#103b2c] px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#0c3226]"
+                          >
+                            {ctaLabel}
+                            <ArrowRight
+                              className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                              strokeWidth={2.5}
+                            />
+                          </Link>
+                        </div>
+                      </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             )}
-          </section>
+          </div>
+        </section>
 
-        </div>
+        {/* METHODOLOGY */}
+        <section className="border-y border-[#103b2c]/8 bg-[#f4f1ea] py-16 md:py-20">
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="mb-10 flex flex-col gap-6 md:mb-14 md:flex-row md:items-end md:justify-between">
+              <div className="max-w-[640px]">
+                <p className="mb-5 inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#103b2c]/60">
+                  <span className="h-px w-6 bg-[#103b2c]/40" />
+                  Methodology
+                </p>
+                <h2 className="font-extrabold leading-[1.04] tracking-[-0.03em] text-black text-[32px] sm:text-[40px] md:text-[44px]">
+                  How these rankings are{" "}
+                  <span className="relative inline-block italic text-[#0f6a52]">
+                    <span className="relative z-10">built</span>
+                  </span>
+                  .
+                </h2>
+              </div>
+              <p className="max-w-[380px] text-[14px] leading-[1.6] text-[#103b2c]/65 md:text-right">
+                No pay-for-placement. Rankings are driven by documentation quality, reputation data,
+                operational clarity, and whether the vendor exposes a useful product-level path.
+              </p>
+            </div>
+
+            <ol className="grid gap-px border-t border-b border-[#103b2c]/15 bg-[#103b2c]/15 sm:grid-cols-2">
+              {methodologyPoints.map((point, idx) => (
+                <li key={point.eyebrow} className="bg-[#f4f1ea] p-6 md:p-7">
+                  <p className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                    {String(idx + 1).padStart(2, "0")} &middot; {point.eyebrow}
+                  </p>
+                  <p className="mt-3 text-[15px] leading-[1.55] text-[#103b2c]/75">{point.body}</p>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-10">
+              <Link
+                href="/guides/how-to-compare-peptide-vendors"
+                className="group inline-flex items-center gap-2 text-[15px] font-semibold text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[6px] transition-colors hover:text-[#0f6a52]"
+              >
+                Read the vendor guide
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* QUIZ CTA DARK BAND */}
+        <section className="relative overflow-hidden bg-[#0c3226] py-20 text-white md:py-24">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 10%, #4ade80 0%, transparent 40%), radial-gradient(circle at 90% 80%, #4ade80 0%, transparent 35%)",
+            }}
+          />
+          <div className="relative container mx-auto grid max-w-5xl gap-10 px-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,340px)] md:items-center">
+            <div>
+              <p className="mb-5 inline-flex items-center gap-2 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-white/55">
+                <span className="h-px w-6 bg-white/40" />
+                Personalized vendor routing
+              </p>
+              <h2 className="font-extrabold leading-[1.04] tracking-[-0.03em] text-[36px] sm:text-[44px] md:text-[52px]">
+                Find the vendor path that fits your protocol.
+              </h2>
+              <p className="mt-6 max-w-[620px] text-[15.5px] leading-[1.65] text-white/65">
+                Take the quiz before picking a vendor. We match your goal, compound interest,
+                budget, and monitoring comfort to the next best step in the funnel.
+              </p>
+            </div>
+
+            <div className="border-y border-white/15 py-6 md:border md:p-6">
+              <ul className="space-y-3 text-[14px] leading-[1.55] text-white/75">
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4ade80]" />
+                  <span>Goal-matched compound and protocol recommendations.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4ade80]" />
+                  <span>Budget and sourcing filters before you leave the site.</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#4ade80]" />
+                  <span>PDF unlocks shown after your personalized result.</span>
+                </li>
+              </ul>
+              <Link
+                href="/quiz"
+                className="mt-7 inline-flex h-[52px] w-full items-center justify-center gap-2.5 whitespace-nowrap rounded-[12px] bg-white px-7 text-[15px] font-extrabold text-[#103b2c] shadow-[0_4px_24px_rgba(0,0,0,0.25)] transition-transform hover:-translate-y-0.5"
+              >
+                Take the quiz
+                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+              </Link>
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>
