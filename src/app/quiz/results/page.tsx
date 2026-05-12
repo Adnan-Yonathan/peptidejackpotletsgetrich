@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
+  LoaderCircle,
   Lock,
 } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
@@ -21,6 +22,7 @@ import { getGoalById } from "@/data/goals";
 import { getGoalProtocolPdfPair } from "@/data/protocol-pdfs";
 import { getVendorBySlug } from "@/data/vendors";
 import { useQuizState } from "@/hooks/useQuizState";
+import { useUser } from "@/hooks/useUser";
 import { generatePlannerResult } from "@/lib/planner-engine";
 import { getShopperRegion } from "@/lib/shopper-country";
 import type { PlannerAnswers, PlannerRecommendation } from "@/types/planner";
@@ -276,6 +278,7 @@ export default function QuizResultsPage() {
     getShopperRegion(answers.country ?? "us") === "us" ? "us" : "eu"
   );
   const [shareMessage, setShareMessage] = useState("Copy stack");
+  const { user, loading: authLoading } = useUser();
 
   // Stamp the moment of first completion once the user lands here with a
   // complete quiz. Idempotent — returning visitors keep their original timestamp.
@@ -283,6 +286,15 @@ export default function QuizResultsPage() {
   useEffect(() => {
     if (complete) markCompletedNow();
   }, [complete, markCompletedNow]);
+
+  useEffect(() => {
+    if (!complete || authLoading || user) return;
+
+    const params = new URLSearchParams({ redirectTo: "/quiz/results" });
+    const email = answers.email?.trim();
+    if (email) params.set("email", email);
+    router.replace(`/signup?${params.toString()}`);
+  }, [answers.email, authLoading, complete, router, user]);
 
   if (!isComplete()) {
     return (
@@ -298,6 +310,21 @@ export default function QuizResultsPage() {
               <Button render={<Link href="/quiz" />}>Start intake</Button>
             </CardContent>
           </Card>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  if (authLoading || !user) {
+    return (
+      <>
+        <Header />
+        <main className="flex flex-1 items-center justify-center bg-[#fbfaf7] px-4 py-12">
+          <div className="flex items-center gap-3 rounded-[1.1rem] border border-[#103b2c]/10 bg-white px-5 py-4 text-sm font-medium text-[#103b2c]/70 shadow-sm">
+            <LoaderCircle className="h-4 w-4 animate-spin text-[#0f6a52]" />
+            {authLoading ? "Checking your account..." : "Redirecting to create your account..."}
+          </div>
         </main>
         <Footer />
       </>

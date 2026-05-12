@@ -59,6 +59,14 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const redirectUrl = request.nextUrl.clone();
+    const redirectTo = request.nextUrl.searchParams.get("redirectTo");
+    if (redirectTo?.startsWith("/")) {
+      const [pathname, search = ""] = redirectTo.split("?");
+      redirectUrl.pathname = pathname;
+      redirectUrl.search = search ? `?${search}` : "";
+      return NextResponse.redirect(redirectUrl);
+    }
+
     redirectUrl.pathname = "/dashboard";
     redirectUrl.search = "";
     return NextResponse.redirect(redirectUrl);

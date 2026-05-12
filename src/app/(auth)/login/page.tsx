@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Signup1 } from "@/components/ui/signup-1";
@@ -12,9 +12,14 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
-  const [email, setEmail] = useState("");
+  const initialEmail = searchParams.get("email") ?? "";
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setEmail(initialEmail);
+  }, [initialEmail]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +38,11 @@ function LoginForm() {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error(
+        error.message.toLowerCase().includes("email not confirmed")
+          ? "This email is not confirmed yet. Create a new account through the quiz signup flow or use the confirmation link from Supabase."
+          : error.message
+      );
       return;
     }
 
@@ -46,9 +55,9 @@ function LoginForm() {
     <Signup1
       heading="Log in to continue"
       submitText={loading ? "Logging in..." : "Log in"}
-      footerText="Don&apos;t have an account?"
+      footerText="Don't have an account?"
       footerLinkText="Sign up"
-      footerLinkUrl={`/signup?redirectTo=${encodeURIComponent(redirectTo)}`}
+      footerLinkUrl={`/signup?redirectTo=${encodeURIComponent(redirectTo)}${email ? `&email=${encodeURIComponent(email)}` : ""}`}
       email={email}
       password={password}
       onEmailChange={setEmail}

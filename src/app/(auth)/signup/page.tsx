@@ -1,11 +1,10 @@
 "use client";
 
 import { Suspense } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Signup1 } from "@/components/ui/signup-1";
-import { SITE_URL } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 
 function SignupForm() {
@@ -13,9 +12,14 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const supabase = createClient();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
-  const [email, setEmail] = useState("");
+  const initialEmail = searchParams.get("email") ?? "";
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setEmail(initialEmail);
+  }, [initialEmail]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,12 +30,26 @@ function SignupForm() {
 
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signUp({
+    const signupResponse = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const signupPayload = (await signupResponse.json().catch(() => ({}))) as { error?: string };
+
+    if (!signupResponse.ok) {
+      setLoading(false);
+      toast.error(signupPayload.error ?? "Unable to create account.");
+      if (signupResponse.status === 409) {
+        router.replace(`/login?redirectTo=${encodeURIComponent(redirectTo)}&email=${encodeURIComponent(email)}`);
+      }
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        emailRedirectTo: `${SITE_URL}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
-      },
     });
 
     setLoading(false);
@@ -41,15 +59,9 @@ function SignupForm() {
       return;
     }
 
-    if (data.session) {
-      toast.success("Account created");
-      router.replace(redirectTo);
-      router.refresh();
-      return;
-    }
-
-    toast.success("Check your email to confirm your account.");
-    router.replace("/login");
+    toast.success("Account created");
+    router.replace(redirectTo);
+    router.refresh();
   };
 
   return (
@@ -58,7 +70,7 @@ function SignupForm() {
       submitText={loading ? "Creating account..." : "Create an account"}
       footerText="Already have an account?"
       footerLinkText="Log in"
-      footerLinkUrl={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
+      footerLinkUrl={`/login?redirectTo=${encodeURIComponent(redirectTo)}${email ? `&email=${encodeURIComponent(email)}` : ""}`}
       email={email}
       password={password}
       onEmailChange={setEmail}
@@ -66,6 +78,7 @@ function SignupForm() {
       onSubmit={handleSignup}
       loading={loading}
       showGoogleButton={false}
+      passwordMinLength={6}
     />
   );
 }

@@ -31,6 +31,7 @@ import {
   TIMEFRAME_OPTIONS,
 } from "@/data/planner-options";
 import { useQuizState } from "@/hooks/useQuizState";
+import { createClient } from "@/lib/supabase/client";
 import type { PlannerAnswers, PlannerStep } from "@/types/planner";
 
 const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = {
@@ -135,6 +136,7 @@ function getVisibleSteps(answers: Partial<PlannerAnswers>) {
 export default function QuizPage() {
   const router = useRouter();
   const { currentStep, answers, setAnswer, goToStep } = useQuizState();
+  const supabase = useMemo(() => createClient(), []);
   const [isGeneratingResults, setIsGeneratingResults] = useState(false);
   const [activeLoadingStep, setActiveLoadingStep] = useState(0);
   const visibleSteps = useMemo(() => getVisibleSteps(answers), [answers]);
@@ -146,7 +148,30 @@ export default function QuizPage() {
 
     if (activeLoadingStep >= RESULT_LOADING_STEPS.length) {
       const completeTimer = window.setTimeout(() => {
-        router.push("/quiz/results");
+        const routeAfterQuiz = async () => {
+          if (!supabase) {
+            router.push("/quiz/results");
+            return;
+          }
+
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (user) {
+            router.push("/quiz/results");
+            return;
+          }
+
+          const params = new URLSearchParams({
+            redirectTo: "/quiz/results",
+          });
+          const email = answers.email?.trim();
+          if (email) params.set("email", email);
+          router.push(`/signup?${params.toString()}`);
+        };
+
+        void routeAfterQuiz();
       }, 450);
 
       return () => window.clearTimeout(completeTimer);
@@ -157,7 +182,7 @@ export default function QuizPage() {
     }, activeLoadingStep === 0 ? 700 : 850);
 
     return () => window.clearTimeout(stepTimer);
-  }, [activeLoadingStep, isGeneratingResults, router]);
+  }, [activeLoadingStep, answers.email, isGeneratingResults, router, supabase]);
 
   const toggleArrayValue = (
     key: "secondaryGoalIds" | "topProblems" | "healthConditions" | "medications",

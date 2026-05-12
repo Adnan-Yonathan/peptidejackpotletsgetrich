@@ -26,6 +26,7 @@ interface Signup1Props {
   onSubmit: (event: React.FormEvent) => void;
   loading?: boolean;
   showGoogleButton?: boolean;
+  passwordMinLength?: number;
 }
 
 const defaultLogo = {
@@ -49,6 +50,7 @@ const Signup1 = ({
   onSubmit,
   loading = false,
   showGoogleButton = false,
+  passwordMinLength,
 }: Signup1Props) => {
   return (
     <section className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -90,7 +92,7 @@ const Signup1 = ({
                   type="password"
                   placeholder="Password"
                   required
-                  minLength={footerLinkUrl === "/login" ? undefined : 6}
+                  minLength={passwordMinLength}
                   value={password}
                   onChange={(event) => onPasswordChange(event.target.value)}
                 />
