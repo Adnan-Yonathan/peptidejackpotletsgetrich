@@ -9,8 +9,6 @@
 
 Start here: [PeptidePros peptide research directory](https://peptidepros.io/peptides)
 
-![PeptidePros BPC-157 research visual](public/images/peptides/bpc-157.png)
-
 ## What PeptidePros Helps With
 
 PeptidePros is built around revenue-focused, search-friendly research paths:
