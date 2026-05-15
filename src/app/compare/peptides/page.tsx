@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { permanentRedirect } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -10,6 +11,7 @@ import {
   evidencePillClass,
   riskPillClass,
 } from "@/lib/compare-peptides-view";
+import { canonicalPair, pairKey } from "@/lib/compare-pairs";
 
 export const metadata: Metadata = {
   title: "Compare Peptides Side by Side",
@@ -41,6 +43,9 @@ export default async function ComparePeptidesPage({
 }) {
   const { ids } = await searchParams;
   const peptides = parseSelectedPeptides(ids);
+  if (ids && peptides.length === 2) {
+    permanentRedirect(`/compare/peptides/${pairKey(canonicalPair(peptides[0].slug, peptides[1].slug))}`);
+  }
   const quickWinners = buildQuickWinners(peptides);
   const sections = buildComparisonSections(peptides);
   const hasComparison = peptides.length >= 2;

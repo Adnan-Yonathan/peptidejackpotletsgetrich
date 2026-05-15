@@ -7,7 +7,7 @@ import { getPublishedGuides } from "@/data/guides";
 import { PEPTIDE_CATEGORIES } from "@/data/peptide-categories";
 import { getPublishedPeptides } from "@/data/peptides";
 import { getActiveVendors } from "@/data/vendors";
-import { getCuratedComparisonPairs, pairKey } from "@/lib/compare-pairs";
+import { getCuratedComparisonPairs, isComparisonIndexable, pairKey } from "@/lib/compare-pairs";
 import { isNoindexPath } from "@/lib/seo-blocklist";
 
 /**
@@ -118,12 +118,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // Curated peptide-vs-peptide comparison pairs — same logic as the route's generateStaticParams.
-  const pairEntries: MetadataRoute.Sitemap = getCuratedComparisonPairs().map((pair) => ({
-    url: url(`/compare/peptides/${pairKey(pair)}`),
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: 0.75,
-  }));
+  const pairEntries: MetadataRoute.Sitemap = getCuratedComparisonPairs()
+    .filter(isComparisonIndexable)
+    .map((pair) => ({
+      url: url(`/compare/peptides/${pairKey(pair)}`),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    }));
 
   const allEntries: MetadataRoute.Sitemap = [
     ...staticEntries,

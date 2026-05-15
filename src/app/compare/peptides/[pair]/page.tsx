@@ -20,7 +20,9 @@ import {
 } from "@/lib/compare-peptides-view";
 import {
   canonicalPair,
+  getPriorityComparisonNote,
   getCuratedComparisonPairs,
+  isComparisonIndexable,
   pairKey,
   parsePairParam,
 } from "@/lib/compare-pairs";
@@ -65,16 +67,19 @@ export async function generateMetadata({
 
   const title = `${a.name} vs ${b.name}: Side-by-Side Comparison`;
   const description = `Compare ${a.name} and ${b.name} on evidence, risk, dosing, regulatory status, cost, and vendor coverage. ${a.shortDescription.split(".")[0]}. ${b.shortDescription.split(".")[0]}.`.slice(0, 320);
+  const canonical = canonicalPair(slugs.a, slugs.b);
+  const canonicalKey = pairKey(canonical);
 
   return {
     title,
     description,
-    alternates: { canonical: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}` },
+    robots: isComparisonIndexable(canonical) ? undefined : { index: false, follow: true },
+    alternates: { canonical: `/compare/peptides/${canonicalKey}` },
     ...buildSeoMetadata({
       title,
       description,
-      path: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}`,
-      imagePath: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}/opengraph-image`,
+      path: `/compare/peptides/${canonicalKey}`,
+      imagePath: `/compare/peptides/${canonicalKey}/opengraph-image`,
       imageAlt: `${a.name} vs ${b.name} comparison`,
     }),
   };
@@ -97,6 +102,7 @@ export default async function PeptidePairComparisonPage({
   const sections = buildComparisonSections(peptides);
   const quickWinners = buildQuickWinners(peptides);
   const editorialReview = getDefaultComparisonReview();
+  const priorityNote = getPriorityComparisonNote(canonicalPair(a.slug, b.slug));
   const firstResearchPick =
     EVIDENCE_PRIORITY[a.evidenceTier] < EVIDENCE_PRIORITY[b.evidenceTier]
       ? a
@@ -184,10 +190,8 @@ export default async function PeptidePairComparisonPage({
                 Start with {firstResearchPick.name}, then use the table to confirm fit.
               </h2>
               <p className="mt-3 max-w-[680px] text-[14.5px] leading-[1.7] text-[#103b2c]/70">
-                {firstResearchPick.name} is the cleaner first read based on the current evidence,
-                risk, and regulatory data stored for this pair. The right answer can still change
-                if your goal, sport testing status, vendor constraints, or monitoring tolerance
-                makes the other option a better fit.
+                {priorityNote?.firstPickReason ??
+                  `${firstResearchPick.name} is the cleaner first read based on the current evidence, risk, and regulatory data stored for this pair. The right answer can still change if your goal, sport testing status, vendor constraints, or monitoring tolerance makes the other option a better fit.`}
               </p>
             </div>
             <IntentCtaPanel
@@ -201,6 +205,46 @@ export default async function PeptidePairComparisonPage({
             />
           </div>
         </section>
+
+        {priorityNote && (
+          <section className="border-t border-[#103b2c]/8 bg-white py-10 md:py-12">
+            <div className="container mx-auto grid max-w-6xl gap-6 px-4 md:grid-cols-[minmax(0,1fr)_320px]">
+              <div>
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f6a52]">
+                  Search intent
+                </p>
+                <h2 className="text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[#103b2c] md:text-[30px]">
+                  Why this comparison deserves its own page
+                </h2>
+                <p className="mt-3 text-[14.5px] leading-[1.7] text-[#103b2c]/72">
+                  {priorityNote.searchIntent}
+                </p>
+                <p className="mt-4 rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-4 text-[14px] leading-[1.65] text-[#103b2c]/74">
+                  {priorityNote.useCase}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#103b2c]/50">
+                  Internal paths
+                </p>
+                <div className="mt-4 grid gap-2 text-[13px] font-semibold">
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/peptides/${a.slug}`}>
+                    Read {a.name}
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/peptides/${b.slug}`}>
+                    Read {b.name}
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/vendors?peptide=${firstResearchPick.slug}`}>
+                    Compare vendors
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/quiz">
+                    Take the peptide quiz
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* SUBJECTS */}
         <section className="bg-[#fbfaf7] pb-2">
@@ -285,6 +329,21 @@ export default async function PeptidePairComparisonPage({
                 </div>
               </div>
             ))}
+            {priorityNote && (
+              <section className="border-t border-[#103b2c]/12 pt-10">
+                <p className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                  FAQ &middot; Pair-specific
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {priorityNote.faq.map((item) => (
+                    <div key={item.question} className="rounded-xl border border-[#103b2c]/10 bg-white p-5">
+                      <h2 className="text-[17px] font-bold text-[#103b2c]">{item.question}</h2>
+                      <p className="mt-2 text-[13.5px] leading-[1.65] text-[#103b2c]/70">{item.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
             <SourceList sources={editorialReview.sources} />
           </div>
         </section>

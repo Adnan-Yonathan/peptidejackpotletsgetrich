@@ -388,6 +388,59 @@ export default async function PeptideDetailPage({
                 </p>
               </div>
 
+              {peptide.slug === "pinealon" && (
+                <div className={SECTION_CARD}>
+                  <p className={DETAIL_LABEL}>Answer first</p>
+                  <h2 className="mt-1 text-lg font-semibold text-foreground">
+                    Pinealon is a weak-evidence research topic, not a first-line sleep or longevity pick.
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    People usually research Pinealon for sleep, cognition, or anti-aging, but the
+                    public evidence base is thin and lacks the kind of reliable human data needed
+                    for confident protocol decisions. Treat it as an advanced, speculative
+                    compound and compare it against better-supported sleep, cognition, and
+                    longevity options before spending money or adding it to a stack.
+                  </p>
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Why people research it</div>
+                      <p className="text-sm text-foreground/80">
+                        Nootropic, sleep, pineal, and longevity claims appear in gray-market
+                        discussions, but most claims are extrapolated.
+                      </p>
+                    </div>
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Evidence limitation</div>
+                      <p className="text-sm text-foreground/80">
+                        No clean dosing standard, no strong human outcome base, and no reliable
+                        interaction map for stack planning.
+                      </p>
+                    </div>
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Better comparisons</div>
+                      <p className="text-sm text-foreground/80">
+                        Review DSIP for sleep, Selank for anxiety-focused cognition, and Epitalon
+                        for the better-known longevity discussion.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/dsip">
+                      Compare DSIP
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/selank">
+                      Compare Selank
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/epitalon">
+                      Compare Epitalon
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/quiz">
+                      Take the quiz first
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               <IntentCtaPanel
                 eyebrow="Peptide research path"
                 title={`Decide whether ${peptide.name} belongs in your plan.`}

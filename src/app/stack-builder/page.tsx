@@ -968,6 +968,28 @@ export default function StackBuilderPage() {
               </p>
             </div>
 
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  title: "Common mistake",
+                  body: "Stacking multiple GH-axis compounds can make a plan look stronger while increasing overlap, water retention, glucose, and monitoring burden.",
+                },
+                {
+                  title: "Compatible example",
+                  body: "A recovery-led stack usually starts with one tissue-repair pathway, then checks whether sleep, inflammation, or vendor coverage changes the next step.",
+                },
+                {
+                  title: "Conversion path",
+                  body: "Use the stack builder for conflict detection, then take the quiz to turn a rough stack into a goal-specific protocol and vendor path.",
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-[#103b2c]/12 bg-[#fbfaf7] p-5">
+                  <h3 className="text-[15px] font-bold text-[#103b2c]">{item.title}</h3>
+                  <p className="mt-2 text-[13.5px] leading-[1.65] text-[#103b2c]/70">{item.body}</p>
+                </div>
+              ))}
+            </div>
+
             <div className="mt-8 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
               <Link
                 href="/peptides"
