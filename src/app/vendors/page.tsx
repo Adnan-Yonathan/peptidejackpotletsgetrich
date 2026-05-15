@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, Globe, ShieldCheck, Truck } from "lucide-react";
+import { ArrowRight, Check, ExternalLink, Globe, ShieldCheck, Truck } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { AffiliateLink } from "@/components/shared/AffiliateLink";
 import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { SourceList } from "@/components/seo/SourceList";
 import { VendorTrustRationale } from "@/components/vendors/VendorTrustRationale";
 import { getPeptideBySlug } from "@/data/peptides";
+import { getAffiliateUrlForVendor } from "@/data/affiliate-links";
 import { getActiveVendors, type VendorData } from "@/data/vendors";
 import {
   getVendorListingsForPeptide,
@@ -355,12 +357,13 @@ export default async function VendorsPage({
             ) : (
               <ol className="border-t border-[#103b2c]/15">
                 {comparedVendors.map((item, index) => {
-                  const targetHref =
+                  const vendorVisitHref =
                     peptide && item.listing
                       ? buildOutboundVendorHref(item.vendor.slug, peptide.slug, "vendor-compare")
-                      : `/vendors/${item.vendor.slug}`;
+                      : getAffiliateUrlForVendor(item.vendor.id) ?? item.vendor.websiteUrl;
                   const ctaLabel =
-                    peptide && item.listing ? `Visit ${item.vendor.name}` : `Review ${item.vendor.name}`;
+                    peptide && item.listing ? `Visit ${item.vendor.name}` : `Visit ${item.vendor.name}`;
+                  const isInternalOutbound = vendorVisitHref.startsWith("/");
 
                   return (
                     <li
@@ -435,16 +438,39 @@ export default async function VendorsPage({
                             </div>
                           </dl>
 
-                          <Link
-                            href={targetHref}
-                            className="group mt-6 inline-flex items-center justify-between gap-2 rounded-[10px] border border-[#103b2c] bg-[#103b2c] px-4 py-3 text-[13px] font-semibold text-white transition-colors hover:bg-[#0c3226]"
-                          >
-                            {ctaLabel}
-                            <ArrowRight
-                              className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
-                              strokeWidth={2.5}
-                            />
-                          </Link>
+                          <div className="mt-6 grid gap-2">
+                            {isInternalOutbound ? (
+                              <Link
+                                href={vendorVisitHref}
+                                className="group inline-flex items-center justify-between gap-2 rounded-[10px] border border-[#103b2c] bg-[#103b2c] px-4 py-3.5 text-[13.5px] font-bold text-white shadow-[0_10px_24px_rgba(16,59,44,0.16)] transition-colors hover:bg-[#0c3226]"
+                              >
+                                {ctaLabel}
+                                <ArrowRight
+                                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                                  strokeWidth={2.5}
+                                />
+                              </Link>
+                            ) : (
+                              <AffiliateLink
+                                href={vendorVisitHref}
+                                vendorId={item.vendor.id}
+                                sourcePage="vendors"
+                                className="group inline-flex items-center justify-between gap-2 rounded-[10px] border border-[#103b2c] bg-[#103b2c] px-4 py-3.5 text-[13.5px] font-bold text-white shadow-[0_10px_24px_rgba(16,59,44,0.16)] transition-colors hover:bg-[#0c3226]"
+                              >
+                                {ctaLabel}
+                                <ExternalLink
+                                  className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1"
+                                  strokeWidth={2.5}
+                                />
+                              </AffiliateLink>
+                            )}
+                            <Link
+                              href={`/vendors/${item.vendor.slug}`}
+                              className="inline-flex items-center justify-center rounded-[10px] border border-[#103b2c]/20 bg-white px-4 py-2.5 text-[12.5px] font-semibold text-[#103b2c] transition-colors hover:border-[#103b2c]/45 hover:bg-[#f4f1ea]"
+                            >
+                              Read review
+                            </Link>
+                          </div>
                           <div className="mt-3">
                             <VendorTrustRationale
                               points={[

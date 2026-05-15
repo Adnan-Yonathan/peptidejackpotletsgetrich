@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink, ShieldCheck } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { AffiliateLink } from "@/components/shared/AffiliateLink";
 import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
 import { SourceList } from "@/components/seo/SourceList";
@@ -227,14 +228,16 @@ export default async function VendorDetailPage({
                   <StatCell value={coaStat} label="COA" capitalize />
                   <StatCell value={typeStat} label="Type" capitalize />
                 </div>
-                <div className="mt-4 flex gap-2 border-t border-white/12 pt-3">
-                  <Button
-                    size="sm"
-                    className="flex-1"
-                    render={<a href={vendorHref} target="_blank" rel="noreferrer" />}
+                <div className="mt-4 grid gap-2 border-t border-white/12 pt-3">
+                  <AffiliateLink
+                    href={vendorHref}
+                    vendorId={vendor.id}
+                    sourcePage="vendor-detail-hero"
+                    className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white px-3 py-2 text-sm font-bold text-[#103b2c] shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition-colors hover:bg-white/90"
                   >
-                    Visit Site
-                  </Button>
+                    Visit {vendor.name}
+                    <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </AffiliateLink>
                   {vendor.trustpilotUrl ? (
                     <Button
                       size="sm"
@@ -481,6 +484,35 @@ export default async function VendorDetailPage({
 
             {/* ── Sticky right rail ── */}
             <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+              <div className="rounded-xl border border-[#103b2c]/15 bg-white p-5 shadow-[0_10px_30px_rgba(16,59,44,0.08)]">
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                  Vendor exit
+                </p>
+                <h3 className="mt-2 text-lg font-bold tracking-[-0.01em] text-[#103b2c]">
+                  Ready to check {vendor.name} directly?
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#103b2c]/65">
+                  Open the vendor site after reviewing COA access, shipping caveats, and RUO
+                  language on this page.
+                </p>
+                <AffiliateLink
+                  href={vendorHref}
+                  vendorId={vendor.id}
+                  sourcePage="vendor-detail-sidebar"
+                  className="group mt-4 inline-flex w-full items-center justify-between gap-2 rounded-[10px] border border-[#103b2c] bg-[#103b2c] px-4 py-3 text-[13.5px] font-bold text-white shadow-[0_10px_24px_rgba(16,59,44,0.16)] transition-colors hover:bg-[#0c3226]"
+                >
+                  Visit {vendor.name}
+                  <ExternalLink className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                </AffiliateLink>
+                <div className="mt-3 flex items-start gap-2 rounded-lg border border-[#103b2c]/10 bg-[#fbfaf7] p-3 text-[11.5px] leading-relaxed text-[#103b2c]/65">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#0f6a52]" />
+                  <span>
+                    Affiliate link. PeptidePros may earn a commission, but vendor checks should
+                    still start with current COA and label verification.
+                  </span>
+                </div>
+              </div>
+
               <StickyQuizCta />
 
               {/* Quick facts */}

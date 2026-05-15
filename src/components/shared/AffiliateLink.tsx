@@ -29,7 +29,7 @@ export function AffiliateLink({
     <a
       href={href}
       target="_blank"
-      rel="noopener noreferrer"
+      rel="sponsored nofollow noopener noreferrer"
       onClick={handleClick}
       className={className}
     >
