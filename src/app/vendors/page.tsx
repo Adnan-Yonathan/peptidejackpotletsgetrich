@@ -4,6 +4,9 @@ import Link from "next/link";
 import { ArrowRight, Check, Globe, ShieldCheck, Truck } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
+import { SourceList } from "@/components/seo/SourceList";
+import { VendorTrustRationale } from "@/components/vendors/VendorTrustRationale";
 import { getPeptideBySlug } from "@/data/peptides";
 import { getActiveVendors, type VendorData } from "@/data/vendors";
 import {
@@ -17,6 +20,7 @@ import {
   getListingMatchStatus,
   getPriceVisibility,
 } from "@/lib/compare-vendors";
+import { getDefaultVendorReview } from "@/lib/editorial";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
 import landingHeroImage from "../../../images/idktoomany.png";
 
@@ -223,6 +227,24 @@ export default async function VendorsPage({
     : getActiveVendors();
   const comparedVendors = buildComparedVendors(vendors, peptideListings, peptide?.slug);
   const methodologyPoints = getMethodologyPoints(peptide?.name);
+  const editorialReview = getDefaultVendorReview();
+  const bestOverall = comparedVendors[0];
+  const bestDocumentation = [...comparedVendors].sort((a, b) => {
+    const aScore = a.listing ? DOC_RANK[getDocumentationStrength(a.listing)] : a.vendor.coaAccessMode === "public_pdf" ? 2 : 0;
+    const bScore = b.listing ? DOC_RANK[getDocumentationStrength(b.listing)] : b.vendor.coaAccessMode === "public_pdf" ? 2 : 0;
+    return bScore - aScore;
+  })[0];
+  const bestUs = comparedVendors.find((item) =>
+    `${item.listing?.country ?? ""} ${item.vendor.headquarters ?? ""} ${item.vendor.shippingRegions ?? ""}`.includes("US") ||
+    `${item.vendor.headquarters ?? ""} ${item.vendor.shippingRegions ?? ""}`.includes("United States")
+  );
+  const bestInternational = comparedVendors.find((item) => item.vendor.id !== bestUs?.vendor.id) ?? comparedVendors[1];
+  const bestByNeed = [
+    bestOverall && { label: "Best overall", item: bestOverall },
+    bestDocumentation && { label: "Best documentation", item: bestDocumentation },
+    bestUs && { label: "Best U.S. fit", item: bestUs },
+    bestInternational && { label: "Best international fit", item: bestInternational },
+  ].filter((entry): entry is { label: string; item: ComparedVendor } => Boolean(entry));
 
   return (
     <>
@@ -278,6 +300,45 @@ export default async function VendorsPage({
             </div>
           </div>
         </section>
+
+        <section className="border-y border-[#103b2c]/8 bg-[#fbfaf7] py-5">
+          <div className="container mx-auto max-w-6xl px-4">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
+        {bestByNeed.length > 0 && (
+          <section className="border-b border-[#103b2c]/8 bg-[#f4f1ea] py-10 md:py-12">
+            <div className="container mx-auto max-w-6xl px-4">
+              <p className="mb-5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f6a52]">
+                Best by buying need
+              </p>
+              <div className="grid gap-px bg-[#103b2c]/10 sm:grid-cols-2 lg:grid-cols-4">
+                {bestByNeed.map(({ label, item }) => (
+                  <Link
+                    key={`${label}-${item.vendor.id}`}
+                    href={`/vendors/${item.vendor.slug}`}
+                    className="group bg-[#f4f1ea] p-5 transition-colors hover:bg-white"
+                  >
+                    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                      {label}
+                    </p>
+                    <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.01em] text-[#103b2c]">
+                      {item.vendor.name}
+                    </h2>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-[#103b2c]/65">
+                      {item.headline}. {getCoverageSummary(item)}.
+                    </p>
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px] group-hover:text-[#0f6a52]">
+                      Review profile
+                      <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* VENDOR LIST */}
         <section className="bg-[#fbfaf7] py-12 md:py-16">
@@ -384,6 +445,17 @@ export default async function VendorsPage({
                               strokeWidth={2.5}
                             />
                           </Link>
+                          <div className="mt-3">
+                            <VendorTrustRationale
+                              points={[
+                                item.listing
+                                  ? `Product-level listing for ${item.listing.peptide?.name ?? peptide?.name ?? "this peptide"} is available.`
+                                  : `${item.listings.length} mapped listing${item.listings.length === 1 ? "" : "s"} inform this profile.`,
+                                item.considerations[0],
+                              ]}
+                              affiliateStatus={item.listing?.affiliateProgramStatus}
+                            />
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -436,6 +508,9 @@ export default async function VendorsPage({
                 Read the vendor guide
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" strokeWidth={2.5} />
               </Link>
+            </div>
+            <div className="mt-8">
+              <SourceList sources={editorialReview.sources} />
             </div>
           </div>
         </section>

@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -25,6 +28,9 @@ import {
 } from "@/data/guides";
 import { getGoalById } from "@/data/goals";
 import { getPeptideById } from "@/data/peptides";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
+import { getGoalHref } from "@/lib/goal-links";
+import { getDefaultArticleReview } from "@/lib/editorial";
 
 const SECTION_CARD =
   "rounded-xl border border-stone-200 bg-white/90 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
@@ -98,6 +104,8 @@ export async function generateStaticParams() {
   return getPublishedGuides().map((guide) => ({ slug: guide.slug }));
 }
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
@@ -113,6 +121,14 @@ export async function generateMetadata({
   return {
     title: guide.seoTitle,
     description: guide.seoDescription,
+    alternates: { canonical: `/guides/${guide.slug}` },
+    ...buildSeoMetadata({
+      title: guide.seoTitle,
+      description: guide.seoDescription,
+      path: `/guides/${guide.slug}`,
+      imageAlt: `${guide.title} guide`,
+      type: "article",
+    }),
   };
 }
 
@@ -143,6 +159,7 @@ export default async function GuideDetailPage({
   const sectionsStat = String(guide.sections.length);
   const faqsStat = String(guide.faqs.length);
   const updatedStat = formatShortDate(guide.updatedAt);
+  const editorialReview = guide.editorialReview ?? getDefaultArticleReview(guide.updatedAt);
 
   return (
     <>
@@ -229,10 +246,26 @@ export default async function GuideDetailPage({
         </section>
 
         {/* ── Two-col body ────────────────────────────────────── */}
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
             <div className="flex flex-col gap-5">
+              <IntentCtaPanel
+                eyebrow="Guide next step"
+                title="Use the guide before choosing a compound."
+                body="Take the quiz after this guide so the next page reflects your goal, risk tolerance, and monitoring comfort."
+                secondaryHref="/peptides"
+                secondaryLabel="Browse peptides"
+                tertiaryHref="/vendors"
+                tertiaryLabel="Review vendors"
+              />
+
               {/* Why this matters */}
               {guide.whyItMatters.length > 0 && (
                 <div className={SECTION_CARD}>
@@ -416,7 +449,7 @@ export default async function GuideDetailPage({
                     {relatedGoals.map((goal) => (
                       <Link
                         key={goal.id}
-                        href={`/goals/${goal.id}`}
+                        href={getGoalHref(goal.id)}
                         className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs text-foreground hover:border-[color:var(--primary)] hover:text-[color:var(--primary)] transition-colors"
                       >
                         {goal.displayName}
@@ -460,6 +493,10 @@ export default async function GuideDetailPage({
                 </div>
               )}
             </aside>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl">
+            <SourceList sources={editorialReview.sources} />
           </div>
 
           {/* Footer CTA */}

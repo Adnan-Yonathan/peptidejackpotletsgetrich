@@ -3,7 +3,11 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { QuizFooterCta } from "@/components/marketing/QuizFooterCta";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
+import { SourceList } from "@/components/seo/SourceList";
+import type { EditorialReview } from "@/lib/editorial";
 import { TOOL_CATEGORIES, type ToolEntry } from "@/lib/tools";
 
 interface Props {
@@ -14,10 +18,26 @@ interface Props {
   description?: ReactNode;
   /** Optional eyebrow override (replaces the default "Tools · {category}" line). */
   eyebrow?: ReactNode;
+  editorialReview?: EditorialReview;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+  tertiaryHref?: string;
+  tertiaryLabel?: string;
   children: ReactNode;
 }
 
-export function ToolPageShell({ tool, heading, description, eyebrow, children }: Props) {
+export function ToolPageShell({
+  tool,
+  heading,
+  description,
+  eyebrow,
+  editorialReview,
+  secondaryHref,
+  secondaryLabel,
+  tertiaryHref,
+  tertiaryLabel,
+  children,
+}: Props) {
   const cat = TOOL_CATEGORIES.find((c) => c.id === tool.category);
 
   return (
@@ -41,8 +61,36 @@ export function ToolPageShell({ tool, heading, description, eyebrow, children }:
           </div>
         </section>
 
+        {editorialReview && (
+          <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-5">
+            <div className="container mx-auto max-w-6xl px-4">
+              <EditorialTrustBlock review={editorialReview} />
+            </div>
+          </section>
+        )}
+
         <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-10 md:py-14">
-          <div className="container mx-auto max-w-6xl px-4">{children}</div>
+          <div className="container mx-auto max-w-6xl px-4">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+              <div>{children}</div>
+              <aside className="space-y-4 lg:sticky lg:top-20">
+                <IntentCtaPanel
+                  eyebrow="Tool next step"
+                  title="Use the math, then validate the path."
+                  body="Take the quiz before moving from calculator output to compound, vendor, or protocol decisions."
+                  secondaryHref={secondaryHref}
+                  secondaryLabel={secondaryLabel}
+                  tertiaryHref={tertiaryHref}
+                  tertiaryLabel={tertiaryLabel}
+                />
+              </aside>
+            </div>
+            {editorialReview && (
+              <div className="mt-8">
+                <SourceList sources={editorialReview.sources} />
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="border-t border-[#103b2c]/8 bg-[#f4f1ea] py-10 md:py-12">

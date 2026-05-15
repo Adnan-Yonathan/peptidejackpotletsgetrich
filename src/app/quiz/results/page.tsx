@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CheckCircle2,
   Copy,
   ExternalLink,
   LoaderCircle,
@@ -426,8 +425,8 @@ export default function QuizResultsPage() {
     <>
       <Header />
       <QuizCountdownBanner completedAt={completedAt} />
-      <main className="flex-1 bg-[#fbfaf7] px-4 py-5 md:py-8">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+      <main className="flex-1 bg-[#fbfaf7] px-4 pb-24 pt-4 md:py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-5">
           <div className="flex items-center justify-between">
             <Button variant="ghost" render={<Link href="/quiz" />}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -467,7 +466,7 @@ export default function QuizResultsPage() {
           </section>
 
           <section className="space-y-2.5">
-            <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
               <FreeCompoundCard recommendation={visibleCompounds[0]} />
               <LockedCompoundCard recommendation={lockedCompounds[0]} />
               <LockedCompoundCard recommendation={lockedCompounds[1]} />
@@ -505,7 +504,7 @@ export default function QuizResultsPage() {
             protocolName={protocolName}
           />
 
-          <section className="space-y-3">
+          <section className="space-y-3 pt-1 md:pt-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
@@ -517,7 +516,7 @@ export default function QuizResultsPage() {
               </div>
             </div>
 
-            <div className="grid gap-3.5 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 md:gap-3.5">
               {vendorOrder.map((item) => (
                 <VendorCard
                   key={item.slug}
@@ -554,7 +553,7 @@ export default function QuizResultsPage() {
             </div>
           </section>
 
-          <section className={`${SURFACE} grid gap-4 px-4 py-4.5 md:grid-cols-[1.25fr_0.75fr] md:px-6`}>
+          <section className={`${SURFACE} grid gap-4 px-4 py-4 md:grid-cols-[1.25fr_0.75fr] md:px-6 md:py-4.5`}>
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
                 Protocol preview

@@ -1,4 +1,6 @@
 ﻿
+import type { EditorialReview } from "@/lib/editorial";
+
 export type GuideCategoryId =
   | "basics"
   | "dosing-reconstitution"
@@ -64,6 +66,7 @@ export interface GuideData {
   relatedGuideIds: string[];
   relatedPeptideIds: string[];
   relatedGoalIds: string[];
+  editorialReview?: EditorialReview;
   featured?: boolean;
 }
 

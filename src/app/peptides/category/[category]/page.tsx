@@ -15,10 +15,13 @@ import {
   evidencePillClass,
   riskPillClass,
 } from "@/lib/compare-peptides-view";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
 export async function generateStaticParams() {
   return PEPTIDE_CATEGORIES.map((c) => ({ category: c.slug }));
 }
+
+export const dynamicParams = false;
 
 export async function generateMetadata({
   params,
@@ -32,6 +35,12 @@ export async function generateMetadata({
     title: meta.title,
     description: meta.description,
     alternates: { canonical: `/peptides/category/${meta.slug}` },
+    ...buildSeoMetadata({
+      title: meta.title,
+      description: meta.description,
+      path: `/peptides/category/${meta.slug}`,
+      imageAlt: `${meta.title} peptide category`,
+    }),
   };
 }
 

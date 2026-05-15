@@ -5,6 +5,8 @@ import { CostCalculator } from "@/components/tools/CostCalculator";
 import { ToolPageShell } from "@/components/tools/ToolPageShell";
 import { getPeptideBySlug, getPublishedPeptides } from "@/data/peptides";
 import { SITE_CANONICAL_URL } from "@/lib/constants";
+import { getDefaultToolReview } from "@/lib/editorial";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 import { getToolById } from "@/lib/tools";
 
 const tool = getToolById("cost")!;
@@ -12,6 +14,8 @@ const tool = getToolById("cost")!;
 export async function generateStaticParams() {
   return getPublishedPeptides().map((p) => ({ slug: p.slug }));
 }
+
+export const dynamicParams = false;
 
 export async function generateMetadata({
   params,
@@ -21,10 +25,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const peptide = getPeptideBySlug(slug);
   if (!peptide) return { title: "Peptide Not Found" };
+  const title = `${peptide.name} Cost Calculator`;
+  const description = `Estimate the monthly and full-cycle cost of ${peptide.name} from tracked vendor listings. U.S. and international shipping routes.`;
+  const path = `/tools/cost/${peptide.slug}`;
   return {
-    title: `${peptide.name} Cost Calculator`,
-    description: `Estimate the monthly and full-cycle cost of ${peptide.name} from tracked vendor listings. U.S. and international shipping routes.`,
-    alternates: { canonical: `/tools/cost/${peptide.slug}` },
+    title,
+    description,
+    alternates: { canonical: path },
+    ...buildSeoMetadata({
+      title,
+      description,
+      path,
+      imageAlt: `${peptide.name} cost calculator`,
+    }),
   };
 }
 
@@ -63,6 +76,11 @@ export default async function PeptideCostPage({
         tool={tool}
         heading={`${peptide.name} cost.`}
         description={`Estimate the monthly burn and full-cycle cost of ${peptide.name} based on tracked vendor listings. Adjust the cycle length and shipping route to match your plan.`}
+        editorialReview={getDefaultToolReview()}
+        secondaryHref={`/peptides/${peptide.slug}`}
+        secondaryLabel="Read peptide profile"
+        tertiaryHref={`/vendors?peptide=${peptide.slug}`}
+        tertiaryLabel="Review vendors"
       >
         <CostCalculator peptide={peptide} />
       </ToolPageShell>

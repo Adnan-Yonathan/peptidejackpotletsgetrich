@@ -1,3 +1,5 @@
+import type { EditorialReview } from "@/lib/editorial";
+
 export type VendorType = "institutional_ruo" | "consumer_ruo" | "rx_manufacturer" | "inactive";
 export type CoaAccessMode = "public_pdf" | "lot_lookup" | "batch_portal" | "on_request" | "rx_label" | "unknown";
 
@@ -20,6 +22,11 @@ export interface VendorData {
   shippingTimeframe?: string;
   shippingNotes: string;
   regulatoryNotes: string;
+  scoringRationale?: string[];
+  trustCaveats?: string[];
+  refundSupportNotes?: string;
+  affiliateDisclosure?: string;
+  editorialReview?: EditorialReview;
   peptideIds: string[];
   status: "active" | "inactive";
 }
@@ -46,6 +53,19 @@ export const VENDORS: VendorData[] = [
     shippingNotes:
       "Amino Club states that every order includes tracking and shipment protection. Lyophilized products ship in discreet, insulated packaging, with ice packs used when needed for temperature-sensitive items.",
     regulatoryNotes: "Consumer RUO. Compliance-sensitive; keep outbound routing anchored to exact product pages instead of broad marketing pages.",
+    scoringRationale: [
+      "Public COA posture is stronger than vendors that rely only on request-based documentation.",
+      "Product-specific outbound mappings exist for many tracked peptides, which lowers mismatch risk.",
+      "U.S. shipping coverage and stated same-day processing windows make this the clearest U.S.-fit vendor currently tracked.",
+    ],
+    trustCaveats: [
+      "Trustpilot count is useful but still a third-party reputation signal, not a product-quality guarantee.",
+      "Current COA, lot, and label details must be checked on the vendor page before any purchase decision.",
+    ],
+    refundSupportNotes:
+      "Support email and shipment-protection language are visible; refund and reship terms should still be reviewed at checkout.",
+    affiliateDisclosure:
+      "PeptidePros may earn a commission from Amino Club links. That does not change the requirement to verify COA, label, and regulatory context before leaving this site.",
     peptideIds: [
       "bpc-157",
       "tb-500",
@@ -90,6 +110,19 @@ export const VENDORS: VendorData[] = [
     shippingNotes:
       "XL Peptides says lyophilized products are packaged to protect against environmental factors and direct sunlight. Product pages and FAQs consistently state dispatch within 1-2 working days, with tracking sent after shipment.",
     regulatoryNotes: "Consumer RUO. Until peptide-specific listings are mapped, treat this as a vendor-level outbound destination rather than an exact product-page route.",
+    scoringRationale: [
+      "International shipping coverage is broader than the U.S.-focused vendor currently tracked.",
+      "Trustpilot rating and review count provide a useful starting reputation signal.",
+      "Vendor-level routing is useful for discovery, but weaker than exact peptide product-page routing.",
+    ],
+    trustCaveats: [
+      "COA access is not normalized in the PeptidePros data layer yet, so documentation should be rechecked product by product.",
+      "Import rules and delivery reliability vary by destination country and can change after this profile is updated.",
+    ],
+    refundSupportNotes:
+      "Support email and dispatch windows are listed; refund, customs, and reship policies should be checked before ordering internationally.",
+    affiliateDisclosure:
+      "PeptidePros may earn a commission from XL Peptides links. Vendor ranking still depends on documentation, reputation, shipping, and product-page fit.",
     peptideIds: [
       "aod-9604",
       "bpc-157",

@@ -4,68 +4,50 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import {
   getPeptideBySlug,
-  getPublishedPeptides,
   type PeptideData,
 } from "@/data/peptides";
-import { getGoalsForPeptide } from "@/data/goals";
 import {
   buildComparisonSections,
   buildQuickWinners,
   evidencePillClass,
   riskPillClass,
 } from "@/lib/compare-peptides-view";
+import {
+  canonicalPair,
+  getCuratedComparisonPairs,
+  pairKey,
+  parsePairParam,
+} from "@/lib/compare-pairs";
+import { getDefaultComparisonReview } from "@/lib/editorial";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
 export const dynamicParams = false;
 
-type PairSlugs = { a: string; b: string };
+const EVIDENCE_PRIORITY: Record<PeptideData["evidenceTier"], number> = {
+  A: 0,
+  B: 1,
+  "B-C": 2,
+  C: 3,
+  "C-D": 4,
+  D: 5,
+};
 
-function canonicalPair(a: string, b: string): PairSlugs {
-  return a < b ? { a, b } : { a: b, b: a };
-}
-
-function pairKey(p: PairSlugs) {
-  return `${p.a}-vs-${p.b}`;
-}
-
-function parsePairParam(param: string): PairSlugs | null {
-  const idx = param.indexOf("-vs-");
-  if (idx <= 0) return null;
-  const a = param.slice(0, idx);
-  const b = param.slice(idx + 4);
-  if (!a || !b || a === b) return null;
-  return { a, b };
-}
-
-function getCuratedPairs(): PairSlugs[] {
-  const peptides = getPublishedPeptides();
-  const seen = new Set<string>();
-  const pairs: PairSlugs[] = [];
-
-  for (let i = 0; i < peptides.length; i++) {
-    const p1 = peptides[i];
-    const p1Goals = new Set(getGoalsForPeptide(p1.id).map((g) => g.id));
-    for (let j = i + 1; j < peptides.length; j++) {
-      const p2 = peptides[j];
-      const sameCategory = p1.category === p2.category;
-      const sharesGoal = getGoalsForPeptide(p2.id).some((g) => p1Goals.has(g.id));
-      if (!sameCategory && !sharesGoal) continue;
-
-      const pair = canonicalPair(p1.slug, p2.slug);
-      const key = pairKey(pair);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      pairs.push(pair);
-    }
-  }
-
-  return pairs;
-}
+const RISK_PRIORITY: Record<PeptideData["riskLevel"], number> = {
+  low: 0,
+  medium: 1,
+  "med-high": 2,
+  high: 3,
+  extreme: 4,
+};
 
 export async function generateStaticParams() {
-  return getCuratedPairs().map((p) => ({ pair: pairKey(p) }));
+  return getCuratedComparisonPairs().map((p) => ({ pair: pairKey(p) }));
 }
 
 export async function generateMetadata({
@@ -88,6 +70,13 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}` },
+    ...buildSeoMetadata({
+      title,
+      description,
+      path: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}`,
+      imagePath: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}/opengraph-image`,
+      imageAlt: `${a.name} vs ${b.name} comparison`,
+    }),
   };
 }
 
@@ -107,6 +96,15 @@ export default async function PeptidePairComparisonPage({
   const peptides: PeptideData[] = [a, b];
   const sections = buildComparisonSections(peptides);
   const quickWinners = buildQuickWinners(peptides);
+  const editorialReview = getDefaultComparisonReview();
+  const firstResearchPick =
+    EVIDENCE_PRIORITY[a.evidenceTier] < EVIDENCE_PRIORITY[b.evidenceTier]
+      ? a
+      : EVIDENCE_PRIORITY[b.evidenceTier] < EVIDENCE_PRIORITY[a.evidenceTier]
+        ? b
+        : RISK_PRIORITY[a.riskLevel] <= RISK_PRIORITY[b.riskLevel]
+          ? a
+          : b;
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -140,6 +138,12 @@ export default async function PeptidePairComparisonPage({
           </div>
         </section>
 
+        <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-5">
+          <div className="container mx-auto max-w-6xl px-4">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
         {/* HEADLINES */}
         <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-12 md:py-14">
           <div className="container mx-auto max-w-6xl px-4">
@@ -167,6 +171,34 @@ export default async function PeptidePairComparisonPage({
                 </Link>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="border-t border-[#103b2c]/8 bg-[#f4f1ea] py-10 md:py-12">
+          <div className="container mx-auto grid max-w-6xl gap-6 px-4 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
+            <div>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f6a52]">
+                Which should you research first?
+              </p>
+              <h2 className="text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-[#103b2c] md:text-[34px]">
+                Start with {firstResearchPick.name}, then use the table to confirm fit.
+              </h2>
+              <p className="mt-3 max-w-[680px] text-[14.5px] leading-[1.7] text-[#103b2c]/70">
+                {firstResearchPick.name} is the cleaner first read based on the current evidence,
+                risk, and regulatory data stored for this pair. The right answer can still change
+                if your goal, sport testing status, vendor constraints, or monitoring tolerance
+                makes the other option a better fit.
+              </p>
+            </div>
+            <IntentCtaPanel
+              eyebrow="Comparison next step"
+              title="Personalize this head-to-head."
+              body="Take the quiz before converting a comparison into a compound, vendor, or protocol decision."
+              secondaryHref={`/vendors?peptide=${firstResearchPick.slug}`}
+              secondaryLabel="Review vendors"
+              tertiaryHref="/pdfs"
+              tertiaryLabel="View protocol PDFs"
+            />
           </div>
         </section>
 
@@ -253,6 +285,7 @@ export default async function PeptidePairComparisonPage({
                 </div>
               </div>
             ))}
+            <SourceList sources={editorialReview.sources} />
           </div>
         </section>
 

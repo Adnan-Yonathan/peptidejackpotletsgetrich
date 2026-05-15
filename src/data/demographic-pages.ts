@@ -12,6 +12,7 @@
  */
 
 import type { AgeRange } from "@/types/planner";
+import type { EditorialReview } from "@/lib/editorial";
 import type { BlogFaq } from "./blog";
 import { GOALS, getGoalById, type GoalData } from "./goals";
 import { GOAL_LIFE_STAGE_FIT } from "./goal-life-stage-fit";
@@ -97,6 +98,7 @@ export interface DemographicPageData {
   canonicalPath: string;
   primaryKeyword: string;
   ogImage?: string;
+  editorialReview?: EditorialReview;
   /**
    * Name of the MedicalCondition this page is genuinely about, if any.
    * Only set on condition / life-stage pages where the audience IS the condition

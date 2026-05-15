@@ -3,11 +3,11 @@ import { SITE_CANONICAL_URL } from "@/lib/constants";
 import { getPublishedBlogPosts } from "@/data/blog";
 import { getPublishedDemographicPages } from "@/data/demographic-pages";
 import { CATEGORY_HUBS } from "@/data/category-hubs";
-import { getGoalsForPeptide } from "@/data/goals";
 import { getPublishedGuides } from "@/data/guides";
 import { PEPTIDE_CATEGORIES } from "@/data/peptide-categories";
 import { getPublishedPeptides } from "@/data/peptides";
 import { getActiveVendors } from "@/data/vendors";
+import { getCuratedComparisonPairs, pairKey } from "@/lib/compare-pairs";
 import { isNoindexPath } from "@/lib/seo-blocklist";
 
 /**
@@ -42,6 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: url("/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: url("/compare/peptides"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: url("/about"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: url("/methodology"), lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: url("/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.2 },
   ];
 
@@ -111,35 +112,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const guideEntries: MetadataRoute.Sitemap = getPublishedGuides().map((guide) => ({
     url: url(`/guides/${guide.slug}`),
-    lastModified: now,
+    lastModified: guide.updatedAt ? new Date(guide.updatedAt) : now,
     changeFrequency: "monthly",
     priority: 0.7,
   }));
 
   // Curated peptide-vs-peptide comparison pairs — same logic as the route's generateStaticParams.
-  const allPeptides = getPublishedPeptides();
-  const seenPairs = new Set<string>();
-  const pairEntries: MetadataRoute.Sitemap = [];
-  for (let i = 0; i < allPeptides.length; i++) {
-    const p1 = allPeptides[i];
-    const p1Goals = new Set(getGoalsForPeptide(p1.id).map((g) => g.id));
-    for (let j = i + 1; j < allPeptides.length; j++) {
-      const p2 = allPeptides[j];
-      const sameCategory = p1.category === p2.category;
-      const sharesGoal = getGoalsForPeptide(p2.id).some((g) => p1Goals.has(g.id));
-      if (!sameCategory && !sharesGoal) continue;
-      const [a, b] = p1.slug < p2.slug ? [p1.slug, p2.slug] : [p2.slug, p1.slug];
-      const key = `${a}-vs-${b}`;
-      if (seenPairs.has(key)) continue;
-      seenPairs.add(key);
-      pairEntries.push({
-        url: url(`/compare/peptides/${key}`),
-        lastModified: now,
-        changeFrequency: "monthly",
-        priority: 0.75,
-      });
-    }
-  }
+  const pairEntries: MetadataRoute.Sitemap = getCuratedComparisonPairs().map((pair) => ({
+    url: url(`/compare/peptides/${pairKey(pair)}`),
+    lastModified: now,
+    changeFrequency: "monthly",
+    priority: 0.75,
+  }));
 
   const allEntries: MetadataRoute.Sitemap = [
     ...staticEntries,

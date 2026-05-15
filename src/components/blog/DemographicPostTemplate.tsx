@@ -8,8 +8,11 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
 import { DemographicJsonLd } from "@/components/seo/DemographicJsonLd";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
+import { SourceList } from "@/components/seo/SourceList";
 import {
   DEMOGRAPHIC_AUTHORS,
   derivePeptideRecs,
@@ -19,6 +22,7 @@ import {
   type DemographicSafetyFlag,
   type DerivedPeptideRec,
 } from "@/data/demographic-pages";
+import { getDefaultArticleReview } from "@/lib/editorial";
 
 /**
  * Editorial-broadsheet template for /blog/peptides-for/[slug].
@@ -33,6 +37,7 @@ import {
 export function DemographicPostTemplate({ page }: { page: DemographicPageData }) {
   const author = DEMOGRAPHIC_AUTHORS[page.authorId];
   const recs = derivePeptideRecs(page);
+  const editorialReview = page.editorialReview ?? getDefaultArticleReview(page.updatedAt);
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -170,6 +175,12 @@ export function DemographicPostTemplate({ page }: { page: DemographicPageData })
             </div>
           </header>
 
+          <section className="border-b border-[#103b2c]/10 bg-[#fbfaf7]">
+            <div className="container mx-auto max-w-6xl px-4 py-5">
+              <EditorialTrustBlock review={editorialReview} />
+            </div>
+          </section>
+
           {/* ═══ Safety strip ═══════════════════════════════════════════ */}
           {page.safetyFlags.length > 0 && (
             <section
@@ -202,6 +213,18 @@ export function DemographicPostTemplate({ page }: { page: DemographicPageData })
                     </p>
                   </blockquote>
                 </Section>
+
+                <div className="mt-10">
+                  <IntentCtaPanel
+                    eyebrow="Audience-specific next step"
+                    title={`Match this ${page.audience.toLowerCase()} research to your profile.`}
+                    body="Take the quiz before choosing a compound, vendor, or PDF so recommendations reflect your goals, life stage, and risk constraints."
+                    secondaryHref="/peptides"
+                    secondaryLabel="Browse peptides"
+                    tertiaryHref="/vendors"
+                    tertiaryLabel="Review vendors"
+                  />
+                </div>
 
                 {/* §02 — Why this group */}
                 <Section
@@ -456,6 +479,9 @@ export function DemographicPostTemplate({ page }: { page: DemographicPageData })
                     </p>
                   </div>
                 </footer>
+                <div className="mt-8">
+                  <SourceList sources={editorialReview.sources} />
+                </div>
               </div>
 
               {/* ─── Editorial TOC ─── */}
