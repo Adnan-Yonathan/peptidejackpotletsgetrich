@@ -49,8 +49,9 @@ export default function HomePage() {
             <h1 className="mb-5 font-extrabold leading-[1.04] tracking-[-0.035em] text-black text-[44px] sm:text-[56px] md:text-[68px]">
               Stop guessing which
               <br />
+              peptides{" "}
               <span className="relative inline-block italic text-[#0f6a52]">
-                <span className="relative z-10">peptides</span>
+                <span className="relative z-10">fit your goal</span>
                 <svg
                   aria-hidden="true"
                   className="pointer-events-none absolute -bottom-1 left-0 h-[10px] w-full"
@@ -65,8 +66,8 @@ export default function HomePage() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </span>{" "}
-              fit your goal.
+              </span>
+              .
             </h1>
 
             <p className="mx-auto mb-7 max-w-[520px] text-[16px] leading-[1.65] text-[#103b2c]/60 md:mx-0">
