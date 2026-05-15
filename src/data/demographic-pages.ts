@@ -152,7 +152,7 @@ export interface DemographicAuthor {
 // ──────────────────────────────────────────────────────────────────────
 
 export interface VendorLink {
-  vendorId: "amino-club" | "xl-peptides";
+  vendorId: "amino-club" | "xl-peptides" | "ignite-peptides";
   vendorName: string;
   url: string;
 }
@@ -3858,6 +3858,10 @@ function buildVendorLinks(peptideId: string): VendorLink[] {
   const xl = getAffiliateUrlForVendor("xl-peptides", peptideId);
   if (xl) {
     links.push({ vendorId: "xl-peptides", vendorName: "XL Peptides", url: xl });
+  }
+  const ignite = getAffiliateUrlForVendor("ignite-peptides", peptideId);
+  if (ignite) {
+    links.push({ vendorId: "ignite-peptides", vendorName: "Ignite Peptides", url: ignite });
   }
   return links;
 }

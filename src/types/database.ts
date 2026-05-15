@@ -155,6 +155,11 @@ export interface Purchase {
   currency: string | null;
   receipt_email: string | null;
   metadata: Record<string, unknown>;
+  offer_type: string | null;
+  source_page: string | null;
+  quiz_session_id: string | null;
+  goal_id: string | null;
+  primary_peptide_slug: string | null;
   purchased_at: string | null;
   created_at: string;
   updated_at: string;
@@ -167,8 +172,47 @@ export interface AffiliateEvent {
   vendor_id: string | null;
   source_page: string;
   source_plan_id: string | null;
+  session_id: string | null;
+  source_type: string | null;
+  vendor_slug: string | null;
+  peptide_slug: string | null;
+  destination_url: string | null;
+  utm_params: Record<string, unknown>;
+  metadata: Record<string, unknown>;
   clicked_at: string;
   ip_hash: string | null;
+}
+
+export interface RevenueEvent {
+  id: string;
+  user_id: string | null;
+  session_id: string;
+  event_type:
+    | "quiz_started"
+    | "quiz_completed"
+    | "signup_started"
+    | "signup_completed"
+    | "paywall_viewed"
+    | "checkout_started"
+    | "checkout_completed"
+    | "affiliate_click";
+  source_page: string | null;
+  source_type: string | null;
+  goal_id: string | null;
+  peptide_id: string | null;
+  peptide_slug: string | null;
+  vendor_id: string | null;
+  vendor_slug: string | null;
+  product_slug: string | null;
+  offer_type: string | null;
+  destination_url: string | null;
+  amount_total: number | null;
+  currency: string | null;
+  utm_params: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  user_agent: string | null;
+  referrer: string | null;
+  created_at: string;
 }
 
 // Quiz & Recommendation types

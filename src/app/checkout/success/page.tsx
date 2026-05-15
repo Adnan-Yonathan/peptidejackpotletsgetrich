@@ -24,6 +24,10 @@ export default async function CheckoutSuccessPage({
   const purchasedProduct = session?.metadata?.productSlug
     ? getPaidPdfProduct(session.metadata.productSlug)
     : null;
+  const purchasedSlugs = parseProductSlugs(session?.metadata?.productSlugs, purchasedProduct?.slug);
+  const purchasedProducts = purchasedSlugs
+    .map((slug) => getPaidPdfProduct(slug))
+    .filter((product): product is NonNullable<typeof product> => Boolean(product));
   const productPair = purchasedProduct
     ? getGoalProtocolPdfPairForProduct(purchasedProduct.slug)
     : undefined;
@@ -42,13 +46,17 @@ export default async function CheckoutSuccessPage({
             Stripe is confirming the payment. Your PDF will appear in your account as soon as the
             webhook records ownership.
           </p>
-          {purchasedProduct && (
+          {purchasedProducts.length > 0 && (
             <div className="mt-5 rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-4 text-left">
               <p className="flex items-center gap-2 text-sm font-semibold text-[#103b2c]">
                 <FileText className="h-4 w-4 text-[#0f6a52]" />
-                Purchased PDF
+                Purchased PDFs
               </p>
-              <p className="mt-1 text-sm text-[#103b2c]/70">{purchasedProduct.name}</p>
+              <ul className="mt-2 space-y-1 text-sm text-[#103b2c]/70">
+                {purchasedProducts.map((product) => (
+                  <li key={product.slug}>{product.name}</li>
+                ))}
+              </ul>
             </div>
           )}
           {addonProduct && (
@@ -69,14 +77,34 @@ export default async function CheckoutSuccessPage({
             </p>
           )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button render={<Link href="/protocol" />}>Open PeptidePros+</Button>
+            <Button render={<Link href="/dashboard/purchases" />}>Download my PDFs</Button>
+            {purchasedProduct && (
+              <Button variant="outline" render={<Link href={`/pdfs/examples/${purchasedProduct.slug}`} />}>
+                Open PDF preview
+              </Button>
+            )}
             <Button variant="outline" render={<Link href="/dashboard/purchases" />}>View my PDFs</Button>
-            <Button variant="outline" render={<Link href="/peptides" />}>
-              Continue browsing
+            <Button variant="outline" render={<Link href="/vendors" />}>
+              See matching vendors
             </Button>
           </div>
         </CardContent>
       </Card>
     </main>
   );
+}
+
+function parseProductSlugs(value: string | undefined, fallback: string | undefined) {
+  if (!value) return fallback ? [fallback] : [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is string => typeof item === "string" && item.length > 0);
+    }
+  } catch {
+    // Legacy checkout sessions only store productSlug.
+  }
+
+  return fallback ? [fallback] : [];
 }

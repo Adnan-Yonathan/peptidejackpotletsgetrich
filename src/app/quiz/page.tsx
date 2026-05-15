@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
@@ -32,6 +32,8 @@ import {
 } from "@/data/planner-options";
 import { useQuizState } from "@/hooks/useQuizState";
 import { createClient } from "@/lib/supabase/client";
+import { trackRevenueEvent } from "@/lib/revenue/client";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 import type { PlannerAnswers, PlannerStep } from "@/types/planner";
 
 const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = {
@@ -112,8 +114,8 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     subtitle: "This shapes whether the stack should be short-term, focused, or longer-horizon.",
   },
   email: {
-    title: "Enter your email to unlock your personalized peptide stack",
-    subtitle: "We will use this to connect your result to your saved experience later.",
+    title: "Send my stack and unlock my protocol preview",
+    subtitle: "Create your free account so your result, vendor options, and protocol offer stay connected.",
   },
 };
 
@@ -137,11 +139,23 @@ export default function QuizPage() {
   const router = useRouter();
   const { currentStep, answers, setAnswer, goToStep } = useQuizState();
   const supabase = useMemo(() => createClient(), []);
+  const hasTrackedStart = useRef(false);
+  const hasTrackedCompletion = useRef(false);
   const [isGeneratingResults, setIsGeneratingResults] = useState(false);
   const [activeLoadingStep, setActiveLoadingStep] = useState(0);
   const visibleSteps = useMemo(() => getVisibleSteps(answers), [answers]);
   const stepName = visibleSteps[Math.min(currentStep, visibleSteps.length - 1)];
   const progress = ((Math.min(currentStep, visibleSteps.length - 1) + 1) / visibleSteps.length) * 100;
+
+  useEffect(() => {
+    if (hasTrackedStart.current) return;
+    hasTrackedStart.current = true;
+    trackRevenueEvent({
+      eventType: "quiz_started",
+      sourcePage: "/quiz",
+      sourceType: "quiz",
+    });
+  }, []);
 
   useEffect(() => {
     if (!isGeneratingResults) return;
@@ -165,6 +179,7 @@ export default function QuizPage() {
 
           const params = new URLSearchParams({
             redirectTo: "/quiz/results",
+            sessionId: getRevenueSessionId(),
           });
           const email = answers.email?.trim();
           if (email) params.set("email", email);
@@ -200,6 +215,21 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentStep >= visibleSteps.length - 1) {
+      if (!hasTrackedCompletion.current) {
+        hasTrackedCompletion.current = true;
+        trackRevenueEvent({
+          eventType: "quiz_completed",
+          sourcePage: "/quiz",
+          sourceType: "quiz",
+          goalId: answers.primaryGoalId,
+          metadata: {
+            budget: answers.budget,
+            experience: answers.experience,
+            riskTolerance: answers.riskTolerance,
+            timeframe: answers.timeframe,
+          },
+        });
+      }
       setActiveLoadingStep(0);
       setIsGeneratingResults(true);
       return;
@@ -273,6 +303,15 @@ export default function QuizPage() {
       <Header />
       <main className="flex-1 bg-[#fbfaf7] px-4 pb-28 pt-5 sm:pb-12 sm:pt-10 md:py-12">
         <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-4 rounded-[1rem] border border-[#103b2c]/10 bg-white px-4 py-3 shadow-sm sm:mb-5 sm:px-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
+              2-minute planner
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#103b2c]/70 sm:text-sm">
+              Get your peptide research stack, vendor options, and protocol preview matched to
+              your goal, budget, risk profile, and timeline.
+            </p>
+          </div>
           <div className="mb-4 sm:mb-8">
             <div className="mb-2 flex justify-between text-xs text-muted-foreground sm:text-sm">
               <span>
@@ -296,6 +335,7 @@ export default function QuizPage() {
             </CardHeader>
 
             <CardContent className="px-4 pb-5 sm:px-6 sm:pb-6">
+              <QuizRevenueCue stepName={stepName} answers={answers} />
               {isGeneratingResults ? renderLoadingChecklist() : renderQuestion()}
             </CardContent>
           </Card>
@@ -635,6 +675,36 @@ function OptionGrid<T extends string>({
           onClick={() => onSelect(option.value)}
         />
       ))}
+    </div>
+  );
+}
+
+function QuizRevenueCue({
+  stepName,
+  answers,
+}: {
+  stepName: PlannerStep;
+  answers: Partial<PlannerAnswers>;
+}) {
+  const cue =
+    stepName === "primaryGoalId"
+      ? "Your protocol preview will be built around the goal you choose here."
+      : stepName === "budget"
+        ? "Vendor options and protocol recommendations will stay inside this budget lane."
+        : stepName === "email"
+          ? "Your free stack preview comes first. The full protocol unlock is shown after your result."
+          : null;
+
+  if (!cue) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-[#0f6a52]/15 bg-[#e7f4ee] px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#103b2c]">
+      {cue}
+      {answers.primaryGoalId && stepName === "budget" ? (
+        <span className="block pt-1 text-[#103b2c]/65">
+          Goal selected. Now we are narrowing the plan by cost and sourcing fit.
+        </span>
+      ) : null}
     </div>
   );
 }

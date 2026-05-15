@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Signup1 } from "@/components/ui/signup-1";
+import { trackRevenueEvent } from "@/lib/revenue/client";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 import { createClient } from "@/lib/supabase/client";
 
 function SignupForm() {
@@ -13,6 +15,7 @@ function SignupForm() {
   const supabase = createClient();
   const redirectTo = searchParams.get("redirectTo") ?? "/dashboard";
   const initialEmail = searchParams.get("email") ?? "";
+  const sessionId = searchParams.get("sessionId") ?? getRevenueSessionId();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,6 +23,18 @@ function SignupForm() {
   useEffect(() => {
     setEmail(initialEmail);
   }, [initialEmail]);
+
+  useEffect(() => {
+    trackRevenueEvent({
+      eventType: "signup_started",
+      sessionId,
+      sourcePage: "/signup",
+      sourceType: "auth",
+      metadata: {
+        redirectTo,
+      },
+    });
+  }, [redirectTo, sessionId]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,6 +75,15 @@ function SignupForm() {
     }
 
     toast.success("Account created");
+    trackRevenueEvent({
+      eventType: "signup_completed",
+      sessionId,
+      sourcePage: "/signup",
+      sourceType: "auth",
+      metadata: {
+        redirectTo,
+      },
+    });
     router.replace(redirectTo);
     router.refresh();
   };

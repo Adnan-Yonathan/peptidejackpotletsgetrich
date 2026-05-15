@@ -1,28 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowRight, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ProtocolPdfProduct } from "@/data/protocol-pdfs";
+import { trackRevenueEvent } from "@/lib/revenue/client";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 
 interface PdfPaywallProps {
   primaryProtocol: ProtocolPdfProduct | undefined;
   addonProtocol?: ProtocolPdfProduct;
   protocolName: string;
+  goalId?: string;
+  primaryPeptideSlug?: string;
+  sourcePage?: string;
 }
 
 export function PdfPaywall({
   primaryProtocol,
+  addonProtocol,
   protocolName,
+  goalId,
+  primaryPeptideSlug,
+  sourcePage = "pdf-paywall",
 }: PdfPaywallProps) {
-  const checkoutHref = primaryProtocol ? `/checkout/${primaryProtocol.slug}` : undefined;
+  const sessionId = useSyncExternalStore(
+    () => () => undefined,
+    getRevenueSessionId,
+    () => "",
+  );
+
+  const checkoutParams = new URLSearchParams({
+    sourcePage,
+    sessionId: sessionId || "pending",
+  });
+  if (goalId) checkoutParams.set("goalId", goalId);
+  if (primaryPeptideSlug) checkoutParams.set("primaryPeptideSlug", primaryPeptideSlug);
+
+  const checkoutHref = primaryProtocol ? `/checkout/${primaryProtocol.slug}?${checkoutParams.toString()}` : undefined;
+  const bundleCheckoutHref =
+    primaryProtocol && addonProtocol
+      ? `/checkout/${primaryProtocol.slug}?${new URLSearchParams({
+          ...Object.fromEntries(checkoutParams.entries()),
+          offer: "bundle",
+        }).toString()}`
+      : undefined;
   const priceLabel = primaryProtocol?.priceLabel ?? "$49";
+
+  useEffect(() => {
+    if (!sessionId) return;
+    trackRevenueEvent({
+      eventType: "paywall_viewed",
+      sessionId,
+      sourcePage,
+      sourceType: "pdf_paywall",
+      goalId,
+      peptideSlug: primaryPeptideSlug,
+      productSlug: primaryProtocol?.slug,
+      offerType: primaryProtocol?.kind,
+    });
+  }, [goalId, primaryPeptideSlug, primaryProtocol?.kind, primaryProtocol?.slug, sessionId, sourcePage]);
 
   return (
     <div className="flex flex-col gap-4 pb-20 sm:gap-5 sm:pb-0">
       <BonusReceipt protocolName={protocolName} />
-      <BigPriceBlock priceLabel={priceLabel} checkoutHref={checkoutHref} />
+      <BigPriceBlock
+        priceLabel={priceLabel}
+        checkoutHref={checkoutHref}
+        bundleCheckoutHref={bundleCheckoutHref}
+        addonProtocol={addonProtocol}
+      />
       <ComparisonTable priceLabel={priceLabel} />
       <PaywallFAQ />
       <FinalCta
@@ -209,9 +257,13 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
 function BigPriceBlock({
   priceLabel,
   checkoutHref,
+  bundleCheckoutHref,
+  addonProtocol,
 }: {
   priceLabel: string;
   checkoutHref: string | undefined;
+  bundleCheckoutHref?: string;
+  addonProtocol?: ProtocolPdfProduct;
 }) {
   return (
     <section className="overflow-hidden rounded-[18px] bg-[#0f6a52] text-white shadow-[0_24px_64px_-24px_rgba(15,106,82,0.5)]">
@@ -246,6 +298,15 @@ function BigPriceBlock({
               {checkoutHref ? `Unlock my protocol — ${priceLabel}` : "Protocol coming soon"}
               {checkoutHref && <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2.6} />}
             </Button>
+            {bundleCheckoutHref && addonProtocol && (
+              <Button
+                className="h-11 w-full rounded-[12px] border border-white/25 bg-[#f0c95a] text-[13.5px] font-extrabold text-[#5a4108] hover:bg-[#e7be4d]"
+                render={<Link href={bundleCheckoutHref} />}
+              >
+                Add {addonProtocol.shortName} for $10 more today
+                <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2.6} />
+              </Button>
+            )}
             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-white/70">
               <span className="inline-flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3" strokeWidth={2.4} />

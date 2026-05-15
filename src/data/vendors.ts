@@ -1,4 +1,4 @@
-import type { EditorialReview } from "@/lib/editorial";
+import { buildEditorialReview, type EditorialReview } from "@/lib/editorial";
 
 export type VendorType = "institutional_ruo" | "consumer_ruo" | "rx_manufacturer" | "inactive";
 export type CoaAccessMode = "public_pdf" | "lot_lookup" | "batch_portal" | "on_request" | "rx_label" | "unknown";
@@ -145,6 +145,110 @@ export const VENDORS: VendorData[] = [
       "semax",
       "tb-500",
       "tesamorelin",
+    ],
+    status: "active",
+  },
+  {
+    id: "ignite-peptides",
+    slug: "ignite-peptides",
+    name: "Ignite Peptides",
+    websiteUrl: "https://ignitepeptides.com/",
+    trustpilotUrl: "https://ca.trustpilot.com/review/ignitepeptides.com",
+    trustpilotRating: "4.1",
+    trustpilotReviewCount: 22,
+    vendorType: "consumer_ruo",
+    description:
+      "U.S.-based consumer RUO vendor with a new affiliate partnership. Treat as a conservative, documentation-check-first option until more third-party review history accumulates.",
+    coaAccessMode: "on_request",
+    qcMethods: ["Third-party testing", "COA with order", "Product-page test reports where available"],
+    headquarters: "Owatonna, Minnesota, United States",
+    supportEmail: "contact@ignitepeptides.com",
+    orderProcessingTime:
+      "Orders may require an additional 24-48 hours for payment processing and dispatch; weekend orders ship the next business day.",
+    shippingRegions: "U.S. domestic territories only.",
+    shippingTimeframe:
+      "USPS Standard: 3-6 business days after dispatch. USPS Express: 2-4 business days after dispatch.",
+    shippingNotes:
+      "Ignite states that it ships only within U.S. domestic territories and sends tracking after dispatch. Product pages and checkout should still be checked for current inventory, temperature handling, and COA availability.",
+    regulatoryNotes:
+      "Consumer RUO. Ignite states products are laboratory research materials only, not for human or veterinary consumption, and not FDA-approved for medical, therapeutic, diagnostic, or disease-related use.",
+    scoringRationale: [
+      "Direct product-level affiliate routing is available for several high-intent peptides, including TB-500 and KPV.",
+      "Trustpilot shows a public profile, but the review count is still small enough that reputation should be treated as an early signal.",
+      "U.S.-only shipping makes Ignite a possible domestic alternative on peptide and quiz-result vendor surfaces.",
+    ],
+    trustCaveats: [
+      "COA language is vendor-claimed and should be verified on the exact product page or order documentation before checkout.",
+      "Trustpilot includes shipping and packaging complaints, so do not describe Ignite as best-in-class or top-rated.",
+      "Some Ignite product names use vendor-specific shorthand, so only verified single-compound mappings are routed directly in v1.",
+    ],
+    refundSupportNotes:
+      "Ignite states that all sales are final and non-refundable except vendor-determined exceptions; missing, wrong, damaged, or defective item claims require timely documentation.",
+    affiliateDisclosure:
+      "PeptidePros may earn a commission from Ignite Peptides links. This does not remove the need to verify COA, product naming, shipping, and RUO context before leaving PeptidePros.",
+    editorialReview: buildEditorialReview({
+      lastReviewedAt: "2026-05-15",
+      methodologySummary:
+        "Ignite was reviewed from PeptidesFinder, Trustpilot, live product pages, shipping terms, disclaimer language, and affiliate-link behavior before being added as a conservative U.S. vendor option.",
+      disclaimerVariant: "vendor",
+      sources: [
+        {
+          title: "Ignite Peptides Review 2026: Quality, Shipping & Trust Score",
+          publisher: "PeptidesFinder",
+          url: "https://peptidesfinder.com/vendors/0a8ed77f-0df7-4c1d-b9d9-55ef809eecfd",
+          accessedAt: "2026-05-15",
+          note: "Used as a third-party vendor review reference.",
+        },
+        {
+          title: "Ignitepeptides Reviews",
+          publisher: "Trustpilot",
+          url: "https://ca.trustpilot.com/review/ignitepeptides.com",
+          accessedAt: "2026-05-15",
+          note: "Used for public rating and review-count signal.",
+        },
+        {
+          title: "Research Peptides | 99% Pure, COA-Verified",
+          publisher: "Ignite Peptides",
+          url: "https://ignitepeptides.com/",
+          accessedAt: "2026-05-15",
+          note: "Used for vendor-claimed headquarters, catalog, purity, COA, and RUO positioning.",
+        },
+        {
+          title: "Shipping & Returns",
+          publisher: "Ignite Peptides",
+          url: "https://ignitepeptides.com/shipping-and-returns/",
+          accessedAt: "2026-05-15",
+          note: "Used for U.S. shipping, processing, cancellation, refund, and reshipment policy notes.",
+        },
+        {
+          title: "Disclaimer",
+          publisher: "Ignite Peptides",
+          url: "https://ignitepeptides.com/disclaimer/",
+          accessedAt: "2026-05-15",
+          note: "Used for research-only and no-medical-use compliance language.",
+        },
+      ],
+    }),
+    peptideIds: [
+      "bpc-157",
+      "thymosin-beta-4",
+      "tb-500",
+      "cjc-1295",
+      "ipamorelin",
+      "sermorelin",
+      "tesamorelin",
+      "mots-c",
+      "epitalon",
+      "ghk-cu",
+      "kpv",
+      "pt-141",
+      "semax",
+      "dsip",
+      "semaglutide",
+      "tirzepatide",
+      "selank",
+      "retatrutide",
+      "melanotan-2",
     ],
     status: "active",
   },

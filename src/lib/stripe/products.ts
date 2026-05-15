@@ -1,5 +1,6 @@
 import {
   PROTOCOL_PDF_PRODUCTS,
+  getGoalProtocolPdfPairForProduct,
   getProtocolPdfProduct,
   type ProtocolPdfProduct,
 } from "@/data/protocol-pdfs";
@@ -49,4 +50,13 @@ export function getStripePriceId(product: PaidPdfProduct) {
   }
 
   return priceId;
+}
+
+export function getBundleProducts(primaryProduct: PaidPdfProduct): PaidPdfProduct[] {
+  if (primaryProduct.kind !== "primary") return [primaryProduct];
+
+  const pair = getGoalProtocolPdfPairForProduct(primaryProduct.slug);
+  if (!pair?.addon) return [primaryProduct];
+
+  return [primaryProduct, pair.addon];
 }
