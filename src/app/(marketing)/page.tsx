@@ -25,7 +25,7 @@ import { TestimonialsSection } from "@/components/ui/testimonials-columns-1";
 import { CATEGORY_HUBS } from "@/data/category-hubs";
 
 export const metadata: Metadata = {
-  title: { absolute: "PeptidePros — Peptide Research, Trusted for Real Results" },
+  title: { absolute: "PeptidePros - Peptide Research, Trusted for Real Results" },
   description:
     "Independent peptide research and vendor comparison. Evidence-graded compounds, regulatory flags upfront, and personalized plans. We don't sell peptides — we help you choose wisely.",
   alternates: { canonical: "/" },
