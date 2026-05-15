@@ -47,10 +47,10 @@ export default function HomePage() {
         <div className="relative z-[2] mx-auto grid w-full max-w-[1320px] items-center gap-10 px-6 pt-16 pb-0 md:grid-cols-[minmax(0,1fr)_360px] md:px-8 md:pt-24 md:pb-0 lg:grid-cols-[minmax(0,1fr)_470px] lg:gap-10">
           <div className="text-center md:self-center md:pb-0 md:text-left">
             <h1 className="mb-5 font-extrabold leading-[1.04] tracking-[-0.035em] text-black text-[44px] sm:text-[56px] md:text-[68px]">
-              Peptide research,
+              Stop guessing which
               <br />
               <span className="relative inline-block italic text-[#0f6a52]">
-                <span className="relative z-10">trusted</span>
+                <span className="relative z-10">peptides</span>
                 <svg
                   aria-hidden="true"
                   className="pointer-events-none absolute -bottom-1 left-0 h-[10px] w-full"
@@ -66,11 +66,12 @@ export default function HomePage() {
                   />
                 </svg>
               </span>{" "}
-              for real results.
+              fit your goal.
             </h1>
 
             <p className="mx-auto mb-7 max-w-[520px] text-[16px] leading-[1.65] text-[#103b2c]/60 md:mx-0">
-              Get a free stack preview, vendor options, and a protocol offer matched to your goal in 2 minutes. We don&rsquo;t sell peptides &mdash; we help you choose wisely.
+              Take our 2-minute quiz to get a peptide protocol matched to your goal,
+              experience, budget, and risk comfort.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
