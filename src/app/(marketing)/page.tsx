@@ -71,8 +71,8 @@ export default function HomePage() {
             </h1>
 
             <p className="mx-auto mb-7 max-w-[520px] text-[16px] leading-[1.65] text-[#103b2c]/60 md:mx-0">
-              Take our 2-minute quiz to get a peptide protocol matched to your goal,
-              experience, budget, and risk comfort.
+              Take our 2-minute quiz to get a peptide protocol matched to your body,
+              health profile, and health goals.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
