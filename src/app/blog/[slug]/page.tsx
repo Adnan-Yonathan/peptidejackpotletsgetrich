@@ -11,6 +11,12 @@ import { BreadcrumbList } from "@/components/seo/JsonLd";
 import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
 import {
+  COAAnnotationVisual,
+  EvidenceRiskMatrix,
+  PeptideDecisionFlow,
+  ProtocolTimelineVisual,
+} from "@/components/visuals";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -102,6 +108,13 @@ function formatShortDate(iso: string) {
 
 export async function generateStaticParams() {
   return getPublishedBlogPosts().map((post) => ({ slug: post.slug }));
+}
+
+function shouldShowCoaVisual(post: { slug: string; categoryId: string; title: string }) {
+  const haystack = `${post.slug} ${post.categoryId} ${post.title}`.toLowerCase();
+  return ["coa", "vendor", "quality", "ruo", "regulatory", "safety", "trust", "buying"].some((term) =>
+    haystack.includes(term)
+  );
 }
 
 export const dynamicParams = false;
@@ -286,6 +299,21 @@ export default async function BlogPostPage({
           </div>
         </section>
 
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <PeptideDecisionFlow
+              pageType="blog"
+              title="Use this article as the context layer."
+              body="Read the research framing, compare the relevant compounds, then use the quiz before moving into vendor or protocol decisions."
+              primaryHref="/quiz"
+              primaryLabel="Take the quiz"
+              secondaryHref="/peptides"
+              secondaryLabel="Browse peptides"
+              relatedLabel={category?.title ?? "Blog research"}
+            />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
@@ -340,6 +368,17 @@ export default async function BlogPostPage({
                   </div>
                 </div>
               )}
+
+              <ProtocolTimelineVisual
+                contextLabel="Article protocol path"
+                title="Move from article insight to protocol decision in five checks."
+                relatedPeptides={relatedPeptides.slice(0, 3).map((peptide) => ({
+                  name: peptide.name,
+                  slug: peptide.slug,
+                }))}
+              />
+
+              {shouldShowCoaVisual(post) && <COAAnnotationVisual />}
 
               {/* Sections */}
               {post.sections.map((section) => (
@@ -503,6 +542,11 @@ export default async function BlogPostPage({
                           View
                         </Button>
                       </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {relatedPeptides.slice(0, 2).map((peptide) => (
+                      <EvidenceRiskMatrix key={`${peptide.id}-matrix`} peptide={peptide} compact />
                     ))}
                   </div>
                 </div>

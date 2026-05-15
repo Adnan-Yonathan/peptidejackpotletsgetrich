@@ -13,6 +13,7 @@ import { getGoalHref } from "@/lib/goal-links";
 import { buildSeoMetadata } from "@/lib/seo-metadata";
 import { getDefaultPeptideReview } from "@/lib/editorial";
 import { VendorTrustRationale } from "@/components/vendors/VendorTrustRationale";
+import { EvidenceRiskMatrix, PeptideDecisionFlow } from "@/components/visuals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -301,6 +302,12 @@ export default async function PeptideDetailPage({
           </div>
         </section>
 
+        <section className="border-b border-stone-200 bg-[#fbfaf7]">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EvidenceRiskMatrix peptide={peptide} />
+          </div>
+        </section>
+
         {/* ── Two-col body ────────────────────────────────────── */}
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
@@ -440,6 +447,17 @@ export default async function PeptideDetailPage({
                   </div>
                 </div>
               )}
+
+              <PeptideDecisionFlow
+                pageType="peptide"
+                title={`Where ${peptide.name} fits in the research path.`}
+                body="Use the evidence and risk profile first, then compare vendors and run the quiz before turning this compound into a protocol decision."
+                primaryHref="/quiz"
+                primaryLabel="Take the quiz"
+                secondaryHref={`/vendors?peptide=${peptide.slug}`}
+                secondaryLabel="Compare vendors"
+                relatedLabel={`${goals.length} related goal${goals.length === 1 ? "" : "s"}`}
+              />
 
               <IntentCtaPanel
                 eyebrow="Peptide research path"

@@ -13,6 +13,7 @@ import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
 import { DemographicJsonLd } from "@/components/seo/DemographicJsonLd";
 import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { SourceList } from "@/components/seo/SourceList";
+import { ProtocolTimelineVisual } from "@/components/visuals";
 import {
   DEMOGRAPHIC_AUTHORS,
   derivePeptideRecs,
@@ -306,6 +307,19 @@ export function DemographicPostTemplate({ page }: { page: DemographicPageData })
           </section>
 
           {gscUpgrade && <GscDemographicUpgrade upgrade={gscUpgrade} />}
+
+          <section className="border-b border-[#103b2c]/10 bg-[#fbfaf7]">
+            <div className="container mx-auto max-w-6xl px-4 py-6">
+              <ProtocolTimelineVisual
+                contextLabel="Audience protocol path"
+                title={`How to move from ${page.audience.toLowerCase()} research to a safer plan.`}
+                relatedPeptides={recs.slice(0, 3).map((rec) => ({
+                  name: rec.peptide.name,
+                  slug: rec.peptide.slug,
+                }))}
+              />
+            </div>
+          </section>
 
           {/* ═══ Safety strip ═══════════════════════════════════════════ */}
           {page.safetyFlags.length > 0 && (
@@ -806,6 +820,33 @@ function CompoundCard({
           <p className="mt-4 max-w-[640px] text-[15.5px] leading-[1.65] text-[#103b2c]/80">
             {rec.framing}
           </p>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="border border-[#103b2c]/10 bg-[#fbfaf7] px-3 py-2">
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#103b2c]/45">
+                Evidence
+              </p>
+              <p className="mt-1 text-[12.5px] font-bold text-[#103b2c]">
+                Tier {peptide.evidenceTier}
+              </p>
+            </div>
+            <div className="border border-[#103b2c]/10 bg-[#fbfaf7] px-3 py-2">
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#103b2c]/45">
+                Risk
+              </p>
+              <p className="mt-1 text-[12.5px] font-bold capitalize text-[#103b2c]">
+                {peptide.riskLevel.replace("-", " ")}
+              </p>
+            </div>
+            <div className="border border-[#103b2c]/10 bg-[#fbfaf7] px-3 py-2">
+              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#103b2c]/45">
+                Route
+              </p>
+              <p className="mt-1 text-[12.5px] font-bold capitalize text-[#103b2c]">
+                {peptide.administrationRoutes[0] ?? "varies"}
+              </p>
+            </div>
+          </div>
 
           {/* Caution */}
           {rec.caution && (

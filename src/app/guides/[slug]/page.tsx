@@ -11,6 +11,12 @@ import { BreadcrumbList } from "@/components/seo/JsonLd";
 import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
 import {
+  COAAnnotationVisual,
+  EvidenceRiskMatrix,
+  PeptideDecisionFlow,
+  ProtocolTimelineVisual,
+} from "@/components/visuals";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -98,6 +104,13 @@ function formatShortDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function shouldShowCoaVisual(guide: { slug: string; categoryId: string; title: string }) {
+  const haystack = `${guide.slug} ${guide.categoryId} ${guide.title}`.toLowerCase();
+  return ["coa", "vendor", "quality", "ruo", "regulatory", "safety", "legal"].some((term) =>
+    haystack.includes(term)
+  );
 }
 
 export async function generateStaticParams() {
@@ -252,6 +265,21 @@ export default async function GuideDetailPage({
           </div>
         </section>
 
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <PeptideDecisionFlow
+              pageType="guide"
+              title="Use the guide as a safety framework."
+              body="Learn the framework first, then check risk, vendor documentation, and personal fit before choosing a compound path."
+              primaryHref="/quiz"
+              primaryLabel="Take the quiz"
+              secondaryHref="/peptides"
+              secondaryLabel="Browse peptides"
+              relatedLabel={category?.title ?? "Guide framework"}
+            />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
@@ -294,6 +322,17 @@ export default async function GuideDetailPage({
                   </div>
                 </div>
               )}
+
+              <ProtocolTimelineVisual
+                contextLabel="Guide protocol path"
+                title="Use this framework before turning research into a protocol."
+                relatedPeptides={relatedPeptides.slice(0, 3).map((peptide) => ({
+                  name: peptide.name,
+                  slug: peptide.slug,
+                }))}
+              />
+
+              {shouldShowCoaVisual(guide) && <COAAnnotationVisual />}
 
               {/* Sections */}
               {guide.sections.map((section) => (
@@ -434,6 +473,11 @@ export default async function GuideDetailPage({
                           View
                         </Button>
                       </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {relatedPeptides.slice(0, 2).map((peptide) => (
+                      <EvidenceRiskMatrix key={`${peptide.id}-matrix`} peptide={peptide} compact />
                     ))}
                   </div>
                 </div>
