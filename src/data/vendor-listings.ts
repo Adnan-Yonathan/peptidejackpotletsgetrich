@@ -37,6 +37,246 @@ export interface ResolvedVendorListing extends VendorListingData {
   vendor: VendorData | undefined;
 }
 
+const IGNITE_CAPTURE_DATE = "2026-05-15";
+
+const IGNITE_LISTING_BASE = {
+  vendorId: "ignite-peptides",
+  vendorName: "Ignite Peptides",
+  vendorTypeLabel: "consumer RUO",
+  country: "US",
+  shopperRegion: "us",
+  currencyCode: "USD",
+  coaAccessModeLabel: "COA with order / verify current product report",
+  qcMethodsListed:
+    "third-party testing and COA documentation claimed by vendor; verify product-specific report",
+  captureDate: IGNITE_CAPTURE_DATE,
+  shippingRegions: "U.S. domestic territories only",
+  regulatoryShippingFlags: "Consumer RUO; research-use-only and not for human or veterinary use",
+  affiliateProgramStatus: "affiliate: direct product page",
+  credibilityNote:
+    "Product-specific Ignite Peptides referral route mapped from the current live product catalog. Verify COA, stock, and label details before checkout.",
+} satisfies Omit<
+  VendorListingData,
+  | "peptideId"
+  | "productPageUrl"
+  | "typicalSkuFormat"
+  | "typicalRetailPriceRangeUsd"
+  | "listedPriceLowUsd"
+  | "listedPriceHighUsd"
+  | "packSizeLowMg"
+  | "packSizeHighMg"
+>;
+
+const IGNITE_VENDOR_LISTINGS: VendorListingData[] = [
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "bpc-157",
+    productPageUrl: "https://ignitepeptides.com/product/bpc-157-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$50.00 shown",
+    listedPriceLowUsd: 50,
+    listedPriceHighUsd: 50,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "tb-500",
+    productPageUrl: "https://ignitepeptides.com/product/tb-500-thymosin-beta-4-5mg/",
+    typicalSkuFormat: "5 mg vial",
+    typicalRetailPriceRangeUsd: "$40.00 shown",
+    listedPriceLowUsd: 40,
+    listedPriceHighUsd: 40,
+    packSizeLowMg: 5,
+    packSizeHighMg: 5,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "thymosin-beta-4",
+    productPageUrl: "https://ignitepeptides.com/product/tb-500-thymosin-beta-4-5mg/",
+    typicalSkuFormat: "5 mg vial; vendor lists as TB-500 (Thymosin Beta-4)",
+    typicalRetailPriceRangeUsd: "$40.00 shown",
+    listedPriceLowUsd: 40,
+    listedPriceHighUsd: 40,
+    packSizeLowMg: 5,
+    packSizeHighMg: 5,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "cjc-1295",
+    productPageUrl: "https://ignitepeptides.com/product/cjc-1295-without-dac/",
+    typicalSkuFormat: "10 mg vial; without DAC product naming",
+    typicalRetailPriceRangeUsd: "$50.00 shown",
+    listedPriceLowUsd: 50,
+    listedPriceHighUsd: 50,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "ipamorelin",
+    productPageUrl: "https://ignitepeptides.com/product/ipamorelin-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$50.00 shown",
+    listedPriceLowUsd: 50,
+    listedPriceHighUsd: 50,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "sermorelin",
+    productPageUrl: "https://ignitepeptides.com/product/sermorelin-5mg/",
+    typicalSkuFormat: "5 mg vial",
+    typicalRetailPriceRangeUsd: "$50.00 shown",
+    listedPriceLowUsd: 50,
+    listedPriceHighUsd: 50,
+    packSizeLowMg: 5,
+    packSizeHighMg: 5,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "tesamorelin",
+    productPageUrl: "https://ignitepeptides.com/product/tesa-10mg/",
+    typicalSkuFormat: "10 mg vial; vendor lists as TESA",
+    typicalRetailPriceRangeUsd: "$100.00 shown",
+    listedPriceLowUsd: 100,
+    listedPriceHighUsd: 100,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "mots-c",
+    productPageUrl: "https://ignitepeptides.com/product/mots-c-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$48.00 shown",
+    listedPriceLowUsd: 48,
+    listedPriceHighUsd: 48,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "epitalon",
+    productPageUrl: "https://ignitepeptides.com/product/epithalon-10mg/",
+    typicalSkuFormat: "10 mg vial; vendor spells as Epithalon",
+    typicalRetailPriceRangeUsd: "See product page",
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "ghk-cu",
+    productPageUrl: "https://ignitepeptides.com/product/ghk-cu-100mg/",
+    typicalSkuFormat: "100 mg vial",
+    typicalRetailPriceRangeUsd: "$75.00 shown",
+    listedPriceLowUsd: 75,
+    listedPriceHighUsd: 75,
+    packSizeLowMg: 100,
+    packSizeHighMg: 100,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "kpv",
+    productPageUrl: "https://ignitepeptides.com/product/kpv-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$30.00 shown",
+    listedPriceLowUsd: 30,
+    listedPriceHighUsd: 30,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "pt-141",
+    productPageUrl: "https://ignitepeptides.com/product/pt-141-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$30.00 shown",
+    listedPriceLowUsd: 30,
+    listedPriceHighUsd: 30,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "semax",
+    productPageUrl: "https://ignitepeptides.com/product/smax-10mg/",
+    typicalSkuFormat: "10 mg vial; vendor lists as SMAX",
+    typicalRetailPriceRangeUsd: "$40.00 shown",
+    listedPriceLowUsd: 40,
+    listedPriceHighUsd: 40,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "dsip",
+    productPageUrl: "https://ignitepeptides.com/product/dsip-5mg/",
+    typicalSkuFormat: "5 mg vial",
+    typicalRetailPriceRangeUsd: "$30.00 shown",
+    listedPriceLowUsd: 30,
+    listedPriceHighUsd: 30,
+    packSizeLowMg: 5,
+    packSizeHighMg: 5,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "semaglutide",
+    productPageUrl: "https://ignitepeptides.com/product/semaglutide-5mg/",
+    typicalSkuFormat: "5 mg vial; vendor lists as GLP-1 (S)",
+    typicalRetailPriceRangeUsd: "$60.00 shown",
+    listedPriceLowUsd: 60,
+    listedPriceHighUsd: 60,
+    packSizeLowMg: 5,
+    packSizeHighMg: 5,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "tirzepatide",
+    productPageUrl: "https://ignitepeptides.com/product/glp-tz-10mg/",
+    typicalSkuFormat: "10 mg vial; vendor lists as GLP-2 (TZ)",
+    typicalRetailPriceRangeUsd: "$75.00 sale price shown; $100.00 regular price shown",
+    listedPriceLowUsd: 75,
+    listedPriceHighUsd: 100,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "selank",
+    productPageUrl: "https://ignitepeptides.com/product/selank-10mg/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$30.00 shown",
+    listedPriceLowUsd: 30,
+    listedPriceHighUsd: 30,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "retatrutide",
+    productPageUrl: "https://ignitepeptides.com/product/retatrutide-10mg/",
+    typicalSkuFormat: "10 mg vial; vendor lists as GLP-3 (RT)",
+    typicalRetailPriceRangeUsd: "$75.00 shown",
+    listedPriceLowUsd: 75,
+    listedPriceHighUsd: 75,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+  {
+    ...IGNITE_LISTING_BASE,
+    peptideId: "melanotan-2",
+    productPageUrl: "https://ignitepeptides.com/product/melanotan-ii/",
+    typicalSkuFormat: "10 mg vial",
+    typicalRetailPriceRangeUsd: "$40.00 shown",
+    listedPriceLowUsd: 40,
+    listedPriceHighUsd: 40,
+    packSizeLowMg: 10,
+    packSizeHighMg: 10,
+  },
+];
+
 export const VENDOR_LISTINGS: VendorListingData[] = [
   {
     peptideId: "aod-9604",
@@ -924,6 +1164,7 @@ export const VENDOR_LISTINGS: VendorListingData[] = [
     packSizeLowMg: 1,
     packSizeHighMg: 1,
   },
+  ...IGNITE_VENDOR_LISTINGS,
 ];
 
 export function getVendorListingsForPeptide(peptideId: string): ResolvedVendorListing[] {
@@ -948,7 +1189,9 @@ export function getListingShopperRegion(
   listing: Pick<VendorListingData, "vendorId" | "shopperRegion">
 ): ShopperRegion {
   if (listing.shopperRegion) return listing.shopperRegion;
-  return listing.vendorId === "amino-club" ? "us" : "international";
+  return listing.vendorId === "amino-club" || listing.vendorId === "ignite-peptides"
+    ? "us"
+    : "international";
 }
 
 function normalizeListingMoney(

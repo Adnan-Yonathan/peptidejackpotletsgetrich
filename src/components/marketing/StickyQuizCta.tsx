@@ -41,7 +41,7 @@ export function StickyQuizCta() {
         </Button>
       </div>
       <p className="mt-2 text-center text-[10px] text-slate-500">
-        Takes 2 min - no email required
+        Takes 2 min - free stack preview
       </p>
     </div>
   );

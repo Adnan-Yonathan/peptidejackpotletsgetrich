@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download, ExternalLink, FileText, LoaderCircle } from "lucide-react";
@@ -21,16 +21,16 @@ type PurchaseAccess = {
   appUrl: string | null;
 };
 
+function subscribeToHydration() {
+  return () => undefined;
+}
+
 export default function ProtocolPage() {
   const router = useRouter();
   const isComplete = useQuizState((state) => state.isComplete);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
   const [isLoadingPurchases, setIsLoadingPurchases] = useState(true);
   const [purchases, setPurchases] = useState<PurchaseAccess[]>([]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -40,7 +40,6 @@ export default function ProtocolPage() {
     }
 
     let cancelled = false;
-    setIsLoadingPurchases(true);
     fetch("/api/purchases", { cache: "no-store" })
       .then(async (response) => {
         if (response.status === 401) return { purchases: [] };

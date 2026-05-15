@@ -12,6 +12,7 @@
  */
 
 import type { AgeRange } from "@/types/planner";
+import type { EditorialReview } from "@/lib/editorial";
 import type { BlogFaq } from "./blog";
 import { GOALS, getGoalById, type GoalData } from "./goals";
 import { GOAL_LIFE_STAGE_FIT } from "./goal-life-stage-fit";
@@ -97,6 +98,7 @@ export interface DemographicPageData {
   canonicalPath: string;
   primaryKeyword: string;
   ogImage?: string;
+  editorialReview?: EditorialReview;
   /**
    * Name of the MedicalCondition this page is genuinely about, if any.
    * Only set on condition / life-stage pages where the audience IS the condition
@@ -150,7 +152,7 @@ export interface DemographicAuthor {
 // ──────────────────────────────────────────────────────────────────────
 
 export interface VendorLink {
-  vendorId: "amino-club" | "xl-peptides";
+  vendorId: "amino-club" | "xl-peptides" | "ignite-peptides";
   vendorName: string;
   url: string;
 }
@@ -207,7 +209,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "Your 20s are your hormonal peak. Most peptides marketed to you are unnecessary. Two compounds — one to bank muscle, one for recovery — cover the actual evidence-backed cases.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 7,
     tldr: "Men in their 20s have peak endogenous growth hormone, testosterone, and recovery capacity. BPC-157 for soft-tissue injuries and a GH secretagogue for serious training blocks are the only compounds with a real case in this window.",
@@ -452,7 +454,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "The decade where visceral fat, joint reserve, and libido all start asking for attention at once. Three compounds — fat loss, recovery, sexual health — cover the dominant midlife signals.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 9,
     tldr: "Men 40–49 face three concurrent shifts: visceral fat resistant to diet, slowed soft-tissue recovery, and dipping libido. A GLP-1 for the metabolic shift, BPC-157 for recovery, and PT-141 for libido is the three-front protocol with the cleanest evidence.",
@@ -956,7 +958,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "The decade where collagen, metabolic flexibility, and recovery all begin shifting at once. Three compounds — skin, fat, recovery — cover the real cases without overshooting.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 8,
     tldr: "Women 30–39 see collagen production decline ~1% per year, metabolic flexibility narrow, and recovery slow. GHK-Cu for skin, a GLP-1 for fat loss where indicated, and BPC-157 for recovery is the conservative three-front protocol.",
@@ -1073,7 +1075,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "The decade when fat redistributes, skin thins, and perimenopause begins quietly. Three compounds — fat loss, skin, longevity — match the dominant shifts.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 9,
     tldr: "Women 40–49 enter perimenopause with falling estradiol, redistributing fat toward the midsection, and accelerating collagen loss. A GLP-1 for the metabolic shift, GHK-Cu for skin, and a longevity compound for system support form a focused three-front protocol.",
@@ -1562,7 +1564,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "Post-transition, the protocol stabilizes. Three compounds — longevity, sleep, skin — address the persistent costs of the new hormonal floor.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 9,
     tldr: "Post-menopausal women face permanent low estradiol, accelerated bone loss, persistent sleep changes, and visible skin thinning. A longevity-leaning peptide, DSIP or epitalon for sleep, and GHK-Cu for skin form the standard three-front maintenance protocol.",
@@ -1679,7 +1681,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "After breastfeeding, three compounds address the persistent recovery deficits — soft tissue, skin, and anxiety — that pregnancy and childbirth leave behind.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 8,
     tldr: "Postpartum recovery includes abdominal wall healing, pelvic floor recovery, skin remodeling, and mood normalization. After breastfeeding ends, BPC-157 for tissue repair, GHK-Cu for skin, and Selank for mood support form a focused recovery protocol.",
@@ -1925,7 +1927,7 @@ export const DEMOGRAPHIC_PAGES: DemographicPageData[] = [
     heroSummary:
       "PCOS combines insulin resistance, androgen excess, and ovulatory dysfunction. Two compounds — fat loss and skin — address the symptoms peptides reach without overstepping endocrine care.",
     publishedAt: "2026-05-11",
-    updatedAt: "2026-05-11",
+    updatedAt: "2026-05-15",
     authorId: "research-desk",
     readMinutes: 8,
     tldr: "PCOS is best managed by insulin-sensitizing medication, weight loss when indicated, and androgen-targeted treatment. A GLP-1 has growing evidence for PCOS-related weight loss; GHK-Cu can address hair and skin manifestations. Both complement, not replace, endocrine care.",
@@ -3856,6 +3858,10 @@ function buildVendorLinks(peptideId: string): VendorLink[] {
   const xl = getAffiliateUrlForVendor("xl-peptides", peptideId);
   if (xl) {
     links.push({ vendorId: "xl-peptides", vendorName: "XL Peptides", url: xl });
+  }
+  const ignite = getAffiliateUrlForVendor("ignite-peptides", peptideId);
+  if (ignite) {
+    links.push({ vendorId: "ignite-peptides", vendorName: "Ignite Peptides", url: ignite });
   }
   return links;
 }

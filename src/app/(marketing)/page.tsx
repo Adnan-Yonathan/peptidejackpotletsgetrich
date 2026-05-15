@@ -70,7 +70,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mx-auto mb-7 max-w-[520px] text-[16px] leading-[1.65] text-[#103b2c]/60 md:mx-0">
-              Evidence-graded compounds. Regulatory flags upfront. Personalized plans in 2 minutes. We don&rsquo;t sell peptides &mdash; we help you choose wisely.
+              Get a free stack preview, vendor options, and a protocol offer matched to your goal in 2 minutes. We don&rsquo;t sell peptides &mdash; we help you choose wisely.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3 md:justify-start">
@@ -78,7 +78,7 @@ export default function HomePage() {
                 href="/quiz"
                 className="inline-flex h-[52px] items-center gap-2.5 whitespace-nowrap rounded-[12px] bg-[#0f6a52] px-8 text-[15px] font-extrabold text-white shadow-[0_10px_30px_rgba(15,106,82,0.28)] transition-transform hover:-translate-y-0.5 hover:bg-[#0d5f49]"
               >
-                Find Your Plan
+                Find My Peptide Stack
                 <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
               </Link>
             </div>
@@ -164,7 +164,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <Button size="lg" className="text-base" render={<Link href="/quiz" />}>
-              Start the Quiz <ArrowRight className="ml-2 h-4 w-4" />
+              Find My Peptide Stack <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -491,6 +491,35 @@ export default function HomePage() {
 
       <TestimonialsSection />
 
+      <section className="border-y border-[#103b2c]/8 bg-[#f4f1ea] py-16 md:py-20">
+        <div className="container mx-auto max-w-6xl px-4">
+          <p className="mb-4 font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-[#0f6a52]">
+            What you unlock
+          </p>
+          <div className="grid gap-px bg-[#103b2c]/10 md:grid-cols-3">
+            {[
+              {
+                title: "Free stack preview",
+                body: "See the first compound, risk lane, compatibility score, and why the stack fits your quiz.",
+              },
+              {
+                title: "Vendor comparison",
+                body: "Jump to mapped vendor options with COA posture, region fit, and product-specific affiliate routes.",
+              },
+              {
+                title: "Full protocol PDF",
+                body: "Unlock the full compound map, timing logic, monitoring checklist, and red-flag rules.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="bg-[#f4f1ea] p-6">
+                <h3 className="text-xl font-bold tracking-[-0.01em] text-[#103b2c]">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#103b2c]/68">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-[#fbfaf7] py-20 md:py-28">
         <div className="container mx-auto max-w-3xl px-4 text-center">
           <h2 className="mb-4 text-3xl font-bold md:text-4xl">
@@ -500,7 +529,7 @@ export default function HomePage() {
             Get matched with evidence-graded compounds, safety flags, and vendor options &mdash; completely free.
           </p>
           <Button size="lg" className="h-12 px-10 text-base" render={<Link href="/quiz" />}>
-            Take the Quiz <ArrowRight className="ml-2 h-4 w-4" />
+            Find My Peptide Stack <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <p className="mt-3 text-[13px] font-medium text-[#103b2c]/58">
             Free forever. Quiz output is yours to keep.

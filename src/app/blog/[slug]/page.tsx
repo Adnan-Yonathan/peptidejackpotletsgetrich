@@ -4,9 +4,18 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
+import {
+  COAAnnotationVisual,
+  EvidenceRiskMatrix,
+  PeptideDecisionFlow,
+  ProtocolTimelineVisual,
+} from "@/components/visuals";
 import {
   Table,
   TableBody,
@@ -25,6 +34,9 @@ import {
 } from "@/data/blog";
 import { getGoalById } from "@/data/goals";
 import { getPeptideById } from "@/data/peptides";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
+import { getGoalHref } from "@/lib/goal-links";
+import { getDefaultArticleReview } from "@/lib/editorial";
 
 const SECTION_CARD =
   "rounded-xl border border-stone-200 bg-white/90 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
@@ -98,6 +110,15 @@ export async function generateStaticParams() {
   return getPublishedBlogPosts().map((post) => ({ slug: post.slug }));
 }
 
+function shouldShowCoaVisual(post: { slug: string; categoryId: string; title: string }) {
+  const haystack = `${post.slug} ${post.categoryId} ${post.title}`.toLowerCase();
+  return ["coa", "vendor", "quality", "ruo", "regulatory", "safety", "trust", "buying"].some((term) =>
+    haystack.includes(term)
+  );
+}
+
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
@@ -113,6 +134,15 @@ export async function generateMetadata({
   return {
     title: post.seoTitle,
     description: post.seoDescription,
+    alternates: { canonical: `/blog/${post.slug}` },
+    ...buildSeoMetadata({
+      title: post.seoTitle,
+      description: post.seoDescription,
+      path: `/blog/${post.slug}`,
+      imagePath: `/blog/${post.slug}/opengraph-image`,
+      imageAlt: `${post.title} blog post`,
+      type: "article",
+    }),
   };
 }
 
@@ -143,6 +173,7 @@ export default async function BlogPostPage({
   const faqsStat = String(post.faqs.length);
   const updatedStat = formatShortDate(post.updatedAt);
   const showQuizCta = post.showQuizCta !== false;
+  const editorialReview = post.editorialReview ?? getDefaultArticleReview(post.updatedAt);
 
   // FAQ JSON-LD for rich snippets / AI extraction
   const faqJsonLd = post.faqs.length
@@ -262,6 +293,27 @@ export default async function BlogPostPage({
         </section>
 
         {/* ── Two-col body ────────────────────────────────────── */}
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <PeptideDecisionFlow
+              pageType="blog"
+              title="Use this article as the context layer."
+              body="Read the research framing, compare the relevant compounds, then use the quiz before moving into vendor or protocol decisions."
+              primaryHref="/quiz"
+              primaryLabel="Take the quiz"
+              secondaryHref="/peptides"
+              secondaryLabel="Browse peptides"
+              relatedLabel={category?.title ?? "Blog research"}
+            />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
@@ -277,6 +329,16 @@ export default async function BlogPostPage({
                   {post.answerFirst}
                 </p>
               </div>
+
+              <IntentCtaPanel
+                eyebrow="Article next step"
+                title="Turn this research into a personalized path."
+                body="Use the quiz before moving from education to compound, vendor, or protocol decisions."
+                secondaryHref="/guides"
+                secondaryLabel="Read more guides"
+                tertiaryHref="/vendors"
+                tertiaryLabel="Review vendors"
+              />
 
               {/* Why this matters */}
               {post.whyItMatters.length > 0 && (
@@ -306,6 +368,17 @@ export default async function BlogPostPage({
                   </div>
                 </div>
               )}
+
+              <ProtocolTimelineVisual
+                contextLabel="Article protocol path"
+                title="Move from article insight to protocol decision in five checks."
+                relatedPeptides={relatedPeptides.slice(0, 3).map((peptide) => ({
+                  name: peptide.name,
+                  slug: peptide.slug,
+                }))}
+              />
+
+              {shouldShowCoaVisual(post) && <COAAnnotationVisual />}
 
               {/* Sections */}
               {post.sections.map((section) => (
@@ -471,6 +544,11 @@ export default async function BlogPostPage({
                       </div>
                     ))}
                   </div>
+                  <div className="mt-4 grid gap-3">
+                    {relatedPeptides.slice(0, 2).map((peptide) => (
+                      <EvidenceRiskMatrix key={`${peptide.id}-matrix`} peptide={peptide} compact />
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -484,7 +562,7 @@ export default async function BlogPostPage({
                     {relatedGoals.map((goal) => (
                       <Link
                         key={goal.id}
-                        href={`/goals/${goal.id}`}
+                        href={getGoalHref(goal.id)}
                         className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs text-foreground hover:border-[color:var(--primary)] hover:text-[color:var(--primary)] transition-colors"
                       >
                         {goal.displayName}
@@ -524,6 +602,10 @@ export default async function BlogPostPage({
                 </div>
               )}
             </aside>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl">
+            <SourceList sources={editorialReview.sources} />
           </div>
 
           {/* Footer CTA */}

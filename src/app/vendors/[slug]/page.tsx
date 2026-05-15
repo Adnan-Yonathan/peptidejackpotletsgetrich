@@ -5,14 +5,19 @@ import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
+import { VendorTrustRationale } from "@/components/vendors/VendorTrustRationale";
 import { getVendorBySlug, getActiveVendors } from "@/data/vendors";
 import { getAffiliateUrlForVendor } from "@/data/affiliate-links";
 import { getVendorListingsForVendor } from "@/data/vendor-listings";
 import { getGuideById } from "@/data/guides";
 import { formatCostRange, getListingCostEstimate } from "@/lib/costs";
+import { getDefaultVendorReview } from "@/lib/editorial";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
 const SECTION_CARD =
   "rounded-xl border border-stone-200 bg-white/90 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
@@ -82,6 +87,8 @@ export async function generateStaticParams() {
   return getActiveVendors().map((vendor) => ({ slug: vendor.slug }));
 }
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
@@ -98,6 +105,13 @@ export async function generateMetadata({
     title: `${vendor.name} review`,
     description,
     alternates: { canonical: `/vendors/${vendor.slug}` },
+    ...buildSeoMetadata({
+      title: `${vendor.name} review`,
+      description,
+      path: `/vendors/${vendor.slug}`,
+      imagePath: `/vendors/${vendor.slug}/opengraph-image`,
+      imageAlt: `${vendor.name} vendor profile`,
+    }),
   };
 }
 
@@ -111,6 +125,7 @@ export default async function VendorDetailPage({
 
   if (!vendor) notFound();
 
+  const editorialReview = vendor.editorialReview ?? getDefaultVendorReview();
   const listings = getVendorListingsForVendor(vendor.id);
   const vendorHref = getAffiliateUrlForVendor(vendor.id) ?? vendor.websiteUrl;
   const vendorGuides = [
@@ -246,6 +261,12 @@ export default async function VendorDetailPage({
         </section>
 
         {/* ── Two-col body ────────────────────────────────────── */}
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
@@ -280,6 +301,41 @@ export default async function VendorDetailPage({
                     <p className="text-sm text-foreground/80">{vendor.regulatoryNotes}</p>
                   </div>
                 </div>
+                {(vendor.scoringRationale?.length || vendor.trustCaveats?.length || vendor.refundSupportNotes) && (
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    {vendor.scoringRationale && (
+                      <div className={DETAIL_CELL}>
+                        <div className={DETAIL_LABEL}>Scoring rationale</div>
+                        <ul className="space-y-1 text-xs text-foreground/80">
+                          {vendor.scoringRationale.map((point) => (
+                            <li key={point}>{point}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {vendor.trustCaveats && (
+                      <div className={DETAIL_CELL}>
+                        <div className={DETAIL_LABEL}>Trust caveats</div>
+                        <ul className="space-y-1 text-xs text-foreground/80">
+                          {vendor.trustCaveats.map((point) => (
+                            <li key={point}>{point}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {vendor.refundSupportNotes && (
+                      <div className={DETAIL_CELL}>
+                        <div className={DETAIL_LABEL}>Refund and support</div>
+                        <p className="text-xs text-foreground/80">{vendor.refundSupportNotes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {vendor.affiliateDisclosure && (
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                    {vendor.affiliateDisclosure}
+                  </p>
+                )}
               </div>
 
               {/* Imported Listings */}
@@ -401,6 +457,15 @@ export default async function VendorDetailPage({
                           <p className="mt-1 text-[11px] text-muted-foreground">
                             Affiliate: {listing.affiliateProgramStatus}
                           </p>
+                          <div className="mt-2">
+                            <VendorTrustRationale
+                              points={[
+                                `COA access: ${listing.coaAccessModeLabel}; QC: ${listing.qcMethodsListed}.`,
+                                listing.credibilityNote ?? "Review current product-page details before leaving PeptidePros.",
+                              ]}
+                              affiliateStatus={listing.affiliateProgramStatus}
+                            />
+                          </div>
                           {listing.credibilityNote && (
                             <p className="mt-2 text-sm text-foreground/80 leading-relaxed">
                               {listing.credibilityNote}
@@ -474,6 +539,9 @@ export default async function VendorDetailPage({
                 </div>
               )}
             </aside>
+          </div>
+          <div className="mx-auto mt-8 max-w-3xl">
+            <SourceList sources={editorialReview.sources} />
           </div>
         </section>
       </main>

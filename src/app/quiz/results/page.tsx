@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  CheckCircle2,
   Copy,
   ExternalLink,
   LoaderCircle,
@@ -24,6 +23,7 @@ import { getVendorBySlug } from "@/data/vendors";
 import { useQuizState } from "@/hooks/useQuizState";
 import { useUser } from "@/hooks/useUser";
 import { generatePlannerResult } from "@/lib/planner-engine";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 import { getShopperRegion } from "@/lib/shopper-country";
 import type { PlannerAnswers, PlannerRecommendation } from "@/types/planner";
 
@@ -117,9 +117,10 @@ function getCompatibilityStatus(plan: ReturnType<typeof generatePlannerResult>) 
   };
 }
 
-function buildResultsOutboundHref(vendorSlug: string, peptideSlug: string, region: "us" | "eu") {
+function buildResultsOutboundHref(vendorSlug: string, peptideSlug: string, region: "us" | "eu", sessionId: string) {
   const params = new URLSearchParams({
     sourcePage: "quiz-results-v2",
+    sessionId,
     utm_source: "peptidepros",
     utm_medium: "affiliate",
     utm_campaign: `quiz-results-${region}`,
@@ -135,6 +136,30 @@ function TrustChip({ children }: { children: React.ReactNode }) {
       {children}
     </span>
   );
+}
+
+type ResultsVendorSlug = "amino-club" | "xl-peptides" | "ignite-peptides";
+
+function getVendorGeoLabel(vendorSlug: ResultsVendorSlug) {
+  if (vendorSlug === "xl-peptides") return "🇪🇺 UK / EU";
+  return "🇺🇸 United States";
+}
+
+function getVendorShippingChip(vendorSlug: ResultsVendorSlug) {
+  if (vendorSlug === "xl-peptides") return "UK/EU shipping";
+  return "US shipping";
+}
+
+function getVendorFitCopy(vendorSlug: ResultsVendorSlug) {
+  if (vendorSlug === "amino-club") {
+    return "Best fit when you want faster U.S. routing and direct product-page affiliate paths.";
+  }
+
+  if (vendorSlug === "ignite-peptides") {
+    return "U.S.-only option with product-level referral routes for mapped compounds. Verify COA and inventory before checkout.";
+  }
+
+  return "Best fit when you want UK/EU fulfillment and a wide international catalog for this stack.";
 }
 
 function FreeCompoundCard({ recommendation }: { recommendation: PlannerRecommendation }) {
@@ -208,7 +233,7 @@ function VendorCard({
 }: {
   badge: string;
   href: string;
-  vendorSlug: "amino-club" | "xl-peptides";
+  vendorSlug: ResultsVendorSlug;
   isPrimary: boolean;
   regionLabel: string;
 }) {
@@ -242,7 +267,7 @@ function VendorCard({
           </Badge>
           <p className="mt-2.5 text-lg font-semibold tracking-tight text-black">{vendor.name}</p>
           <p className="mt-1 text-[13px] text-[#103b2c]/58">
-            {regionLabel} · {vendorSlug === "amino-club" ? "🇺🇸 United States" : "🇪🇺 UK / EU"}
+            {regionLabel} · {getVendorGeoLabel(vendorSlug)}
           </p>
         </div>
       </div>
@@ -250,13 +275,11 @@ function VendorCard({
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         <TrustChip>{vendor.trustpilotRating ?? "N/A"}/5 rating</TrustChip>
         <TrustChip>{coaLabel}</TrustChip>
-        <TrustChip>{vendorSlug === "amino-club" ? "US shipping" : "UK/EU shipping"}</TrustChip>
+        <TrustChip>{getVendorShippingChip(vendorSlug)}</TrustChip>
       </div>
 
       <p className="mt-2.5 text-[13px] leading-5 text-[#103b2c]/72">
-        {vendorSlug === "amino-club"
-          ? "Best fit when you want faster U.S. routing and direct product-page affiliate paths."
-          : "Best fit when you want UK/EU fulfillment and a wide international catalog for this stack."}
+        {getVendorFitCopy(vendorSlug)}
       </p>
 
       <Button
@@ -278,7 +301,9 @@ export default function QuizResultsPage() {
     getShopperRegion(answers.country ?? "us") === "us" ? "us" : "eu"
   );
   const [shareMessage, setShareMessage] = useState("Copy stack");
+  const [revenueSessionId] = useState(() => getRevenueSessionId());
   const { user, loading: authLoading } = useUser();
+  const hasSavedPlan = useRef(false);
 
   // Stamp the moment of first completion once the user lands here with a
   // complete quiz. Idempotent — returning visitors keep their original timestamp.
@@ -290,11 +315,34 @@ export default function QuizResultsPage() {
   useEffect(() => {
     if (!complete || authLoading || user) return;
 
-    const params = new URLSearchParams({ redirectTo: "/quiz/results" });
+    const params = new URLSearchParams({ redirectTo: "/quiz/results", sessionId: revenueSessionId });
     const email = answers.email?.trim();
     if (email) params.set("email", email);
     router.replace(`/signup?${params.toString()}`);
-  }, [answers.email, authLoading, complete, router, user]);
+  }, [answers.email, authLoading, complete, revenueSessionId, router, user]);
+
+  useEffect(() => {
+    if (!complete || !user || hasSavedPlan.current) return;
+    hasSavedPlan.current = true;
+
+    const completedAnswers = { ...PLANNER_DEFAULTS, ...answers } as PlannerAnswers;
+    const plan = generatePlannerResult(completedAnswers);
+
+    fetch("/api/plans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: `${getGoalById(completedAnswers.primaryGoalId)?.displayName ?? "Personalized"} Stack`,
+        quizSnapshot: completedAnswers,
+        recommendedPeptides: plan,
+        totalCostEstimate: null,
+        timelineWeeks:
+          completedAnswers.timeframe === "short" ? 4 : completedAnswers.timeframe === "medium" ? 8 : 12,
+      }),
+    }).catch(() => {
+      hasSavedPlan.current = false;
+    });
+  }, [answers, complete, user]);
 
   if (!isComplete()) {
     return (
@@ -390,11 +438,21 @@ export default function QuizResultsPage() {
     recommendedStack[3] ?? plan.alternatives[2] ?? plan.alternatives[1] ?? plan.alternatives[0],
   ];
   const primaryPeptideSlug = recommendedStack[0]?.peptide.slug ?? "bpc-157";
+  const checkoutContext = new URLSearchParams({
+    sourcePage: "quiz-results-v2",
+    sessionId: revenueSessionId,
+    goalId: completedAnswers.primaryGoalId,
+    primaryPeptideSlug,
+  });
+  const primaryCheckoutHref = primaryProtocol
+    ? `/checkout/${primaryProtocol.slug}?${checkoutContext.toString()}`
+    : undefined;
   const vendorOrder =
     vendorRegion === "us"
       ? [
           { slug: "amino-club" as const, primary: true, badge: "Recommended for you", region: "US route" },
-          { slug: "xl-peptides" as const, primary: false, badge: "Carries your stack", region: "EU route" },
+          { slug: "ignite-peptides" as const, primary: false, badge: "US alternative", region: "US route" },
+          { slug: "xl-peptides" as const, primary: false, badge: "International option", region: "EU route" },
         ]
       : [
           { slug: "xl-peptides" as const, primary: true, badge: "Recommended for you", region: "EU route" },
@@ -426,8 +484,8 @@ export default function QuizResultsPage() {
     <>
       <Header />
       <QuizCountdownBanner completedAt={completedAt} />
-      <main className="flex-1 bg-[#fbfaf7] px-4 py-5 md:py-8">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+      <main className="flex-1 bg-[#fbfaf7] px-4 pb-24 pt-4 md:py-8">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-5">
           <div className="flex items-center justify-between">
             <Button variant="ghost" render={<Link href="/quiz" />}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -437,7 +495,7 @@ export default function QuizResultsPage() {
 
           <section className={`${SURFACE} px-4 py-4 md:px-5`}>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[#0f6a52]">
-              Quiz complete
+              Personalized stack preview
             </p>
             <h1 className="mt-2 text-[1.7rem] font-bold tracking-tight text-black md:text-[2.15rem]">
               {stackName}
@@ -464,17 +522,15 @@ export default function QuizResultsPage() {
                 {recommendedStack.length} compounds
               </Badge>
             </div>
-          </section>
 
-          <section className="space-y-2.5">
-            <div className="grid grid-cols-2 gap-2.5 md:gap-3">
+            <div className="mt-4 grid grid-cols-2 gap-2 md:gap-3">
               <FreeCompoundCard recommendation={visibleCompounds[0]} />
               <LockedCompoundCard recommendation={lockedCompounds[0]} />
               <LockedCompoundCard recommendation={lockedCompounds[1]} />
               <LockedCompoundCard recommendation={lockedCompounds[2]} />
             </div>
 
-            <div className="rounded-[1rem] border border-[#103b2c]/10 bg-white px-3 py-2.5">
+            <div className="mt-3 rounded-[1rem] border border-[#103b2c]/10 bg-[#fbfaf7] px-3 py-2.5">
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-[13px] font-semibold text-[#103b2c]">Compatibility score</p>
@@ -497,27 +553,45 @@ export default function QuizResultsPage() {
                 </p>
               </div>
             </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_230px] md:items-center">
+              <p className="text-[13px] leading-5 text-[#103b2c]/72">
+                Unlock the complete compound map, stack roles, timing logic, monitoring checklist,
+                vendor due-diligence checklist, and red-flag rules for this result.
+              </p>
+              <Button
+                className="h-11 w-full text-[15px]"
+                size="lg"
+                disabled={!primaryCheckoutHref}
+                {...(primaryCheckoutHref ? { render: <Link href={primaryCheckoutHref} /> } : {})}
+              >
+                {primaryProtocol ? `Unlock Full Protocol - ${protocolPrice}` : "Protocol coming soon"}
+              </Button>
+            </div>
           </section>
 
           <PdfPaywall
             primaryProtocol={primaryProtocol}
             addonProtocol={addonProtocol}
             protocolName={protocolName}
+            goalId={completedAnswers.primaryGoalId}
+            primaryPeptideSlug={primaryPeptideSlug}
+            sourcePage="quiz-results-v2"
           />
 
-          <section className="space-y-3">
+          <section className="space-y-3 pt-1 md:pt-2">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
                   Vendor recommendations
                 </p>
                 <h2 className="mt-1.5 text-[1.7rem] font-bold tracking-tight text-black">
-                  Best sources for your stack
+                  Best source options for your first compound
                 </h2>
               </div>
             </div>
 
-            <div className="grid gap-3.5 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2 md:gap-3.5">
               {vendorOrder.map((item) => (
                 <VendorCard
                   key={item.slug}
@@ -525,7 +599,7 @@ export default function QuizResultsPage() {
                   vendorSlug={item.slug}
                   regionLabel={item.region}
                   isPrimary={item.primary}
-                  href={buildResultsOutboundHref(item.slug, primaryPeptideSlug, vendorRegion)}
+                  href={buildResultsOutboundHref(item.slug, primaryPeptideSlug, vendorRegion, revenueSessionId)}
                 />
               ))}
             </div>
@@ -554,7 +628,7 @@ export default function QuizResultsPage() {
             </div>
           </section>
 
-          <section className={`${SURFACE} grid gap-4 px-4 py-4.5 md:grid-cols-[1.25fr_0.75fr] md:px-6`}>
+          <section className={`${SURFACE} grid gap-4 px-4 py-4 md:grid-cols-[1.25fr_0.75fr] md:px-6 md:py-4.5`}>
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
                 Protocol preview
@@ -586,8 +660,8 @@ export default function QuizResultsPage() {
               <Button
                 className="h-11 w-full text-[15px]"
                 size="lg"
-                disabled={!primaryProtocol}
-                {...(primaryProtocol ? { render: <Link href={`/checkout/${primaryProtocol.slug}`} /> } : {})}
+                disabled={!primaryCheckoutHref}
+                {...(primaryCheckoutHref ? { render: <Link href={primaryCheckoutHref} /> } : {})}
               >
                 {primaryProtocol ? `Unlock My Protocol → ${protocolPrice}` : "Protocol coming soon"}
               </Button>

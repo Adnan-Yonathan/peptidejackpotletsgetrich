@@ -4,68 +4,52 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import {
   getPeptideBySlug,
-  getPublishedPeptides,
   type PeptideData,
 } from "@/data/peptides";
-import { getGoalsForPeptide } from "@/data/goals";
 import {
   buildComparisonSections,
   buildQuickWinners,
   evidencePillClass,
   riskPillClass,
 } from "@/lib/compare-peptides-view";
+import {
+  canonicalPair,
+  getPriorityComparisonNote,
+  getCuratedComparisonPairs,
+  isComparisonIndexable,
+  pairKey,
+  parsePairParam,
+} from "@/lib/compare-pairs";
+import { getDefaultComparisonReview } from "@/lib/editorial";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
 export const dynamicParams = false;
 
-type PairSlugs = { a: string; b: string };
+const EVIDENCE_PRIORITY: Record<PeptideData["evidenceTier"], number> = {
+  A: 0,
+  B: 1,
+  "B-C": 2,
+  C: 3,
+  "C-D": 4,
+  D: 5,
+};
 
-function canonicalPair(a: string, b: string): PairSlugs {
-  return a < b ? { a, b } : { a: b, b: a };
-}
-
-function pairKey(p: PairSlugs) {
-  return `${p.a}-vs-${p.b}`;
-}
-
-function parsePairParam(param: string): PairSlugs | null {
-  const idx = param.indexOf("-vs-");
-  if (idx <= 0) return null;
-  const a = param.slice(0, idx);
-  const b = param.slice(idx + 4);
-  if (!a || !b || a === b) return null;
-  return { a, b };
-}
-
-function getCuratedPairs(): PairSlugs[] {
-  const peptides = getPublishedPeptides();
-  const seen = new Set<string>();
-  const pairs: PairSlugs[] = [];
-
-  for (let i = 0; i < peptides.length; i++) {
-    const p1 = peptides[i];
-    const p1Goals = new Set(getGoalsForPeptide(p1.id).map((g) => g.id));
-    for (let j = i + 1; j < peptides.length; j++) {
-      const p2 = peptides[j];
-      const sameCategory = p1.category === p2.category;
-      const sharesGoal = getGoalsForPeptide(p2.id).some((g) => p1Goals.has(g.id));
-      if (!sameCategory && !sharesGoal) continue;
-
-      const pair = canonicalPair(p1.slug, p2.slug);
-      const key = pairKey(pair);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      pairs.push(pair);
-    }
-  }
-
-  return pairs;
-}
+const RISK_PRIORITY: Record<PeptideData["riskLevel"], number> = {
+  low: 0,
+  medium: 1,
+  "med-high": 2,
+  high: 3,
+  extreme: 4,
+};
 
 export async function generateStaticParams() {
-  return getCuratedPairs().map((p) => ({ pair: pairKey(p) }));
+  return getCuratedComparisonPairs().map((p) => ({ pair: pairKey(p) }));
 }
 
 export async function generateMetadata({
@@ -83,11 +67,21 @@ export async function generateMetadata({
 
   const title = `${a.name} vs ${b.name}: Side-by-Side Comparison`;
   const description = `Compare ${a.name} and ${b.name} on evidence, risk, dosing, regulatory status, cost, and vendor coverage. ${a.shortDescription.split(".")[0]}. ${b.shortDescription.split(".")[0]}.`.slice(0, 320);
+  const canonical = canonicalPair(slugs.a, slugs.b);
+  const canonicalKey = pairKey(canonical);
 
   return {
     title,
     description,
-    alternates: { canonical: `/compare/peptides/${pairKey(canonicalPair(slugs.a, slugs.b))}` },
+    robots: isComparisonIndexable(canonical) ? undefined : { index: false, follow: true },
+    alternates: { canonical: `/compare/peptides/${canonicalKey}` },
+    ...buildSeoMetadata({
+      title,
+      description,
+      path: `/compare/peptides/${canonicalKey}`,
+      imagePath: `/compare/peptides/${canonicalKey}/opengraph-image`,
+      imageAlt: `${a.name} vs ${b.name} comparison`,
+    }),
   };
 }
 
@@ -107,6 +101,16 @@ export default async function PeptidePairComparisonPage({
   const peptides: PeptideData[] = [a, b];
   const sections = buildComparisonSections(peptides);
   const quickWinners = buildQuickWinners(peptides);
+  const editorialReview = getDefaultComparisonReview();
+  const priorityNote = getPriorityComparisonNote(canonicalPair(a.slug, b.slug));
+  const firstResearchPick =
+    EVIDENCE_PRIORITY[a.evidenceTier] < EVIDENCE_PRIORITY[b.evidenceTier]
+      ? a
+      : EVIDENCE_PRIORITY[b.evidenceTier] < EVIDENCE_PRIORITY[a.evidenceTier]
+        ? b
+        : RISK_PRIORITY[a.riskLevel] <= RISK_PRIORITY[b.riskLevel]
+          ? a
+          : b;
 
   const breadcrumbs = [
     { name: "Home", href: "/" },
@@ -140,6 +144,12 @@ export default async function PeptidePairComparisonPage({
           </div>
         </section>
 
+        <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-5">
+          <div className="container mx-auto max-w-6xl px-4">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
         {/* HEADLINES */}
         <section className="border-t border-[#103b2c]/8 bg-[#fbfaf7] py-12 md:py-14">
           <div className="container mx-auto max-w-6xl px-4">
@@ -169,6 +179,72 @@ export default async function PeptidePairComparisonPage({
             </div>
           </div>
         </section>
+
+        <section className="border-t border-[#103b2c]/8 bg-[#f4f1ea] py-10 md:py-12">
+          <div className="container mx-auto grid max-w-6xl gap-6 px-4 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
+            <div>
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f6a52]">
+                Which should you research first?
+              </p>
+              <h2 className="text-[26px] font-extrabold leading-tight tracking-[-0.02em] text-[#103b2c] md:text-[34px]">
+                Start with {firstResearchPick.name}, then use the table to confirm fit.
+              </h2>
+              <p className="mt-3 max-w-[680px] text-[14.5px] leading-[1.7] text-[#103b2c]/70">
+                {priorityNote?.firstPickReason ??
+                  `${firstResearchPick.name} is the cleaner first read based on the current evidence, risk, and regulatory data stored for this pair. The right answer can still change if your goal, sport testing status, vendor constraints, or monitoring tolerance makes the other option a better fit.`}
+              </p>
+            </div>
+            <IntentCtaPanel
+              eyebrow="Comparison next step"
+              title="Personalize this head-to-head."
+              body="Take the quiz before converting a comparison into a compound, vendor, or protocol decision."
+              secondaryHref={`/vendors?peptide=${firstResearchPick.slug}`}
+              secondaryLabel="Review vendors"
+              tertiaryHref="/pdfs"
+              tertiaryLabel="View protocol PDFs"
+            />
+          </div>
+        </section>
+
+        {priorityNote && (
+          <section className="border-t border-[#103b2c]/8 bg-white py-10 md:py-12">
+            <div className="container mx-auto grid max-w-6xl gap-6 px-4 md:grid-cols-[minmax(0,1fr)_320px]">
+              <div>
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-[#0f6a52]">
+                  Search intent
+                </p>
+                <h2 className="text-[24px] font-extrabold leading-tight tracking-[-0.02em] text-[#103b2c] md:text-[30px]">
+                  Why this comparison deserves its own page
+                </h2>
+                <p className="mt-3 text-[14.5px] leading-[1.7] text-[#103b2c]/72">
+                  {priorityNote.searchIntent}
+                </p>
+                <p className="mt-4 rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-4 text-[14px] leading-[1.65] text-[#103b2c]/74">
+                  {priorityNote.useCase}
+                </p>
+              </div>
+              <div className="rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#103b2c]/50">
+                  Internal paths
+                </p>
+                <div className="mt-4 grid gap-2 text-[13px] font-semibold">
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/peptides/${a.slug}`}>
+                    Read {a.name}
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/peptides/${b.slug}`}>
+                    Read {b.name}
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href={`/vendors?peptide=${firstResearchPick.slug}`}>
+                    Compare vendors
+                  </Link>
+                  <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/quiz">
+                    Take the peptide quiz
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* SUBJECTS */}
         <section className="bg-[#fbfaf7] pb-2">
@@ -253,6 +329,22 @@ export default async function PeptidePairComparisonPage({
                 </div>
               </div>
             ))}
+            {priorityNote && (
+              <section className="border-t border-[#103b2c]/12 pt-10">
+                <p className="mb-4 font-mono text-[10.5px] uppercase tracking-[0.16em] text-[#0f6a52]">
+                  FAQ &middot; Pair-specific
+                </p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {priorityNote.faq.map((item) => (
+                    <div key={item.question} className="rounded-xl border border-[#103b2c]/10 bg-white p-5">
+                      <h2 className="text-[17px] font-bold text-[#103b2c]">{item.question}</h2>
+                      <p className="mt-2 text-[13.5px] leading-[1.65] text-[#103b2c]/70">{item.answer}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+            <SourceList sources={editorialReview.sources} />
           </div>
         </section>
 

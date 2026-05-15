@@ -68,6 +68,35 @@ export const AFFILIATE_VENDOR_LINKS: AffiliateVendorLinkData[] = [
     notes:
       "Base affiliate link is confirmed. Add peptide-specific deep links later if you want outbound routing to land on exact product pages instead of the vendor homepage.",
   },
+  {
+    vendorId: "ignite-peptides",
+    vendorName: "Ignite Peptides",
+    partnerDomain: "ignitepeptides.com",
+    defaultAffiliateUrl: "https://ignitepeptides.com/ref/hijeffk@gmail.com/",
+    peptideAffiliateUrls: {
+      "bpc-157": "https://ignitepeptides.com/product/bpc-157-10mg/ref/hijeffk@gmail.com/",
+      "thymosin-beta-4": "https://ignitepeptides.com/product/tb-500-thymosin-beta-4-5mg/ref/hijeffk@gmail.com/",
+      "tb-500": "https://ignitepeptides.com/product/tb-500-thymosin-beta-4-5mg/ref/hijeffk@gmail.com/",
+      "cjc-1295": "https://ignitepeptides.com/product/cjc-1295-without-dac/ref/hijeffk@gmail.com/",
+      ipamorelin: "https://ignitepeptides.com/product/ipamorelin-10mg/ref/hijeffk@gmail.com/",
+      sermorelin: "https://ignitepeptides.com/product/sermorelin-5mg/ref/hijeffk@gmail.com/",
+      tesamorelin: "https://ignitepeptides.com/product/tesa-10mg/ref/hijeffk@gmail.com/",
+      "mots-c": "https://ignitepeptides.com/product/mots-c-10mg/ref/hijeffk@gmail.com/",
+      epitalon: "https://ignitepeptides.com/product/epithalon-10mg/ref/hijeffk@gmail.com/",
+      "ghk-cu": "https://ignitepeptides.com/product/ghk-cu-100mg/ref/hijeffk@gmail.com/",
+      kpv: "https://ignitepeptides.com/product/kpv-10mg/ref/hijeffk@gmail.com/",
+      "pt-141": "https://ignitepeptides.com/product/pt-141-10mg/ref/hijeffk@gmail.com/",
+      semax: "https://ignitepeptides.com/product/smax-10mg/ref/hijeffk@gmail.com/",
+      dsip: "https://ignitepeptides.com/product/dsip-5mg/ref/hijeffk@gmail.com/",
+      semaglutide: "https://ignitepeptides.com/product/semaglutide-5mg/ref/hijeffk@gmail.com/",
+      tirzepatide: "https://ignitepeptides.com/product/glp-tz-10mg/ref/hijeffk@gmail.com/",
+      selank: "https://ignitepeptides.com/product/selank-10mg/ref/hijeffk@gmail.com/",
+      retatrutide: "https://ignitepeptides.com/product/retatrutide-10mg/ref/hijeffk@gmail.com/",
+      "melanotan-2": "https://ignitepeptides.com/product/melanotan-ii/ref/hijeffk@gmail.com/",
+    },
+    notes:
+      "Referral path is confirmed. Only single-compound product URLs verified from Ignite's live WooCommerce catalog are mapped here.",
+  },
 ];
 
 export function getAffiliateVendorLinkByVendorId(vendorId: string): AffiliateVendorLinkData | undefined {

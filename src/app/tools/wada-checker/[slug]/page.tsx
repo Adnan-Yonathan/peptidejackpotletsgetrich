@@ -5,6 +5,8 @@ import { WadaChecker } from "@/components/tools/WadaChecker";
 import { ToolPageShell } from "@/components/tools/ToolPageShell";
 import { getPeptideBySlug, getPublishedPeptides } from "@/data/peptides";
 import { SITE_CANONICAL_URL } from "@/lib/constants";
+import { getDefaultToolReview } from "@/lib/editorial";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 import { getToolById } from "@/lib/tools";
 
 const tool = getToolById("wada-checker")!;
@@ -12,6 +14,8 @@ const tool = getToolById("wada-checker")!;
 export async function generateStaticParams() {
   return getPublishedPeptides().map((p) => ({ slug: p.slug }));
 }
+
+export const dynamicParams = false;
 
 export async function generateMetadata({
   params,
@@ -21,10 +25,19 @@ export async function generateMetadata({
   const { slug } = await params;
   const peptide = getPeptideBySlug(slug);
   if (!peptide) return { title: "Peptide Not Found" };
+  const title = `Is ${peptide.name} on the WADA Prohibited List?`;
+  const description = `${peptide.name} WADA classification, anti-doping status, and what athletes in tested sports need to know.`;
+  const path = `/tools/wada-checker/${peptide.slug}`;
   return {
-    title: `Is ${peptide.name} on the WADA Prohibited List?`,
-    description: `${peptide.name} WADA classification, anti-doping status, and what athletes in tested sports need to know.`,
-    alternates: { canonical: `/tools/wada-checker/${peptide.slug}` },
+    title,
+    description,
+    alternates: { canonical: path },
+    ...buildSeoMetadata({
+      title,
+      description,
+      path,
+      imageAlt: `${peptide.name} WADA status checker`,
+    }),
   };
 }
 
@@ -63,6 +76,11 @@ export default async function PeptideWadaPage({
         tool={tool}
         heading={`Is ${peptide.name} on the WADA list?`}
         description={`Anti-doping classification for ${peptide.name}, plus what athletes in tested sports need to know before any research use.`}
+        editorialReview={getDefaultToolReview()}
+        secondaryHref={`/peptides/${peptide.slug}`}
+        secondaryLabel="Read peptide profile"
+        tertiaryHref="/guides/ruo-vs-human-use"
+        tertiaryLabel="Read RUO guide"
       >
         <WadaChecker peptide={peptide} />
       </ToolPageShell>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, CheckCircle2, LoaderCircle } from "lucide-react";
 import { Footer } from "@/components/layout/Footer";
@@ -32,6 +32,8 @@ import {
 } from "@/data/planner-options";
 import { useQuizState } from "@/hooks/useQuizState";
 import { createClient } from "@/lib/supabase/client";
+import { trackRevenueEvent } from "@/lib/revenue/client";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 import type { PlannerAnswers, PlannerStep } from "@/types/planner";
 
 const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = {
@@ -112,8 +114,8 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     subtitle: "This shapes whether the stack should be short-term, focused, or longer-horizon.",
   },
   email: {
-    title: "Enter your email to unlock your personalized peptide stack",
-    subtitle: "We will use this to connect your result to your saved experience later.",
+    title: "Send my stack and unlock my protocol preview",
+    subtitle: "Create your free account so your result, vendor options, and protocol offer stay connected.",
   },
 };
 
@@ -137,11 +139,23 @@ export default function QuizPage() {
   const router = useRouter();
   const { currentStep, answers, setAnswer, goToStep } = useQuizState();
   const supabase = useMemo(() => createClient(), []);
+  const hasTrackedStart = useRef(false);
+  const hasTrackedCompletion = useRef(false);
   const [isGeneratingResults, setIsGeneratingResults] = useState(false);
   const [activeLoadingStep, setActiveLoadingStep] = useState(0);
   const visibleSteps = useMemo(() => getVisibleSteps(answers), [answers]);
   const stepName = visibleSteps[Math.min(currentStep, visibleSteps.length - 1)];
   const progress = ((Math.min(currentStep, visibleSteps.length - 1) + 1) / visibleSteps.length) * 100;
+
+  useEffect(() => {
+    if (hasTrackedStart.current) return;
+    hasTrackedStart.current = true;
+    trackRevenueEvent({
+      eventType: "quiz_started",
+      sourcePage: "/quiz",
+      sourceType: "quiz",
+    });
+  }, []);
 
   useEffect(() => {
     if (!isGeneratingResults) return;
@@ -165,6 +179,7 @@ export default function QuizPage() {
 
           const params = new URLSearchParams({
             redirectTo: "/quiz/results",
+            sessionId: getRevenueSessionId(),
           });
           const email = answers.email?.trim();
           if (email) params.set("email", email);
@@ -200,6 +215,21 @@ export default function QuizPage() {
 
   const handleNext = () => {
     if (currentStep >= visibleSteps.length - 1) {
+      if (!hasTrackedCompletion.current) {
+        hasTrackedCompletion.current = true;
+        trackRevenueEvent({
+          eventType: "quiz_completed",
+          sourcePage: "/quiz",
+          sourceType: "quiz",
+          goalId: answers.primaryGoalId,
+          metadata: {
+            budget: answers.budget,
+            experience: answers.experience,
+            riskTolerance: answers.riskTolerance,
+            timeframe: answers.timeframe,
+          },
+        });
+      }
       setActiveLoadingStep(0);
       setIsGeneratingResults(true);
       return;
@@ -261,14 +291,29 @@ export default function QuizPage() {
   };
 
   const questionCopy = QUESTION_COPY[stepName];
+  const isLastStep = currentStep >= visibleSteps.length - 1;
+  const nextLabel = isGeneratingResults
+    ? "Analyzing your responses..."
+    : isLastStep
+      ? "Generate My Program"
+      : "Next";
 
   return (
     <>
       <Header />
-      <main className="flex-1 px-4 py-12">
+      <main className="flex-1 bg-[#fbfaf7] px-4 pb-28 pt-5 sm:pb-12 sm:pt-10 md:py-12">
         <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-8">
-            <div className="mb-2 flex justify-between text-sm text-muted-foreground">
+          <div className="mb-4 rounded-[1rem] border border-[#103b2c]/10 bg-white px-4 py-3 shadow-sm sm:mb-5 sm:px-5">
+            <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
+              2-minute planner
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-[#103b2c]/70 sm:text-sm">
+              Get your peptide research stack, vendor options, and protocol preview matched to
+              your goal, budget, risk profile, and timeline.
+            </p>
+          </div>
+          <div className="mb-4 sm:mb-8">
+            <div className="mb-2 flex justify-between text-xs text-muted-foreground sm:text-sm">
               <span>
                 Question {Math.min(currentStep, visibleSteps.length - 1) + 1} of {visibleSteps.length}
               </span>
@@ -277,34 +322,31 @@ export default function QuizPage() {
             <Progress value={progress} className="h-2" />
           </div>
 
-          <Card>
-            <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl">
+          <Card className="overflow-hidden border-stone-200 bg-white/95 shadow-[0_18px_55px_-42px_rgba(16,59,44,0.5)]">
+            <CardHeader className="space-y-2 px-4 py-5 sm:px-6 sm:py-6">
+              <CardTitle className="text-[22px] leading-tight sm:text-2xl">
                 {isGeneratingResults ? "Generating your personalized plan" : questionCopy.title}
               </CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[13px] leading-relaxed text-muted-foreground sm:text-sm">
                 {isGeneratingResults
                   ? "The planner is compiling your answers into a stack recommendation."
                   : questionCopy.subtitle}
               </p>
             </CardHeader>
 
-            <CardContent>
+            <CardContent className="px-4 pb-5 sm:px-6 sm:pb-6">
+              <QuizRevenueCue stepName={stepName} answers={answers} />
               {isGeneratingResults ? renderLoadingChecklist() : renderQuestion()}
             </CardContent>
           </Card>
 
-          <div className="mt-6 flex justify-between">
+          <div className="mt-6 hidden justify-between sm:flex">
             <Button variant="outline" onClick={handleBack} disabled={currentStep === 0 || isGeneratingResults}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button onClick={handleNext} disabled={!canProceed() || isGeneratingResults}>
-              {isGeneratingResults
-                ? "Analyzing your responses..."
-                : currentStep >= visibleSteps.length - 1
-                  ? "Generate My Program"
-                  : "Next"}
+              {nextLabel}
               {isGeneratingResults ? (
                 <LoaderCircle className="ml-2 h-4 w-4 animate-spin" />
               ) : (
@@ -314,6 +356,33 @@ export default function QuizPage() {
           </div>
         </div>
       </main>
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#103b2c]/10 bg-[#fbfaf7]/95 px-4 py-3 shadow-[0_-18px_45px_-35px_rgba(16,59,44,0.7)] backdrop-blur sm:hidden">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleBack}
+            disabled={currentStep === 0 || isGeneratingResults}
+            className="h-12 w-12 shrink-0 rounded-xl px-0"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            size="lg"
+            onClick={handleNext}
+            disabled={!canProceed() || isGeneratingResults}
+            className="h-12 flex-1 rounded-xl bg-[#103b2c] text-[15px] font-extrabold text-white hover:bg-[#0c3226]"
+          >
+            {nextLabel}
+            {isGeneratingResults ? (
+              <LoaderCircle className="ml-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowRight className="ml-2 h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
       <Footer />
     </>
   );
@@ -597,7 +666,7 @@ function OptionGrid<T extends string>({
   onSelect: (value: T) => void;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
       {options.map((option) => (
         <OptionButton
           key={option.value}
@@ -606,6 +675,36 @@ function OptionGrid<T extends string>({
           onClick={() => onSelect(option.value)}
         />
       ))}
+    </div>
+  );
+}
+
+function QuizRevenueCue({
+  stepName,
+  answers,
+}: {
+  stepName: PlannerStep;
+  answers: Partial<PlannerAnswers>;
+}) {
+  const cue =
+    stepName === "primaryGoalId"
+      ? "Your protocol preview will be built around the goal you choose here."
+      : stepName === "budget"
+        ? "Vendor options and protocol recommendations will stay inside this budget lane."
+        : stepName === "email"
+          ? "Your free stack preview comes first. The full protocol unlock is shown after your result."
+          : null;
+
+  if (!cue) return null;
+
+  return (
+    <div className="mb-4 rounded-xl border border-[#0f6a52]/15 bg-[#e7f4ee] px-3.5 py-3 text-[12.5px] font-medium leading-relaxed text-[#103b2c]">
+      {cue}
+      {answers.primaryGoalId && stepName === "budget" ? (
+        <span className="block pt-1 text-[#103b2c]/65">
+          Goal selected. Now we are narrowing the plan by cost and sourcing fit.
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -622,7 +721,7 @@ function MultiSelectGrid({
   max?: number;
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-2">
+    <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
       {options.map((option) => {
         const selected = selectedValues.includes(option.id);
         const disabled = !selected && typeof max === "number" && selectedValues.length >= max;
@@ -654,8 +753,8 @@ function OptionalMultiSelectGrid({
   onToggle: (value: string) => void;
 }) {
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">Optional. Select all that apply, or continue if none apply.</p>
+    <div className="space-y-3 sm:space-y-4">
+      <p className="text-[13px] text-muted-foreground sm:text-sm">Optional. Select all that apply, or continue if none apply.</p>
       <MultiSelectGrid options={options} selectedValues={selectedValues} onToggle={onToggle} />
     </div>
   );
@@ -678,13 +777,13 @@ function OptionButton({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-lg border p-4 text-left transition-colors ${
+      className={`rounded-lg border p-3 text-left transition-colors sm:p-4 ${
         selected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
       } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
     >
-      <div className="font-medium">{title}</div>
+      <div className="text-sm font-medium leading-snug sm:text-base">{title}</div>
       {description && (
-        <p className="mt-1 text-sm leading-5 text-muted-foreground">{description}</p>
+        <p className="mt-1 text-[12.5px] leading-5 text-muted-foreground sm:text-sm">{description}</p>
       )}
     </button>
   );

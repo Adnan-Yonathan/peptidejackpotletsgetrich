@@ -1,3 +1,5 @@
+import type { EditorialReview } from "@/lib/editorial";
+
 export type BlogCategoryId =
   | "metabolic"
   | "aesthetic"
@@ -71,6 +73,7 @@ export interface BlogPostData {
   relatedGoalIds: string[];
   /** Whether this post should show the quiz CTA in its hero/right rail. Defaults to true. */
   showQuizCta?: boolean;
+  editorialReview?: EditorialReview;
   featured?: boolean;
 }
 

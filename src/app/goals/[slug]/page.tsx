@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, ShieldCheck, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ShieldCheck, TriangleAlert } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { StickyQuizCta } from "@/components/marketing/StickyQuizCta";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
 import { BreadcrumbList } from "@/components/seo/JsonLd";
+import { SourceList } from "@/components/seo/SourceList";
 import { Button } from "@/components/ui/button";
 import {
   CATEGORY_HUBS,
@@ -23,6 +26,8 @@ import {
   type RiskLevel,
 } from "@/data/peptides";
 import { getVendorListingsForPeptide } from "@/data/vendor-listings";
+import { getDefaultArticleReview } from "@/lib/editorial";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
 const SECTION_CARD =
   "rounded-xl border border-stone-200 bg-white/90 p-6 shadow-[0_1px_0_rgba(0,0,0,0.02)]";
@@ -122,6 +127,8 @@ export async function generateStaticParams() {
   return CATEGORY_HUBS.map((hub) => ({ slug: hub.slug }));
 }
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
@@ -137,6 +144,14 @@ export async function generateMetadata({
   return {
     title: `${hub.title} Research Guide`,
     description: hub.description,
+    alternates: { canonical: `/goals/${hub.slug}` },
+    ...buildSeoMetadata({
+      title: `${hub.title} Research Guide`,
+      description: hub.description,
+      path: `/goals/${hub.slug}`,
+      imagePath: `/goals/${hub.slug}/opengraph-image`,
+      imageAlt: `${hub.title} research guide`,
+    }),
   };
 }
 
@@ -230,6 +245,7 @@ export default async function GoalHubPage({
     .slice(0, 6);
 
   const goals = getHubGoals(hub);
+  const editorialReview = getDefaultArticleReview("2026-05-15");
   const peptideCount = peptides.length;
   const allPeptideCount = getPublishedPeptides().length;
   const hubCostEstimates = featuredPeptides
@@ -353,6 +369,12 @@ export default async function GoalHubPage({
         </section>
 
         {/* ── Two-col body ────────────────────────────────────── */}
+        <section className="border-b border-stone-200 bg-stone-50">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
             {/* ── Main column ── */}
@@ -388,6 +410,16 @@ export default async function GoalHubPage({
                   </div>
                 </div>
               </div>
+
+              <IntentCtaPanel
+                eyebrow="Goal hub next step"
+                title={`Build a ${hub.title.toLowerCase()} research path.`}
+                body="Use the quiz before choosing a compound, vendor, or PDF so the route reflects your goal, risk tolerance, and monitoring comfort."
+                secondaryHref="/vendors"
+                secondaryLabel="Compare vendors"
+                tertiaryHref="/pdfs"
+                tertiaryLabel="View protocol PDFs"
+              />
 
               {/* Best options to research first */}
               {featuredPeptides.length > 0 && (
@@ -725,6 +757,10 @@ export default async function GoalHubPage({
                 </div>
               )}
             </aside>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl">
+            <SourceList sources={editorialReview.sources} />
           </div>
         </section>
       </main>

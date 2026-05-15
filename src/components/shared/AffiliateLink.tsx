@@ -22,7 +22,7 @@ export function AffiliateLink({
   className,
 }: AffiliateLinkProps) {
   const handleClick = () => {
-    trackAffiliateClick({ peptideId, vendorId, sourcePage, planId });
+    trackAffiliateClick({ peptideId, vendorId, sourcePage, planId, destinationUrl: href });
   };
 
   return (

@@ -35,11 +35,11 @@ export function MobileStickyQuizCta() {
           href="/quiz"
           className="flex h-12 w-full items-center justify-center gap-2 rounded-[0.95rem] bg-[#0f6a52] px-5 text-[15px] font-extrabold text-white transition-colors hover:bg-[#0d5f49]"
         >
-          Find Your Plan
+          Find My Stack
           <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
         </Link>
         <p className="mt-2 text-center text-[11px] font-medium text-[#103b2c]/58">
-          Takes 2 min - No email required
+          Takes 2 min - free stack preview
         </p>
       </div>
     </div>

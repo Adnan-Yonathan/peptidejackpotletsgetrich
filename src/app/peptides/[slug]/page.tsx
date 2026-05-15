@@ -3,15 +3,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { IntentCtaPanel } from "@/components/marketing/IntentCtaPanel";
 import { QuizFooterCta } from "@/components/marketing/QuizFooterCta";
 import { BreadcrumbList, JsonLd } from "@/components/seo/JsonLd";
+import { EditorialTrustBlock } from "@/components/seo/EditorialTrustBlock";
+import { SourceList } from "@/components/seo/SourceList";
 import { SITE_CANONICAL_URL } from "@/lib/constants";
+import { getGoalHref } from "@/lib/goal-links";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
+import { getDefaultPeptideReview } from "@/lib/editorial";
+import { VendorTrustRationale } from "@/components/vendors/VendorTrustRationale";
+import { EvidenceRiskMatrix, PeptideDecisionFlow } from "@/components/visuals";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getPeptideBySlug, getPublishedPeptides, type PeptideData } from "@/data/peptides";
 import { getGoalsForPeptide } from "@/data/goals";
-import { getListingPriceLabel, getVendorListingsForPeptide } from "@/data/vendor-listings";
+import { getVendorListingsForPeptide } from "@/data/vendor-listings";
 import { getDisclaimersForPeptide } from "@/data/disclaimers";
 import { getGuidesForPeptide } from "@/data/guides";
 import { getAgeGuidanceForPeptide } from "@/data/age-guidance";
@@ -34,6 +42,8 @@ export async function generateStaticParams() {
   return getPublishedPeptides().map((p) => ({ slug: p.slug }));
 }
 
+export const dynamicParams = false;
+
 export async function generateMetadata({
   params,
 }: {
@@ -43,12 +53,21 @@ export async function generateMetadata({
   const peptide = getPeptideBySlug(slug);
   if (!peptide) return { title: "Peptide Not Found" };
   const synonyms = peptide.synonyms.length ? ` (${peptide.synonyms.slice(0, 2).join(", ")})` : "";
+  const title = `${peptide.name}${synonyms}`;
+  const path = `/peptides/${peptide.slug}`;
   return {
-    title: `${peptide.name}${synonyms}`,
+    title,
     description: peptide.shortDescription,
     alternates: {
-      canonical: `/peptides/${peptide.slug}`,
+      canonical: path,
     },
+    ...buildSeoMetadata({
+      title,
+      description: peptide.shortDescription,
+      path,
+      imagePath: `${path}/opengraph-image`,
+      imageAlt: `${peptide.name} peptide profile`,
+    }),
   };
 }
 
@@ -101,6 +120,7 @@ export default async function PeptideDetailPage({
 
   const goals = getGoalsForPeptide(peptide.id);
   const vendorListings = getVendorListingsForPeptide(peptide.id);
+  const editorialReview = peptide.editorialReview ?? getDefaultPeptideReview();
   const disclaimers = getDisclaimersForPeptide(peptide.copyWarnings);
   const relatedGuides = getGuidesForPeptide(peptide.id).slice(0, 3);
   const related = getRelatedPeptides(peptide);
@@ -276,6 +296,18 @@ export default async function PeptideDetailPage({
           </section>
         )}
 
+        <section className="border-b border-stone-200 bg-[#fbfaf7]">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EditorialTrustBlock review={editorialReview} />
+          </div>
+        </section>
+
+        <section className="border-b border-stone-200 bg-[#fbfaf7]">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6 py-5">
+            <EvidenceRiskMatrix peptide={peptide} />
+          </div>
+        </section>
+
         {/* ── Two-col body ────────────────────────────────────── */}
         <section className="container mx-auto max-w-6xl px-4 sm:px-6 py-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
@@ -362,6 +394,80 @@ export default async function PeptideDetailPage({
                   {peptide.longDescription}
                 </p>
               </div>
+
+              {peptide.slug === "pinealon" && (
+                <div className={SECTION_CARD}>
+                  <p className={DETAIL_LABEL}>Answer first</p>
+                  <h2 className="mt-1 text-lg font-semibold text-foreground">
+                    Pinealon is a weak-evidence research topic, not a first-line sleep or longevity pick.
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    People usually research Pinealon for sleep, cognition, or anti-aging, but the
+                    public evidence base is thin and lacks the kind of reliable human data needed
+                    for confident protocol decisions. Treat it as an advanced, speculative
+                    compound and compare it against better-supported sleep, cognition, and
+                    longevity options before spending money or adding it to a stack.
+                  </p>
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Why people research it</div>
+                      <p className="text-sm text-foreground/80">
+                        Nootropic, sleep, pineal, and longevity claims appear in gray-market
+                        discussions, but most claims are extrapolated.
+                      </p>
+                    </div>
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Evidence limitation</div>
+                      <p className="text-sm text-foreground/80">
+                        No clean dosing standard, no strong human outcome base, and no reliable
+                        interaction map for stack planning.
+                      </p>
+                    </div>
+                    <div className={DETAIL_CELL}>
+                      <div className={DETAIL_LABEL}>Better comparisons</div>
+                      <p className="text-sm text-foreground/80">
+                        Review DSIP for sleep, Selank for anxiety-focused cognition, and Epitalon
+                        for the better-known longevity discussion.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/dsip">
+                      Compare DSIP
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/selank">
+                      Compare Selank
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/peptides/epitalon">
+                      Compare Epitalon
+                    </Link>
+                    <Link className="text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[5px]" href="/quiz">
+                      Take the quiz first
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <PeptideDecisionFlow
+                pageType="peptide"
+                title={`Where ${peptide.name} fits in the research path.`}
+                body="Use the evidence and risk profile first, then compare vendors and run the quiz before turning this compound into a protocol decision."
+                primaryHref="/quiz"
+                primaryLabel="Take the quiz"
+                secondaryHref={`/vendors?peptide=${peptide.slug}`}
+                secondaryLabel="Compare vendors"
+                relatedLabel={`${goals.length} related goal${goals.length === 1 ? "" : "s"}`}
+              />
+
+              <IntentCtaPanel
+                eyebrow="Peptide research path"
+                title={`Decide whether ${peptide.name} belongs in your plan.`}
+                body="Use the quiz before choosing a compound, vendor, or PDF. It routes by goal, experience, budget, safety flags, and monitoring comfort."
+                secondaryHref={`/tools/reconstitution/${peptide.slug}`}
+                secondaryLabel="Calculate this peptide"
+                tertiaryHref={`/vendors?peptide=${peptide.slug}`}
+                tertiaryLabel="Review vendors"
+              />
 
               {/* Research Details */}
               <div className={SECTION_CARD}>
@@ -741,6 +847,15 @@ export default async function PeptideDetailPage({
                           <p className="mt-1 text-[11px] text-muted-foreground">
                             {listing.regulatoryShippingFlags}
                           </p>
+                          <div className="mt-2">
+                            <VendorTrustRationale
+                              points={[
+                                `${listing.vendorTypeLabel}; COA access is listed as ${listing.coaAccessModeLabel}.`,
+                                listing.credibilityNote ?? "Product-page details should be verified before leaving PeptidePros.",
+                              ]}
+                              affiliateStatus={listing.affiliateProgramStatus}
+                            />
+                          </div>
                         </div>
                       );
                     })}
@@ -758,7 +873,7 @@ export default async function PeptideDetailPage({
                     {goals.map((g) => (
                       <Link
                         key={g.id}
-                        href={`/goals/${g.id}`}
+                        href={getGoalHref(g.id)}
                         className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-3 py-1 text-xs text-foreground hover:border-[color:var(--primary)] hover:text-[color:var(--primary)] transition-colors"
                       >
                         {g.displayName}
@@ -808,6 +923,9 @@ export default async function PeptideDetailPage({
           <p className="mx-auto mt-10 max-w-2xl text-center text-xs text-muted-foreground">
             {disclaimers[0].text}
           </p>
+          <div className="mt-6">
+            <SourceList sources={editorialReview.sources} />
+          </div>
         </section>
         <QuizFooterCta
           eyebrow="Personalized peptide routing"

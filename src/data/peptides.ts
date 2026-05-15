@@ -1,4 +1,6 @@
-﻿export type EvidenceTier = "A" | "B" | "B-C" | "C" | "C-D" | "D";
+﻿import type { EditorialReview } from "@/lib/editorial";
+
+export type EvidenceTier = "A" | "B" | "B-C" | "C" | "C-D" | "D";
 export type RegulatoryStatus = "rx_approved" | "investigational" | "not_approved" | "ruo_only";
 export type RiskLevel = "low" | "medium" | "med-high" | "high" | "extreme";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced";
@@ -48,6 +50,7 @@ export interface PeptideData {
   qualityRequirements: string[];
   copyWarnings: string[];
   isStackable: boolean;
+  editorialReview?: EditorialReview;
   status: "published" | "draft";
 }
 

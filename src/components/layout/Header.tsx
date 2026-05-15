@@ -72,15 +72,15 @@ export function Header() {
           <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" />}>
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </SheetTrigger>
-          <SheetContent side="right" className="w-72">
-            <nav className="mt-8 flex flex-col gap-4">
+          <SheetContent side="right" className="w-72 px-6 pb-6 pt-12">
+            <nav className="flex flex-col gap-4">
               {NAV_LINKS.slice(0, 1).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "text-lg font-medium transition-colors",
+                    "rounded-lg px-2 py-1.5 text-lg font-medium transition-colors",
                     isActive(link.href) ? "text-[#0f6a52]" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -95,7 +95,7 @@ export function Header() {
                   onClick={() => setMobileToolsOpen((v) => !v)}
                   aria-expanded={mobileToolsOpen}
                   className={cn(
-                    "flex items-center justify-between text-lg font-medium transition-colors",
+                    "flex items-center justify-between rounded-lg px-2 py-1.5 text-lg font-medium transition-colors",
                     toolsActive ? "text-[#0f6a52]" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -105,7 +105,7 @@ export function Header() {
                   />
                 </button>
                 {mobileToolsOpen && (
-                  <div className="mt-3 space-y-4 border-l border-[#103b2c]/15 pl-4">
+                  <div className="mt-3 space-y-4 border-l border-[#103b2c]/15 pl-4 pr-2">
                     {TOOL_CATEGORIES.map((cat) => {
                       const tools = getToolsByCategory(cat.id);
                       if (tools.length === 0) return null;
@@ -120,7 +120,7 @@ export function Header() {
                                 <Link
                                   href={t.href}
                                   onClick={() => setOpen(false)}
-                                  className="flex items-center gap-2 text-[14px] text-[#103b2c]"
+                                  className="flex items-center gap-2 rounded-md px-2 py-1 text-[14px] text-[#103b2c] transition-colors hover:bg-[#103b2c]/5"
                                 >
                                   <span>{t.shortName}</span>
                                   {t.status === "coming-soon" && (
@@ -138,7 +138,7 @@ export function Header() {
                     <Link
                       href="/tools"
                       onClick={() => setOpen(false)}
-                      className="inline-flex text-[13px] font-semibold text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[4px]"
+                      className="inline-flex px-2 text-[13px] font-semibold text-[#103b2c] underline decoration-[#0f6a52] decoration-2 underline-offset-[4px]"
                     >
                       Browse all tools
                     </Link>
@@ -152,14 +152,14 @@ export function Header() {
                   href={link.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    "text-lg font-medium transition-colors",
+                    "rounded-lg px-2 py-1.5 text-lg font-medium transition-colors",
                     isActive(link.href) ? "text-[#0f6a52]" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {link.label}
                 </Link>
               ))}
-              <div className="flex flex-col gap-2 border-t pt-4">
+              <div className="flex flex-col gap-2 border-t px-2 pt-4">
                 <AuthActions mobile onNavigate={() => setOpen(false)} />
               </div>
             </nav>

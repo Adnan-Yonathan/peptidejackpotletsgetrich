@@ -1,29 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { ArrowRight, ChevronDown, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ProtocolPdfProduct } from "@/data/protocol-pdfs";
+import { trackRevenueEvent } from "@/lib/revenue/client";
+import { getRevenueSessionId } from "@/lib/revenue/session";
 
 interface PdfPaywallProps {
   primaryProtocol: ProtocolPdfProduct | undefined;
   addonProtocol?: ProtocolPdfProduct;
   protocolName: string;
+  goalId?: string;
+  primaryPeptideSlug?: string;
+  sourcePage?: string;
 }
 
 export function PdfPaywall({
   primaryProtocol,
-  addonProtocol: _addonProtocol,
+  addonProtocol,
   protocolName,
+  goalId,
+  primaryPeptideSlug,
+  sourcePage = "pdf-paywall",
 }: PdfPaywallProps) {
-  const checkoutHref = primaryProtocol ? `/checkout/${primaryProtocol.slug}` : undefined;
+  const sessionId = useSyncExternalStore(
+    () => () => undefined,
+    getRevenueSessionId,
+    () => "",
+  );
+
+  const checkoutParams = new URLSearchParams({
+    sourcePage,
+    sessionId: sessionId || "pending",
+  });
+  if (goalId) checkoutParams.set("goalId", goalId);
+  if (primaryPeptideSlug) checkoutParams.set("primaryPeptideSlug", primaryPeptideSlug);
+
+  const checkoutHref = primaryProtocol ? `/checkout/${primaryProtocol.slug}?${checkoutParams.toString()}` : undefined;
+  const bundleCheckoutHref =
+    primaryProtocol && addonProtocol
+      ? `/checkout/${primaryProtocol.slug}?${new URLSearchParams({
+          ...Object.fromEntries(checkoutParams.entries()),
+          offer: "bundle",
+        }).toString()}`
+      : undefined;
   const priceLabel = primaryProtocol?.priceLabel ?? "$49";
 
+  useEffect(() => {
+    if (!sessionId) return;
+    trackRevenueEvent({
+      eventType: "paywall_viewed",
+      sessionId,
+      sourcePage,
+      sourceType: "pdf_paywall",
+      goalId,
+      peptideSlug: primaryPeptideSlug,
+      productSlug: primaryProtocol?.slug,
+      offerType: primaryProtocol?.kind,
+    });
+  }, [goalId, primaryPeptideSlug, primaryProtocol?.kind, primaryProtocol?.slug, sessionId, sourcePage]);
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4 pb-20 sm:gap-5 sm:pb-0">
       <BonusReceipt protocolName={protocolName} />
-      <BigPriceBlock priceLabel={priceLabel} checkoutHref={checkoutHref} />
+      <BigPriceBlock
+        priceLabel={priceLabel}
+        checkoutHref={checkoutHref}
+        bundleCheckoutHref={bundleCheckoutHref}
+        addonProtocol={addonProtocol}
+      />
       <ComparisonTable priceLabel={priceLabel} />
       <PaywallFAQ />
       <FinalCta
@@ -35,6 +82,17 @@ export function PdfPaywall({
         PeptidePros is an educational platform. Not medical advice. Not for diagnosing, treating,
         curing, or preventing disease.
       </p>
+      {checkoutHref && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#103b2c]/10 bg-[#fbfaf7]/95 px-4 py-3 shadow-[0_-18px_45px_-35px_rgba(16,59,44,0.75)] backdrop-blur sm:hidden">
+          <Button
+            className="h-12 w-full rounded-xl bg-[#103b2c] text-[15px] font-extrabold text-white hover:bg-[#0c3226]"
+            render={<Link href={checkoutHref} />}
+          >
+            Unlock protocol - {priceLabel}
+            <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2.6} />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -97,7 +155,7 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
       className="overflow-hidden rounded-[18px] border border-[#103b2c]/12 bg-[#fbfaf7] shadow-[0_18px_60px_-46px_rgba(16,59,44,0.55)]"
     >
       {/* Header */}
-      <header className="relative border-b border-dashed border-[#103b2c]/18 bg-white px-5 py-5 md:px-7 md:py-6">
+      <header className="relative border-b border-dashed border-[#103b2c]/18 bg-white px-4 py-4 md:px-7 md:py-6">
         <div className="flex items-center justify-between gap-3">
           <div className="inline-flex items-center gap-2 font-mono text-[10.5px] font-semibold uppercase tracking-[0.22em] text-[#0f6a52]">
             <Sparkles className="h-3.5 w-3.5" strokeWidth={2.3} />
@@ -109,11 +167,11 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
         </div>
         <h2
           id="bonus-stack-heading"
-          className="mt-2 text-[1.6rem] font-extrabold tracking-[-0.025em] text-black md:text-[1.85rem]"
+          className="mt-2 text-[1.35rem] font-extrabold tracking-[-0.025em] text-black md:text-[1.85rem]"
         >
           Everything you get today
         </h2>
-        <p className="mt-1.5 max-w-[44ch] text-[13px] leading-[1.55] text-[#103b2c]/65">
+        <p className="mt-1.5 max-w-[44ch] text-[12.5px] leading-[1.55] text-[#103b2c]/65 md:text-[13px]">
           Five items in your unlock — one main PDF and four limited-release bonuses, priced
           line-by-line below.
         </p>
@@ -124,11 +182,11 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
         {rows.map((row, i) => (
           <li
             key={row.title}
-            className="grid grid-cols-[auto_1fr_auto] items-baseline gap-x-3 gap-y-1 px-5 py-4 md:px-7 md:py-4"
+            className="grid grid-cols-[1fr_auto] items-start gap-x-3 gap-y-2 px-4 py-3.5 md:grid-cols-[auto_1fr_auto] md:items-baseline md:px-7 md:py-4"
           >
             {/* Tag chip */}
             <span
-              className={`row-span-2 inline-flex h-[24px] items-center self-start rounded-[6px] px-2.5 font-mono text-[10.5px] font-bold uppercase tracking-[0.06em] ${
+              className={`col-span-2 inline-flex h-[24px] w-fit items-center self-start rounded-[6px] px-2.5 font-mono text-[10.5px] font-bold uppercase tracking-[0.06em] md:col-span-1 md:row-span-2 ${
                 row.free
                   ? "bg-[#e7f4ee] text-[#0f6a52] ring-1 ring-inset ring-[#0f6a52]/15"
                   : "bg-[#103b2c] text-[#f1e9d4]"
@@ -141,7 +199,7 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
 
             {/* Title + dot leader */}
             <div className="flex min-w-0 items-baseline gap-2">
-              <span className="truncate text-[14.5px] font-bold tracking-tight text-[#0d3327]">
+              <span className="text-[13.5px] font-bold leading-snug tracking-tight text-[#0d3327] md:truncate md:text-[14.5px]">
                 {row.title}
               </span>
               <span
@@ -165,7 +223,7 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
             </div>
 
             {/* Desc row */}
-            <p className="col-start-2 -mt-0.5 text-[12px] leading-[1.5] text-[#103b2c]/60">
+            <p className="col-span-2 -mt-0.5 text-[12px] leading-[1.5] text-[#103b2c]/60 md:col-span-1 md:col-start-2">
               {row.desc}
             </p>
           </li>
@@ -173,7 +231,7 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
       </ul>
 
       {/* Totals — double rule + total value only */}
-      <div className="bg-white px-5 pb-5 pt-4 md:px-7 md:pb-6 md:pt-5">
+      <div className="bg-white px-4 pb-4 pt-3.5 md:px-7 md:pb-6 md:pt-5">
         <div className="mb-3 flex flex-col gap-[2px]">
           <span className="h-px w-full bg-[#103b2c]/30" />
           <span className="h-px w-full bg-[#103b2c]/30" />
@@ -183,7 +241,7 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
           <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-[#0d3327]">
             Total value
           </span>
-          <span className="font-mono text-[28px] font-extrabold tracking-[-0.02em] tabular-nums text-[#0d3327]">
+          <span className="font-mono text-[24px] font-extrabold tracking-[-0.02em] tabular-nums text-[#0d3327] md:text-[28px]">
             ${totalValue}
           </span>
         </div>
@@ -199,14 +257,18 @@ function BonusReceipt({ protocolName }: { protocolName: string }) {
 function BigPriceBlock({
   priceLabel,
   checkoutHref,
+  bundleCheckoutHref,
+  addonProtocol,
 }: {
   priceLabel: string;
   checkoutHref: string | undefined;
+  bundleCheckoutHref?: string;
+  addonProtocol?: ProtocolPdfProduct;
 }) {
   return (
     <section className="overflow-hidden rounded-[18px] bg-[#0f6a52] text-white shadow-[0_24px_64px_-24px_rgba(15,106,82,0.5)]">
-      <div className="px-5 py-6 md:px-8 md:py-7">
-        <div className="grid items-center gap-6 md:grid-cols-[1.15fr_1fr] md:gap-7">
+      <div className="px-4 py-5 md:px-8 md:py-7">
+        <div className="grid items-center gap-5 md:grid-cols-[1.15fr_1fr] md:gap-7">
           <div>
             <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
               Total value &middot; $370
@@ -215,27 +277,36 @@ function BigPriceBlock({
               <span className="text-[22px] font-semibold leading-none text-white/55 line-through">
                 $370
               </span>
-              <span className="text-[64px] font-extrabold leading-none tracking-[-0.05em] md:text-[72px]">
+              <span className="text-[52px] font-extrabold leading-none tracking-[-0.05em] md:text-[72px]">
                 {priceLabel}
               </span>
               <span className="inline-flex h-[24px] items-center rounded-full bg-[#f0c95a] px-2.5 text-[11.5px] font-bold uppercase tracking-[0.04em] text-[#5a4108]">
                 Save 86%
               </span>
             </div>
-            <p className="mt-3 max-w-[34ch] text-[13px] leading-[1.55] text-white/85">
+            <p className="mt-3 max-w-[34ch] text-[12.5px] leading-[1.55] text-white/85 md:text-[13px]">
               Limited-release price &mdash; held for the next 100 protocols (84 claimed). Same compound research a clinician charges $300+ to deliver, plus 4 bonuses.
             </p>
           </div>
 
           <div className="flex flex-col gap-3">
             <Button
-              className="h-[60px] w-full rounded-[12px] bg-white text-[15.5px] font-extrabold tracking-tight text-[#0f6a52] shadow-[0_8px_20px_-8px_rgba(0,0,0,0.3)] hover:bg-white/95"
+              className="h-[54px] w-full rounded-[12px] bg-white text-[14.5px] font-extrabold tracking-tight text-[#0f6a52] shadow-[0_8px_20px_-8px_rgba(0,0,0,0.3)] hover:bg-white/95 md:h-[60px] md:text-[15.5px]"
               disabled={!checkoutHref}
               {...(checkoutHref ? { render: <Link href={checkoutHref} /> } : {})}
             >
               {checkoutHref ? `Unlock my protocol — ${priceLabel}` : "Protocol coming soon"}
               {checkoutHref && <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2.6} />}
             </Button>
+            {bundleCheckoutHref && addonProtocol && (
+              <Button
+                className="h-11 w-full rounded-[12px] border border-white/25 bg-[#f0c95a] text-[13.5px] font-extrabold text-[#5a4108] hover:bg-[#e7be4d]"
+                render={<Link href={bundleCheckoutHref} />}
+              >
+                Add {addonProtocol.shortName} for $10 more today
+                <ArrowRight className="ml-2 h-4 w-4" strokeWidth={2.6} />
+              </Button>
+            )}
             <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-white/70">
               <span className="inline-flex items-center gap-1">
                 <ShieldCheck className="h-3 w-3" strokeWidth={2.4} />
@@ -268,12 +339,12 @@ function ComparisonTable({ priceLabel }: { priceLabel: string }) {
     ["Turnaround", "30 seconds", "1–3 weeks", "Days–weeks"],
   ];
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-2.5 sm:gap-3">
       <div>
         <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0f6a52]">
           Why {priceLabel}
         </p>
-        <h2 className="mt-1.5 text-[1.4rem] font-bold tracking-[-0.02em] text-black md:text-[1.55rem]">
+        <h2 className="mt-1.5 text-[1.25rem] font-bold tracking-[-0.02em] text-black md:text-[1.55rem]">
           Compared to your alternatives
         </h2>
       </div>
@@ -329,15 +400,15 @@ function ComparisonTable({ priceLabel }: { priceLabel: string }) {
               ))}
             </div>
             <div
-              className={`grid grid-cols-[1.2fr_1fr_1fr] text-[12px] md:hidden ${
+              className={`grid grid-cols-[1.15fr_0.95fr_1fr] text-[11.5px] md:hidden ${
                 ri === 0 ? "" : "border-t border-[#103b2c]/10"
               }`}
             >
-              <div className="px-3 py-2 text-left font-semibold text-[#103b2c]">{row[0]}</div>
-              <div className="bg-[#e7f4ee] px-3 py-2 text-center font-semibold text-[#0f6a52]">
+              <div className="px-2.5 py-2 text-left font-semibold text-[#103b2c]">{row[0]}</div>
+              <div className="bg-[#e7f4ee] px-2.5 py-2 text-center font-semibold text-[#0f6a52]">
                 {row[1]}
               </div>
-              <div className="px-3 py-2 text-center text-[#103b2c]/75">
+              <div className="px-2.5 py-2 text-center text-[#103b2c]/75">
                 {row[2]}
                 {row[3] ? (
                   <span className="block text-[10.5px] text-[#103b2c]/55">{row[3]}</span>
@@ -385,8 +456,8 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
 function PaywallFAQ() {
   const [open, setOpen] = useState(0);
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-[1.4rem] font-bold tracking-[-0.02em] text-black md:text-[1.55rem]">
+    <section className="flex flex-col gap-2.5 sm:gap-3">
+      <h2 className="text-[1.25rem] font-bold tracking-[-0.02em] text-black md:text-[1.55rem]">
         Last objections, handled
       </h2>
       <ul className="flex flex-col gap-2">
@@ -400,7 +471,7 @@ function PaywallFAQ() {
               <button
                 type="button"
                 onClick={() => setOpen(isOpen ? -1 : i)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+                className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left md:px-4 md:py-3.5"
                 aria-expanded={isOpen}
               >
                 <span className="text-[14px] font-semibold text-[#103b2c]">{it.q}</span>
@@ -437,8 +508,8 @@ function FinalCta({
   priceLabel: string;
 }) {
   return (
-    <section className="rounded-[18px] bg-[#103b2c] px-6 py-7 text-center text-white md:px-8 md:py-9">
-      <h2 className="text-[1.55rem] font-extrabold tracking-[-0.025em] md:text-[1.85rem]">
+    <section className="rounded-[18px] bg-[#103b2c] px-4 py-6 text-center text-white md:px-8 md:py-9">
+      <h2 className="text-[1.35rem] font-extrabold tracking-[-0.025em] md:text-[1.85rem]">
         Your protocol is one click away.
       </h2>
       <p className="mt-2 text-[13.5px] text-white/70">
