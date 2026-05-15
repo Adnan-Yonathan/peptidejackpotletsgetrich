@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Download, FileText } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
@@ -38,8 +38,8 @@ export default async function PurchasesPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold">My PDFs</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Purchased protocol PDFs live here. Export and email delivery can use these same
-          ownership records once the PDF files are created.
+          Purchased protocols live here. Open a protocol to review your personalized plan and
+          export it as a PDF.
         </p>
       </div>
 
@@ -48,6 +48,7 @@ export default async function PurchasesPage() {
           {purchases.map((purchase) => {
             const product = getPaidPdfProduct(purchase.product_slug);
             const title = product?.name ?? purchase.product_slug;
+            const protocolSlug = product?.slug ?? purchase.product_slug;
             return (
               <Card key={purchase.id}>
                 <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -65,9 +66,9 @@ export default async function PurchasesPage() {
                         : "recently"}
                     </p>
                   </div>
-                  <Button size="sm" render={<a href={`/api/purchases/${purchase.product_slug}/download`} />}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
+                  <Button size="sm" render={<Link href={`/dashboard/purchases/${protocolSlug}/protocol`} />}>
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open personalized protocol
                   </Button>
                 </CardHeader>
               </Card>

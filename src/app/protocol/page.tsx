@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download, ExternalLink, FileText, LoaderCircle } from "lucide-react";
+import { ExternalLink, FileText, LoaderCircle } from "lucide-react";
 import QuizResultsPage from "@/app/quiz/results/page";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
@@ -111,7 +111,7 @@ export default function ProtocolPage() {
               Your protocol library
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#103b2c]/68">
-              Download your purchased PDFs or open the in-app protocol view from here.
+              Open your purchased personalized protocols and export them as PDFs from here.
             </p>
           </div>
 
@@ -134,16 +134,10 @@ export default function ProtocolPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <Button size="sm" render={<a href={purchase.downloadUrl} />}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download PDF
+                    <Button size="sm" render={<Link href={purchase.downloadUrl} />}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Open protocol
                     </Button>
-                    {purchase.appUrl && (
-                      <Button size="sm" variant="outline" render={<Link href={purchase.appUrl} />}>
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open in app
-                      </Button>
-                    )}
                   </div>
                 </CardHeader>
               </Card>

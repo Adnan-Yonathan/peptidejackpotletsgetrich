@@ -39,8 +39,8 @@ export async function GET() {
         productName: product?.name ?? purchase.product_slug,
         productKind: product?.kind ?? "primary",
         purchasedAt: purchase.purchased_at,
-        downloadUrl: `/api/purchases/${product?.slug ?? purchase.product_slug}/download`,
-        appUrl: product ? `/pdfs/examples/${product.slug}` : null,
+        downloadUrl: `/dashboard/purchases/${product?.slug ?? purchase.product_slug}/protocol`,
+        appUrl: product ? `/dashboard/purchases/${product.slug}/protocol` : null,
       };
     }),
   });

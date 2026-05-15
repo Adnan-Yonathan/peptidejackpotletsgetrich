@@ -43,8 +43,8 @@ export default async function CheckoutSuccessPage({
           <CheckCircle2 className="mx-auto h-12 w-12 text-[#0f6a52]" />
           <h1 className="mt-4 text-2xl font-bold">Purchase complete</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Stripe is confirming the payment. Your PDF will appear in your account as soon as the
-            webhook records ownership.
+            Stripe is confirming the payment. Your personalized protocol will appear in your
+            account as soon as the webhook records ownership.
           </p>
           {purchasedProducts.length > 0 && (
             <div className="mt-5 rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] p-4 text-left">
@@ -77,13 +77,8 @@ export default async function CheckoutSuccessPage({
             </p>
           )}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button render={<Link href="/dashboard/purchases" />}>Download my PDFs</Button>
-            {purchasedProduct && (
-              <Button variant="outline" render={<Link href={`/pdfs/examples/${purchasedProduct.slug}`} />}>
-                Open PDF preview
-              </Button>
-            )}
-            <Button variant="outline" render={<Link href="/dashboard/purchases" />}>View my PDFs</Button>
+            <Button render={<Link href="/dashboard/purchases" />}>Open my protocol</Button>
+            <Button variant="outline" render={<Link href="/dashboard/purchases" />}>View purchases</Button>
             <Button variant="outline" render={<Link href="/vendors" />}>
               See matching vendors
             </Button>
