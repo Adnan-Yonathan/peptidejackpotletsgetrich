@@ -14,12 +14,14 @@ import { GOALS } from "@/data/goals";
 import {
   ACTIVITY_LEVEL_OPTIONS,
   AGE_RANGE_OPTIONS,
+  BODY_COMPOSITION_GOAL_OPTIONS,
   BUDGET_OPTIONS,
   COUNTRY_OPTIONS,
   DELIVERY_PREFERENCE_OPTIONS,
   EXPERIENCE_OPTIONS,
   FEMALE_LIFE_STAGE_OPTIONS,
   HEALTH_CONDITION_OPTIONS,
+  INJURY_STATUS_OPTIONS,
   MALE_HORMONE_CONTEXT_OPTIONS,
   MEDICATION_OPTIONS,
   MONITORING_OPTIONS,
@@ -27,13 +29,12 @@ import {
   PLAN_STYLE_OPTIONS,
   PROBLEM_OPTIONS,
   REPRODUCTIVE_STATUS_OPTIONS,
+  ROUTINE_OPTIONS,
   SEX_OPTIONS,
   TIMEFRAME_OPTIONS,
 } from "@/data/planner-options";
 import { useQuizState } from "@/hooks/useQuizState";
-import { createClient } from "@/lib/supabase/client";
 import { trackRevenueEvent } from "@/lib/revenue/client";
-import { getRevenueSessionId } from "@/lib/revenue/session";
 import type { PlannerAnswers, PlannerStep } from "@/types/planner";
 
 const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = {
@@ -49,9 +50,21 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     title: "What sex should the planner use for safety logic?",
     subtitle: "This applies sex-specific evidence, approval boundaries, and reproductive cautions where relevant.",
   },
+  bodyMetrics: {
+    title: "What are your height and weight?",
+    subtitle: "Approximate body metrics help the planner choose a more realistic intensity lane and protocol context.",
+  },
   activityLevel: {
     title: "What is your current activity level?",
     subtitle: "Training output helps separate recovery, performance, and general wellness needs.",
+  },
+  bodyCompositionGoal: {
+    title: "What body-composition direction fits you best?",
+    subtitle: "This helps distinguish metabolic, recomp, muscle, and maintenance-focused protocol logic.",
+  },
+  injuryStatus: {
+    title: "Any injury or recovery context right now?",
+    subtitle: "Recovery context changes how strongly the planner weighs tissue-repair and monitoring tradeoffs.",
   },
   topProblems: {
     title: "What problems are you trying to fix first?",
@@ -97,6 +110,10 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     title: "What delivery route fits your comfort level?",
     subtitle: "This helps avoid recommendations that look good on paper but are unrealistic for you.",
   },
+  routineConsistency: {
+    title: "How consistent can your routine be?",
+    subtitle: "Adherence changes whether the planner should favor lower-friction or more detailed protocols.",
+  },
   monitoringWillingness: {
     title: "How much tracking are you willing to do?",
     subtitle: "Some protocols need more symptom, lab, or progress monitoring than others.",
@@ -114,8 +131,8 @@ const QUESTION_COPY: Record<PlannerStep, { title: string; subtitle: string }> = 
     subtitle: "This shapes whether the stack should be short-term, focused, or longer-horizon.",
   },
   email: {
-    title: "Send my stack and unlock my protocol preview",
-    subtitle: "Create your free account so your result, vendor options, and protocol offer stay connected.",
+    title: "Where should we save your protocol access details?",
+    subtitle: "No account required. This keeps your quiz result, checkout, and protocol access connected.",
   },
 };
 
@@ -135,10 +152,33 @@ function getVisibleSteps(answers: Partial<PlannerAnswers>) {
   });
 }
 
+function parseOptionalNumber(value: string) {
+  if (!value.trim()) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function hasValidBodyMetrics(answers: Partial<PlannerAnswers>) {
+  const feet = answers.heightFeet;
+  const inches = answers.heightInches;
+  const weight = answers.weightLbs;
+
+  return (
+    typeof feet === "number" &&
+    feet >= 3 &&
+    feet <= 8 &&
+    typeof inches === "number" &&
+    inches >= 0 &&
+    inches <= 11 &&
+    typeof weight === "number" &&
+    weight >= 70 &&
+    weight <= 500
+  );
+}
+
 export default function QuizPage() {
   const router = useRouter();
   const { currentStep, answers, setAnswer, goToStep } = useQuizState();
-  const supabase = useMemo(() => createClient(), []);
   const hasTrackedStart = useRef(false);
   const hasTrackedCompletion = useRef(false);
   const [isGeneratingResults, setIsGeneratingResults] = useState(false);
@@ -162,31 +202,7 @@ export default function QuizPage() {
 
     if (activeLoadingStep >= RESULT_LOADING_STEPS.length) {
       const completeTimer = window.setTimeout(() => {
-        const routeAfterQuiz = async () => {
-          if (!supabase) {
-            router.push("/quiz/results");
-            return;
-          }
-
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-
-          if (user) {
-            router.push("/quiz/results");
-            return;
-          }
-
-          const params = new URLSearchParams({
-            redirectTo: "/quiz/results",
-            sessionId: getRevenueSessionId(),
-          });
-          const email = answers.email?.trim();
-          if (email) params.set("email", email);
-          router.push(`/signup?${params.toString()}`);
-        };
-
-        void routeAfterQuiz();
+        router.push("/quiz/results");
       }, 450);
 
       return () => window.clearTimeout(completeTimer);
@@ -197,7 +213,7 @@ export default function QuizPage() {
     }, activeLoadingStep === 0 ? 700 : 850);
 
     return () => window.clearTimeout(stepTimer);
-  }, [activeLoadingStep, answers.email, isGeneratingResults, router, supabase]);
+  }, [activeLoadingStep, isGeneratingResults, router]);
 
   const toggleArrayValue = (
     key: "secondaryGoalIds" | "topProblems" | "healthConditions" | "medications",
@@ -224,9 +240,14 @@ export default function QuizPage() {
           goalId: answers.primaryGoalId,
           metadata: {
             budget: answers.budget,
+            bodyCompositionGoal: answers.bodyCompositionGoal,
             experience: answers.experience,
+            heightFeet: answers.heightFeet,
+            heightInches: answers.heightInches,
+            injuryStatus: answers.injuryStatus,
             riskTolerance: answers.riskTolerance,
             timeframe: answers.timeframe,
+            weightLbs: answers.weightLbs,
           },
         });
       }
@@ -251,8 +272,14 @@ export default function QuizPage() {
         return Boolean(answers.ageRange);
       case "sex":
         return Boolean(answers.sex);
+      case "bodyMetrics":
+        return hasValidBodyMetrics(answers);
       case "activityLevel":
         return Boolean(answers.activityLevel);
+      case "bodyCompositionGoal":
+        return Boolean(answers.bodyCompositionGoal);
+      case "injuryStatus":
+        return Boolean(answers.injuryStatus);
       case "topProblems":
         return (answers.topProblems?.length ?? 0) > 0;
       case "experience":
@@ -273,6 +300,8 @@ export default function QuizPage() {
         return Boolean(answers.budget);
       case "deliveryPreference":
         return Boolean(answers.deliveryPreference);
+      case "routineConsistency":
+        return Boolean(answers.routineConsistency);
       case "monitoringWillingness":
         return Boolean(answers.monitoringWillingness);
       case "riskTolerance":
@@ -309,7 +338,7 @@ export default function QuizPage() {
             </p>
             <p className="mt-1 text-[13px] leading-relaxed text-[#103b2c]/70 sm:text-sm">
               Get your peptide research stack, vendor options, and protocol preview matched to
-              your goal, budget, risk profile, and timeline.
+              your body, health profile, goals, and timeline.
             </p>
           </div>
           <div className="mb-4 sm:mb-8">
@@ -440,9 +469,71 @@ export default function QuizPage() {
             }}
           />
         );
+      case "bodyMetrics":
+        return (
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1.25fr]">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-[#103b2c]">Height feet</span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={3}
+                  max={8}
+                  value={answers.heightFeet ?? ""}
+                  onChange={(event) => setAnswer("heightFeet", parseOptionalNumber(event.target.value))}
+                  placeholder="5"
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-[#103b2c]">Height inches</span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={11}
+                  value={answers.heightInches ?? 0}
+                  onChange={(event) => setAnswer("heightInches", parseOptionalNumber(event.target.value))}
+                  placeholder="10"
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-[#103b2c]">Weight pounds</span>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={70}
+                  max={500}
+                  value={answers.weightLbs ?? ""}
+                  onChange={(event) => setAnswer("weightLbs", parseOptionalNumber(event.target.value))}
+                  placeholder="180"
+                />
+              </label>
+            </div>
+            <p className="rounded-xl border border-[#103b2c]/10 bg-[#fbfaf7] px-3 py-2 text-xs leading-relaxed text-[#103b2c]/70">
+              These are used for personalization context only, not to calculate a prescribed dose.
+            </p>
+          </div>
+        );
       case "activityLevel":
         return (
           <OptionGrid options={ACTIVITY_LEVEL_OPTIONS} value={answers.activityLevel} onSelect={(value) => setAnswer("activityLevel", value)} />
+        );
+      case "bodyCompositionGoal":
+        return (
+          <OptionGrid
+            options={BODY_COMPOSITION_GOAL_OPTIONS}
+            value={answers.bodyCompositionGoal}
+            onSelect={(value) => setAnswer("bodyCompositionGoal", value)}
+          />
+        );
+      case "injuryStatus":
+        return (
+          <OptionGrid
+            options={INJURY_STATUS_OPTIONS}
+            value={answers.injuryStatus}
+            onSelect={(value) => setAnswer("injuryStatus", value)}
+          />
         );
       case "topProblems":
         return (
@@ -546,6 +637,14 @@ export default function QuizPage() {
             options={DELIVERY_PREFERENCE_OPTIONS}
             value={answers.deliveryPreference}
             onSelect={(value) => setAnswer("deliveryPreference", value)}
+          />
+        );
+      case "routineConsistency":
+        return (
+          <OptionGrid
+            options={ROUTINE_OPTIONS}
+            value={answers.routineConsistency}
+            onSelect={(value) => setAnswer("routineConsistency", value)}
           />
         );
       case "monitoringWillingness":
@@ -692,7 +791,7 @@ function QuizRevenueCue({
       : stepName === "budget"
         ? "Vendor options and protocol recommendations will stay inside this budget lane."
         : stepName === "email"
-          ? "Your free stack preview comes first. The full protocol unlock is shown after your result."
+          ? "Your free stack preview comes next. No account is required to view results or checkout."
           : null;
 
   if (!cue) return null;

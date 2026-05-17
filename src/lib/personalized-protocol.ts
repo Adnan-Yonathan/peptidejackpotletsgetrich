@@ -26,6 +26,7 @@ export const PLANNER_DEFAULTS_FOR_PROTOCOL: Partial<PlannerAnswers> = {
   reproductiveStatus: "none",
   femaleLifeStage: "not_applicable",
   maleHormoneContext: "not_applicable",
+  heightInches: 0,
   notes: "",
   deliveryPreference: "flexible",
   stackingPreference: "basic_stack",
@@ -69,6 +70,23 @@ function titleCase(value: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function getHeightInches(answers: PlannerAnswers): number | null {
+  if (typeof answers.heightFeet !== "number" || typeof answers.heightInches !== "number") return null;
+  return answers.heightFeet * 12 + answers.heightInches;
+}
+
+function formatHeight(answers: PlannerAnswers) {
+  const heightInches = getHeightInches(answers);
+  if (!heightInches) return null;
+  return `${Math.floor(heightInches / 12)}'${heightInches % 12}"`;
+}
+
+function calculateBmi(answers: PlannerAnswers): number | null {
+  const heightInches = getHeightInches(answers);
+  if (!heightInches || !answers.weightLbs) return null;
+  return (answers.weightLbs / (heightInches * heightInches)) * 703;
+}
+
 export function buildProfileSnapshot(answers?: PlannerAnswers): ProtocolProfileSnapshot[] {
   if (!answers) {
     return [
@@ -83,7 +101,13 @@ export function buildProfileSnapshot(answers?: PlannerAnswers): ProtocolProfileS
     { label: "Sex", value: titleCase(answers.sex) },
     { label: "Activity", value: titleCase(answers.activityLevel) },
     { label: "Experience", value: titleCase(answers.experience) },
+    ...(formatHeight(answers) ? [{ label: "Height", value: formatHeight(answers) as string }] : []),
+    ...(answers.weightLbs ? [{ label: "Weight", value: `${answers.weightLbs} lb` }] : []),
+    ...(calculateBmi(answers) ? [{ label: "BMI context", value: calculateBmi(answers)!.toFixed(1) }] : []),
+    ...(answers.bodyCompositionGoal ? [{ label: "Body-composition direction", value: titleCase(answers.bodyCompositionGoal) }] : []),
+    ...(answers.injuryStatus ? [{ label: "Recovery context", value: titleCase(answers.injuryStatus) }] : []),
     { label: "Plan style", value: titleCase(answers.planStyle) },
+    { label: "Routine consistency", value: titleCase(answers.routineConsistency) },
     { label: "Monitoring", value: titleCase(answers.monitoringWillingness) },
     { label: "Delivery", value: titleCase(answers.deliveryPreference) },
   ];
@@ -121,9 +145,12 @@ export function chooseDoseReferenceLane(
   if (answers.ageRange === "65+" || answers.ageRange === "55-64") cautionReasons.push("Older age range favors conservative reference selection.");
   if (answers.planStyle === "conservative") cautionReasons.push("Conservative plan style favors the low-reference lane.");
   if (answers.monitoringWillingness === "minimal") cautionReasons.push("Minimal monitoring tolerance favors a lower reference lane.");
+  if (answers.routineConsistency === "low") cautionReasons.push("Low routine consistency favors a simpler low-reference lane.");
   if (answers.reproductiveStatus !== "none") cautionReasons.push("Reproductive context requires a tighter screen.");
   if (answers.healthConditions.length > 0) cautionReasons.push("Health-condition context adds caution flags.");
   if (answers.medications.length > 0) cautionReasons.push("Medication context adds interaction-review needs.");
+  if (answers.weightLbs && answers.weightLbs < 150) cautionReasons.push("Lower body-weight context favors starting at the low-reference lane.");
+  if (answers.injuryStatus === "post_surgery") cautionReasons.push("Post-surgery context requires clinician review before interpreting any reference range.");
   if (answers.deliveryPreference === "oral_topical_only" || answers.deliveryPreference === "avoid_injections") {
     cautionReasons.push("Delivery preference conflicts with many injectable reference protocols.");
   }
@@ -134,6 +161,12 @@ export function chooseDoseReferenceLane(
   }
   if (answers.topProblems.some((problem) => problem.includes("injury") || problem.includes("recovery"))) {
     upperReasons.push("Recovery/injury context can justify upper-reference discussion when no major caution flags apply.");
+  }
+  if (answers.injuryStatus === "acute_injury" || answers.injuryStatus === "training_recovery") {
+    upperReasons.push("Current injury or training-recovery context can justify upper-reference discussion when no major caution flags apply.");
+  }
+  if (answers.weightLbs && answers.weightLbs > 200) {
+    upperReasons.push("Higher body-weight context can support upper-reference discussion when no caution flags apply.");
   }
   if (answers.experience === "advanced") {
     upperReasons.push("Advanced experience supports a broader discussion range when monitoring is adequate.");

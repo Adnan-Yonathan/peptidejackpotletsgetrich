@@ -145,7 +145,7 @@ export interface Subscription {
 
 export interface Purchase {
   id: string;
-  user_id: string;
+  user_id: string | null;
   product_slug: string;
   stripe_checkout_session_id: string;
   stripe_payment_intent_id: string | null;
@@ -160,7 +160,25 @@ export interface Purchase {
   quiz_session_id: string | null;
   goal_id: string | null;
   primary_peptide_slug: string | null;
+  access_token_hash: string | null;
+  access_token_created_at: string | null;
+  access_token_last_used_at: string | null;
+  quiz_snapshot: QuizAnswers | null;
+  recommended_peptides: RecommendationResult | null;
   purchased_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CheckoutContext {
+  id: string;
+  quiz_session_id: string;
+  email: string | null;
+  quiz_snapshot: QuizAnswers | null;
+  recommended_peptides: RecommendationResult | null;
+  goal_id: string | null;
+  primary_peptide_slug: string | null;
+  source_page: string | null;
   created_at: string;
   updated_at: string;
 }

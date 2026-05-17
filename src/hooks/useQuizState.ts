@@ -36,6 +36,7 @@ const defaultAnswers: Partial<PlannerAnswers> = {
   reproductiveStatus: "none",
   femaleLifeStage: "not_applicable",
   maleHormoneContext: "not_applicable",
+  heightInches: 0,
   notes: "",
   deliveryPreference: "flexible",
   stackingPreference: "basic_stack",
@@ -43,6 +44,20 @@ const defaultAnswers: Partial<PlannerAnswers> = {
   monitoringWillingness: "basic",
   planStyle: "balanced",
 };
+
+function hasValidBodyMetrics(answers: Partial<PlannerAnswers>) {
+  return (
+    typeof answers.heightFeet === "number" &&
+    answers.heightFeet >= 3 &&
+    answers.heightFeet <= 8 &&
+    typeof answers.heightInches === "number" &&
+    answers.heightInches >= 0 &&
+    answers.heightInches <= 11 &&
+    typeof answers.weightLbs === "number" &&
+    answers.weightLbs >= 70 &&
+    answers.weightLbs <= 500
+  );
+}
 
 export const useQuizState = create<QuizState>()(
   persist(
@@ -85,10 +100,13 @@ export const useQuizState = create<QuizState>()(
           answers.email &&
           answers.ageRange &&
           answers.sex &&
+          hasValidBodyMetrics(answers) &&
           answers.reproductiveStatus &&
           answers.femaleLifeStage &&
           answers.maleHormoneContext &&
           answers.activityLevel &&
+          answers.bodyCompositionGoal &&
+          answers.injuryStatus &&
           answers.topProblems &&
           answers.topProblems.length > 0 &&
           answers.experience &&
@@ -97,6 +115,7 @@ export const useQuizState = create<QuizState>()(
           answers.medications &&
           answers.budget &&
           answers.deliveryPreference &&
+          answers.routineConsistency &&
           answers.monitoringWillingness &&
           answers.riskTolerance &&
           answers.planStyle &&

@@ -16,9 +16,11 @@ import { getCompatibility } from "@/data/compatibility";
 import {
   ACTIVITY_LEVEL_OPTIONS,
   AGE_RANGE_OPTIONS,
+  BODY_COMPOSITION_GOAL_OPTIONS,
   EXPERIENCE_OPTIONS,
   FEMALE_LIFE_STAGE_OPTIONS,
   HEALTH_CONDITION_OPTIONS,
+  INJURY_STATUS_OPTIONS,
   MALE_HORMONE_CONTEXT_OPTIONS,
   MEDICATION_OPTIONS,
   MONITORING_OPTIONS,
@@ -167,6 +169,60 @@ function scorePeptide(peptide: PeptideData, answers: PlannerAnswers): PlannerRec
     if (peptide.category === "tissue_repair" || peptide.category === "muscle_repair") {
       score += 6;
     }
+  }
+
+  if (answers.bodyCompositionGoal === "fat_loss") {
+    if (peptide.category === "metabolic" || ["semaglutide", "tirzepatide", "liraglutide", "retatrutide", "aod-9604", "tesamorelin"].includes(peptide.id)) {
+      score += 9;
+      rationale.push("Matches your fat-loss body-composition direction.");
+    }
+  } else if (answers.bodyCompositionGoal === "recomposition") {
+    if (peptide.category === "metabolic" || peptide.category === "tissue_repair" || peptide.category === "gh_axis") {
+      score += 5;
+      rationale.push("Supports a recomposition-oriented balance of metabolic and recovery context.");
+    }
+  } else if (answers.bodyCompositionGoal === "muscle_gain") {
+    if (peptide.category === "muscle_repair" || peptide.category === "gh_axis" || peptide.category === "growth_factor") {
+      score += 7;
+      rationale.push("Fits your muscle-gain direction when monitoring and risk tolerance line up.");
+    }
+  } else if (answers.bodyCompositionGoal === "maintenance") {
+    if (peptide.riskLevel === "low" || peptide.riskLevel === "medium") {
+      score += 3;
+    }
+  }
+
+  if (answers.injuryStatus && answers.injuryStatus !== "none") {
+    if (peptide.category === "tissue_repair" || peptide.category === "muscle_repair" || ["bpc-157", "tb-500", "ghk-cu"].includes(peptide.id)) {
+      score += answers.injuryStatus === "post_surgery" ? 5 : 8;
+      rationale.push("Your injury/recovery context increases the relevance of repair-oriented compounds.");
+    }
+
+    if (answers.injuryStatus === "post_surgery" && peptide.riskLevel !== "low") {
+      score -= 4;
+      cautions.push("Post-surgery context raises the bar for clinician review and conservative sequencing.");
+    }
+  }
+
+  if (answers.routineConsistency === "low") {
+    if (peptide.category === "gh_axis" || peptide.category === "growth_factor") {
+      score -= 3;
+      cautions.push("Low routine consistency makes higher-friction timing and monitoring less attractive.");
+    }
+    if (peptide.category === "metabolic" && peptide.evidenceTier === "A") {
+      score += 3;
+    }
+  }
+
+  const bmi = calculateBmi(answers);
+  if (bmi && bmi >= 30 && answers.bodyCompositionGoal === "fat_loss" && peptide.category === "metabolic") {
+    score += 4;
+    rationale.push("Body-metric context increases the relevance of evidence-backed metabolic options.");
+  }
+
+  if (answers.weightLbs && answers.weightLbs < 150 && peptide.riskLevel === "high") {
+    score -= 4;
+    cautions.push("Lower body-weight context favors starting with lower-risk options.");
   }
 
   if (answers.ageRange === "55-64" || answers.ageRange === "65+") {
@@ -338,6 +394,19 @@ function buildIdentifiedNeeds(answers: PlannerAnswers): string[] {
     needs.push(`Reproductive context: ${getLabel(REPRODUCTIVE_STATUS_OPTIONS, answers.reproductiveStatus)}`);
   }
 
+  if (answers.bodyCompositionGoal) {
+    needs.push(`Body-composition direction: ${getLabel(BODY_COMPOSITION_GOAL_OPTIONS, answers.bodyCompositionGoal)}`);
+  }
+
+  if (answers.injuryStatus && answers.injuryStatus !== "none") {
+    needs.push(`Recovery context: ${getLabel(INJURY_STATUS_OPTIONS, answers.injuryStatus)}`);
+  }
+
+  const metrics = formatBodyMetrics(answers);
+  if (metrics) {
+    needs.push(`Body metrics: ${metrics}`);
+  }
+
   if (answers.sex === "female" && answers.femaleLifeStage && answers.femaleLifeStage !== "not_applicable") {
     needs.push(`Female life stage: ${getLabel(FEMALE_LIFE_STAGE_OPTIONS, answers.femaleLifeStage)}`);
   }
@@ -389,6 +458,20 @@ function buildSafetyNotes(
     notes.push("Reproductive status was treated as a hard safety gate, so hormone-active and poorly studied compounds were screened more aggressively.");
   }
 
+  if (answers.injuryStatus === "post_surgery") {
+    notes.push("Post-surgery recovery context was treated as a reason to require clinician review before interpreting any protocol.");
+  } else if (answers.injuryStatus && answers.injuryStatus !== "none") {
+    notes.push("Injury or recovery context increased repair-oriented fit, but it does not replace diagnosis, imaging, rehab, or clinician oversight.");
+  }
+
+  if (answers.routineConsistency === "low") {
+    notes.push("Low routine consistency pushed the planner toward lower-friction recommendations and away from complex timing-heavy protocols.");
+  }
+
+  if (answers.weightLbs && answers.weightLbs < 150) {
+    notes.push("Lower body-weight context pushed dosing discussion toward the conservative reference-start lane.");
+  }
+
   if (answers.sex === "female" && answers.femaleLifeStage === "perimenopause") {
     notes.push("Perimenopause context was treated as a reason to stay practical about sleep, metabolic health, recovery, and bone-related tradeoffs instead of chasing aggressive hormone claims.");
   }
@@ -436,6 +519,13 @@ function buildProfileSummary(answers: PlannerAnswers): string {
   const profileParts = [
     `${age}, ${sex.toLowerCase()}, ${activity.toLowerCase()}, ${experience.toLowerCase()} profile`,
   ];
+  const bodyContext = [
+    formatBodyMetrics(answers),
+    answers.bodyCompositionGoal ? getLabel(BODY_COMPOSITION_GOAL_OPTIONS, answers.bodyCompositionGoal).toLowerCase() : undefined,
+    answers.injuryStatus && answers.injuryStatus !== "none"
+      ? getLabel(INJURY_STATUS_OPTIONS, answers.injuryStatus).toLowerCase()
+      : undefined,
+  ].filter(Boolean);
 
   if (answers.reproductiveStatus !== "none") {
     profileParts.push(getLabel(REPRODUCTIVE_STATUS_OPTIONS, answers.reproductiveStatus).toLowerCase());
@@ -449,7 +539,7 @@ function buildProfileSummary(answers: PlannerAnswers): string {
     profileParts.push(getLabel(MALE_HORMONE_CONTEXT_OPTIONS, answers.maleHormoneContext).toLowerCase());
   }
 
-  return `${profileParts.join(", ")} in ${country}, focused on ${goal.toLowerCase()}.`;
+  return `${profileParts.join(", ")} in ${country}, focused on ${goal.toLowerCase()}${bodyContext.length ? ` with ${bodyContext.join(", ")} context` : ""}.`;
 }
 
 function buildPlanHeadline(answers: PlannerAnswers): string {
@@ -534,6 +624,33 @@ function rankExclusion(exclusion: ExcludedCompound, answers: PlannerAnswers): nu
   }
   rank -= exclusion.reasons.length * 5;
   return rank;
+}
+
+function getHeightInches(answers: PlannerAnswers): number | null {
+  if (typeof answers.heightFeet !== "number" || typeof answers.heightInches !== "number") return null;
+  return answers.heightFeet * 12 + answers.heightInches;
+}
+
+function calculateBmi(answers: PlannerAnswers): number | null {
+  const heightInches = getHeightInches(answers);
+  if (!heightInches || !answers.weightLbs) return null;
+  return (answers.weightLbs / (heightInches * heightInches)) * 703;
+}
+
+function formatBodyMetrics(answers: PlannerAnswers): string | null {
+  const heightInches = getHeightInches(answers);
+  const parts: string[] = [];
+  if (heightInches) {
+    parts.push(`${Math.floor(heightInches / 12)}'${heightInches % 12}"`);
+  }
+  if (answers.weightLbs) {
+    parts.push(`${answers.weightLbs} lb`);
+  }
+  const bmi = calculateBmi(answers);
+  if (bmi) {
+    parts.push(`BMI ${bmi.toFixed(1)}`);
+  }
+  return parts.length > 0 ? parts.join(", ") : null;
 }
 
 function getLabel<T extends string>(

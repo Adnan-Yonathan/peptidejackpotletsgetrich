@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { SITE_URL } from "@/lib/constants";
+import { getCheckoutContext } from "@/lib/checkout-context";
+import { createPurchaseAccessTokenMap } from "@/lib/purchase-access";
 import { recordRevenueEvent } from "@/lib/revenue/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe, isStripeAutomaticTaxEnabled } from "@/lib/stripe/server";
@@ -14,6 +16,7 @@ export default async function CheckoutProductPage({
     offer?: string;
     sourcePage?: string;
     sessionId?: string;
+    quizSessionId?: string;
     goalId?: string;
     primaryPeptideSlug?: string;
   }>;
@@ -22,40 +25,36 @@ export default async function CheckoutProductPage({
   const {
     offer,
     sourcePage = "checkout-page",
-    sessionId = crypto.randomUUID(),
-    goalId,
-    primaryPeptideSlug,
+    sessionId,
+    quizSessionId,
+    goalId: requestedGoalId,
+    primaryPeptideSlug: requestedPrimaryPeptideSlug,
   } = await searchParams;
+  const effectiveSessionId = quizSessionId || sessionId || crypto.randomUUID();
   const product = getPaidPdfProduct(productSlug);
 
   if (!product) {
-    redirect("/dashboard/purchases");
+    redirect("/pdfs");
   }
 
-  const supabase = await createClient();
+  const supabase = await createClient().catch(() => null);
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    const redirectParams = new URLSearchParams();
-    if (offer) redirectParams.set("offer", offer);
-    if (sourcePage) redirectParams.set("sourcePage", sourcePage);
-    if (sessionId) redirectParams.set("sessionId", sessionId);
-    if (goalId) redirectParams.set("goalId", goalId);
-    if (primaryPeptideSlug) redirectParams.set("primaryPeptideSlug", primaryPeptideSlug);
-    const checkoutPath = `/checkout/${product.slug}${redirectParams.size ? `?${redirectParams.toString()}` : ""}`;
-    redirect(`/signup?redirectTo=${encodeURIComponent(checkoutPath)}`);
-  }
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
+  const checkoutContext = await getCheckoutContext(effectiveSessionId);
+  const goalId = requestedGoalId ?? checkoutContext?.goal_id ?? undefined;
+  const primaryPeptideSlug = requestedPrimaryPeptideSlug ?? checkoutContext?.primary_peptide_slug ?? undefined;
 
   const offerType = offer === "bundle" && product.kind === "primary" ? "bundle" : product.kind;
   const products = offerType === "bundle" ? getBundleProducts(product) : [product];
   const productSlugs = products.map((item) => item.slug);
+  const accessTokens = createPurchaseAccessTokenMap(productSlugs);
+  const checkoutEmail = user?.email ?? checkoutContext?.email ?? undefined;
 
   await recordRevenueEvent({
     eventType: "checkout_started",
-    userId: user.id,
-    sessionId,
+    userId: user?.id ?? null,
+    sessionId: effectiveSessionId,
     sourcePage,
     sourceType: "stripe_checkout_page",
     goalId,
@@ -70,7 +69,7 @@ export default async function CheckoutProductPage({
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    customer_email: user.email,
+    customer_email: checkoutEmail || undefined,
     line_items:
       offerType === "bundle" && products.length > 1
         ? [
@@ -94,31 +93,32 @@ export default async function CheckoutProductPage({
       enabled: isStripeAutomaticTaxEnabled(),
     },
     metadata: {
-      userId: user.id,
+      userId: user?.id ?? "",
       productSlug: product.slug,
       productSlugs: JSON.stringify(productSlugs),
+      purchaseAccessTokens: JSON.stringify(accessTokens),
       pdfKey: product.pdfKey,
       offerType,
       sourcePage,
-      quizSessionId: sessionId,
+      quizSessionId: effectiveSessionId,
       goalId: goalId ?? "",
       primaryPeptideSlug: primaryPeptideSlug ?? "",
     },
     payment_intent_data: {
       metadata: {
-        userId: user.id,
+        userId: user?.id ?? "",
         productSlug: product.slug,
         productSlugs: JSON.stringify(productSlugs),
         pdfKey: product.pdfKey,
         offerType,
         sourcePage,
-        quizSessionId: sessionId,
+        quizSessionId: effectiveSessionId,
         goalId: goalId ?? "",
         primaryPeptideSlug: primaryPeptideSlug ?? "",
       },
     },
     success_url: `${SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${SITE_URL}/dashboard/purchases?checkout=cancelled`,
+    cancel_url: checkoutContext ? `${SITE_URL}/quiz/results?checkout=cancelled` : `${SITE_URL}/pdfs?checkout=cancelled`,
   });
 
   if (!session.url) {

@@ -33,7 +33,7 @@ export function PdfPaywall({
 
   const checkoutParams = new URLSearchParams({
     sourcePage,
-    sessionId: sessionId || "pending",
+    quizSessionId: sessionId || "pending",
   });
   if (goalId) checkoutParams.set("goalId", goalId);
   if (primaryPeptideSlug) checkoutParams.set("primaryPeptideSlug", primaryPeptideSlug);

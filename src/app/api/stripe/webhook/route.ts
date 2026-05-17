@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getCheckoutContext } from "@/lib/checkout-context";
+import {
+  createPurchaseAccessToken,
+  hashPurchaseAccessToken,
+  parsePurchaseAccessTokenMap,
+} from "@/lib/purchase-access";
 import { recordRevenueEvent } from "@/lib/revenue/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe/server";
@@ -18,17 +24,22 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   const goalId = session.metadata?.goalId || null;
   const primaryPeptideSlug = session.metadata?.primaryPeptideSlug || null;
 
-  if (!userId || !productSlug) {
+  if (!productSlug) {
     throw new Error(`Checkout Session ${session.id} is missing fulfillment metadata`);
   }
 
   const supabase = createAdminClient();
   const stripeCustomerId = getStripeId(session.customer);
   const productSlugs = parseProductSlugs(session.metadata?.productSlugs, productSlug);
+  const checkoutContext = await getCheckoutContext(quizSessionId);
+  const accessTokens = parsePurchaseAccessTokenMap(session.metadata?.purchaseAccessTokens);
+  const receiptEmail = session.customer_details?.email ?? session.customer_email ?? checkoutContext?.email ?? null;
+  const safeMetadata = { ...(session.metadata ?? {}) };
+  delete safeMetadata.purchaseAccessTokens;
 
   const { error: purchaseError } = await supabase.from("purchases").upsert(
     productSlugs.map((slug, index) => ({
-      user_id: userId,
+      user_id: userId || null,
       product_slug: slug,
       stripe_checkout_session_id: productSlugs.length > 1 ? `${session.id}:${slug}` : session.id,
       stripe_payment_intent_id:
@@ -37,16 +48,20 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
       status: "completed",
       amount_total: index === 0 ? session.amount_total : null,
       currency: session.currency,
-      receipt_email: session.customer_details?.email ?? session.customer_email,
-      metadata: session.metadata ?? {},
+      receipt_email: receiptEmail,
+      metadata: safeMetadata,
       offer_type: offerType,
-      source_page: sourcePage,
+      source_page: sourcePage ?? checkoutContext?.source_page ?? null,
       quiz_session_id: quizSessionId ?? null,
-      goal_id: goalId,
-      primary_peptide_slug: primaryPeptideSlug,
+      goal_id: goalId ?? checkoutContext?.goal_id ?? null,
+      primary_peptide_slug: primaryPeptideSlug ?? checkoutContext?.primary_peptide_slug ?? null,
+      access_token_hash: hashPurchaseAccessToken(accessTokens[slug] ?? createPurchaseAccessToken()),
+      access_token_created_at: new Date().toISOString(),
+      quiz_snapshot: checkoutContext?.quiz_snapshot ?? null,
+      recommended_peptides: checkoutContext?.recommended_peptides ?? null,
       purchased_at: new Date().toISOString(),
     })),
-    { onConflict: "user_id,product_slug" }
+    { onConflict: "stripe_checkout_session_id" }
   );
 
   if (purchaseError) {
@@ -56,12 +71,12 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
   if (quizSessionId) {
     await recordRevenueEvent({
       eventType: "checkout_completed",
-      userId,
+      userId: userId || null,
       sessionId: quizSessionId,
-      sourcePage: sourcePage ?? "stripe_webhook",
+      sourcePage: sourcePage ?? checkoutContext?.source_page ?? "stripe_webhook",
       sourceType: "stripe_webhook",
-      goalId: goalId ?? undefined,
-      peptideSlug: primaryPeptideSlug ?? undefined,
+      goalId: goalId ?? checkoutContext?.goal_id ?? undefined,
+      peptideSlug: primaryPeptideSlug ?? checkoutContext?.primary_peptide_slug ?? undefined,
       productSlug,
       offerType: offerType ?? undefined,
       amountTotal: session.amount_total ?? undefined,
@@ -73,7 +88,7 @@ async function fulfillCheckoutSession(session: Stripe.Checkout.Session) {
     });
   }
 
-  if (stripeCustomerId) {
+  if (stripeCustomerId && userId) {
     await supabase
       .from("profiles")
       .update({ stripe_customer_id: stripeCustomerId })

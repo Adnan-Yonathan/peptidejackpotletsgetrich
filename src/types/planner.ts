@@ -10,7 +10,10 @@ export type PlannerStep =
   | "country"
   | "ageRange"
   | "sex"
+  | "bodyMetrics"
   | "activityLevel"
+  | "bodyCompositionGoal"
+  | "injuryStatus"
   | "topProblems"
   | "experience"
   | "primaryGoalId"
@@ -22,6 +25,7 @@ export type PlannerStep =
   | "medications"
   | "budget"
   | "deliveryPreference"
+  | "routineConsistency"
   | "monitoringWillingness"
   | "riskTolerance"
   | "planStyle"
@@ -53,6 +57,18 @@ export type MaleHormoneContext =
   | "on_trt_or_androgen_therapy"
   | "prostate_or_psa_monitoring";
 export type ActivityLevel = "low" | "moderate" | "high" | "athlete";
+export type BodyCompositionGoal =
+  | "fat_loss"
+  | "recomposition"
+  | "muscle_gain"
+  | "maintenance"
+  | "not_sure";
+export type InjuryStatus =
+  | "none"
+  | "acute_injury"
+  | "chronic_pain"
+  | "post_surgery"
+  | "training_recovery";
 export type Timeframe = "short" | "medium" | "long";
 export type StackingPreference = "single" | "basic_stack" | "advanced_stack";
 export type DeliveryPreference = "oral_topical_only" | "avoid_injections" | "flexible" | "injectable_ok";
@@ -69,7 +85,12 @@ export interface PlannerAnswers {
   reproductiveStatus: ReproductiveStatus;
   femaleLifeStage: FemaleLifeStage;
   maleHormoneContext: MaleHormoneContext;
+  heightFeet?: number;
+  heightInches?: number;
+  weightLbs?: number;
   activityLevel: ActivityLevel;
+  bodyCompositionGoal?: BodyCompositionGoal;
+  injuryStatus?: InjuryStatus;
   experience: ExperienceLevel;
   primaryGoalId: string;
   secondaryGoalIds: string[];

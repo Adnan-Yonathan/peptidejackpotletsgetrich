@@ -1,8 +1,10 @@
 import type {
   ActivityLevel,
   AgeRange,
+  BodyCompositionGoal,
   DeliveryPreference,
   FemaleLifeStage,
+  InjuryStatus,
   MaleHormoneContext,
   MonitoringWillingness,
   PlanStyle,
@@ -26,7 +28,10 @@ export const PLANNER_STEPS: PlannerStep[] = [
   "country",
   "ageRange",
   "sex",
+  "bodyMetrics",
   "activityLevel",
+  "bodyCompositionGoal",
+  "injuryStatus",
   "topProblems",
   "experience",
   "primaryGoalId",
@@ -38,6 +43,7 @@ export const PLANNER_STEPS: PlannerStep[] = [
   "medications",
   "budget",
   "deliveryPreference",
+  "routineConsistency",
   "monitoringWillingness",
   "riskTolerance",
   "planStyle",
@@ -102,6 +108,22 @@ export const ACTIVITY_LEVEL_OPTIONS: Option<ActivityLevel>[] = [
   { value: "moderate", label: "Moderate", description: "Regular walks or a few training sessions weekly" },
   { value: "high", label: "High", description: "Frequent training with active recovery needs" },
   { value: "athlete", label: "Athlete", description: "Performance-focused with high output demands" },
+];
+
+export const BODY_COMPOSITION_GOAL_OPTIONS: Option<BodyCompositionGoal>[] = [
+  { value: "fat_loss", label: "Fat loss", description: "Prioritize metabolic fit, appetite context, and sustainable body-composition support" },
+  { value: "recomposition", label: "Recomposition", description: "Balance fat-loss, recovery, and muscle-preserving tradeoffs" },
+  { value: "muscle_gain", label: "Muscle gain", description: "Bias toward training recovery, GH-axis fit, and performance context" },
+  { value: "maintenance", label: "Maintenance", description: "Keep the plan practical without pushing aggressive body-composition changes" },
+  { value: "not_sure", label: "Not sure", description: "Let the planner stay balanced and avoid overfitting the stack" },
+];
+
+export const INJURY_STATUS_OPTIONS: Option<InjuryStatus>[] = [
+  { value: "none", label: "No current injury", description: "Use general wellness, performance, or metabolic logic" },
+  { value: "acute_injury", label: "Recent injury", description: "Increase attention on short-term tissue-repair and inflammation context" },
+  { value: "chronic_pain", label: "Chronic pain or recurring issue", description: "Emphasize conservative recovery logic and tracking discipline" },
+  { value: "post_surgery", label: "Post-surgery recovery", description: "Use stricter clinician-review and recovery-screening language" },
+  { value: "training_recovery", label: "Training recovery", description: "Bias toward high-output recovery and performance sustainability" },
 ];
 
 export const BUDGET_OPTIONS: Option<BudgetTier>[] = [

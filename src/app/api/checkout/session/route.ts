@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { SITE_URL } from "@/lib/constants";
+import { getCheckoutContext } from "@/lib/checkout-context";
+import { createPurchaseAccessTokenMap } from "@/lib/purchase-access";
 import { recordRevenueEvent } from "@/lib/revenue/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripe, isStripeAutomaticTaxEnabled } from "@/lib/stripe/server";
@@ -27,38 +29,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid product" }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const supabase = await createClient().catch(() => null);
   const {
     data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    const redirectParams = new URLSearchParams();
-    if (requestedOfferType) redirectParams.set("offer", requestedOfferType);
-    if (sourcePage) redirectParams.set("sourcePage", sourcePage);
-    if (quizSessionId) redirectParams.set("sessionId", quizSessionId);
-    if (goalId) redirectParams.set("goalId", goalId);
-    if (primaryPeptideSlug) redirectParams.set("primaryPeptideSlug", primaryPeptideSlug);
-    const checkoutPath = `/checkout/${product.slug}${redirectParams.size ? `?${redirectParams.toString()}` : ""}`;
-    return NextResponse.json(
-      { redirectUrl: `/signup?redirectTo=${encodeURIComponent(checkoutPath)}` },
-      { status: 401 }
-    );
-  }
+  } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
 
   const offerType = requestedOfferType === "bundle" && product.kind === "primary" ? "bundle" : product.kind;
   const products = offerType === "bundle" ? getBundleProducts(product) : [product];
   const productSlugs = products.map((item) => item.slug);
   const sessionId = quizSessionId || crypto.randomUUID();
+  const checkoutContext = await getCheckoutContext(sessionId);
+  const resolvedGoalId = goalId ?? checkoutContext?.goal_id ?? undefined;
+  const resolvedPrimaryPeptideSlug = primaryPeptideSlug ?? checkoutContext?.primary_peptide_slug ?? undefined;
+  const accessTokens = createPurchaseAccessTokenMap(productSlugs);
+  const checkoutEmail = user?.email ?? checkoutContext?.email ?? undefined;
 
   await recordRevenueEvent({
     eventType: "checkout_started",
-    userId: user.id,
+    userId: user?.id ?? null,
     sessionId,
     sourcePage,
     sourceType: "checkout_session_api",
-    goalId,
-    peptideSlug: primaryPeptideSlug,
+    goalId: resolvedGoalId,
+    peptideSlug: resolvedPrimaryPeptideSlug,
     productSlug: product.slug,
     offerType,
     metadata: {
@@ -69,7 +62,7 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
-    customer_email: user.email,
+    customer_email: checkoutEmail || undefined,
     line_items:
       offerType === "bundle" && products.length > 1
         ? [
@@ -93,31 +86,32 @@ export async function POST(request: Request) {
       enabled: isStripeAutomaticTaxEnabled(),
     },
     metadata: {
-      userId: user.id,
+      userId: user?.id ?? "",
       productSlug: product.slug,
       productSlugs: JSON.stringify(productSlugs),
+      purchaseAccessTokens: JSON.stringify(accessTokens),
       pdfKey: product.pdfKey,
       offerType,
       sourcePage,
       quizSessionId: sessionId,
-      goalId: goalId ?? "",
-      primaryPeptideSlug: primaryPeptideSlug ?? "",
+      goalId: resolvedGoalId ?? "",
+      primaryPeptideSlug: resolvedPrimaryPeptideSlug ?? "",
     },
     payment_intent_data: {
       metadata: {
-        userId: user.id,
+        userId: user?.id ?? "",
         productSlug: product.slug,
         productSlugs: JSON.stringify(productSlugs),
         pdfKey: product.pdfKey,
         offerType,
         sourcePage,
         quizSessionId: sessionId,
-        goalId: goalId ?? "",
-        primaryPeptideSlug: primaryPeptideSlug ?? "",
+        goalId: resolvedGoalId ?? "",
+        primaryPeptideSlug: resolvedPrimaryPeptideSlug ?? "",
       },
     },
     success_url: `${SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${SITE_URL}/dashboard/purchases?checkout=cancelled`,
+    cancel_url: checkoutContext ? `${SITE_URL}/quiz/results?checkout=cancelled` : `${SITE_URL}/pdfs?checkout=cancelled`,
   });
 
   if (!session.url) {
