@@ -1,0 +1,38 @@
+{
+  "workflow": "script-to-video",
+  "source": {
+    "text": "Your transformation hook and caption script goes here."
+  },
+  "media": {
+    "type": "custom",
+    "useOnlyProvided": true,
+    "turnImagesIntoVideos": true,
+    "mergeVideos": false,
+    "animation": "soft",
+    "provided": [
+      {
+        "url": "https://example.com/before-clip.mp4",
+        "type": "video",
+        "title": "Before shot"
+      },
+      {
+        "url": "https://example.com/after-clip.mp4",
+        "type": "video",
+        "title": "After shot"
+      }
+    ]
+  },
+  "options": {
+    "useOnlyProvidedMedia": true,
+    "preventSummarization": true
+  },
+  "voice": {
+    "enabled": false
+  },
+  "captions": {
+    "enabled": true,
+    "preset": "Wrap 1",
+    "position": "bottom"
+  },
+  "aspectRatio": "9 / 16"
+}

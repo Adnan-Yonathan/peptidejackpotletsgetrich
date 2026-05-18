@@ -42,3 +42,13 @@ supabase/.temp/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Revid local generation artifacts
+/revid/outputs/*
+!/revid/outputs/.gitkeep
+/revid/assets/generated-images/*
+!/revid/assets/generated-images/.gitkeep
+/revid/assets/generated-videos/*
+!/revid/assets/generated-videos/.gitkeep
+/revid/run-logs/*
+!/revid/run-logs/.gitkeep

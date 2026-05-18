@@ -1,0 +1,31 @@
+{
+  "workflow": "motion-transfer",
+  "source": {
+    "url": "https://example.com/source-motion.mp4"
+  },
+  "media": {
+    "type": "moving-image",
+    "density": "medium",
+    "animation": "dynamic",
+    "imageModel": "good",
+    "videoModel": "ultra",
+    "mediaPreset": "DEFAULT",
+    "useOnlyProvided": true,
+    "provided": [
+      {
+        "url": "https://example.com/character-reference.jpg",
+        "title": "Target character reference",
+        "type": "image"
+      }
+    ]
+  },
+  "voice": {
+    "enabled": false
+  },
+  "captions": {
+    "enabled": true,
+    "preset": "Wrap 1",
+    "position": "bottom"
+  },
+  "aspectRatio": "9 / 16"
+}

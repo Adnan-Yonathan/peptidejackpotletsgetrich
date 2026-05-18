@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FlaskConical, Store, Settings2, Target, BarChart3 } from "lucide-react";
+import { FlaskConical, Store, Settings2, Target, BarChart3, Video } from "lucide-react";
 
 export const metadata: Metadata = { title: "Admin Dashboard" };
 
@@ -12,6 +12,7 @@ export default function AdminDashboardPage() {
     { title: "Rules", icon: Settings2, href: "/admin/rules", description: "Recommendation rule engine" },
     { title: "Goals", icon: Target, href: "/admin/goals", description: "Manage research goals" },
     { title: "Analytics", icon: BarChart3, href: "/admin/analytics", description: "Affiliate click analytics" },
+    { title: "Revid", icon: Video, href: "/admin/revid", description: "Create before/after motion-transfer clips" },
   ];
 
   return (

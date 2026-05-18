@@ -1,0 +1,29 @@
+{
+  "workflow": "prompt-to-video",
+  "source": {
+    "prompt": "A confident AI influencer reveal shot in a clean modern gym, vertical TikTok style, slow camera push-in, realistic phone-shot aesthetic.",
+    "stylePrompt": "ultra realistic, influencer content, natural face, stable identity, clean lighting, no extra people, no text, no logos",
+    "durationSeconds": 6
+  },
+  "media": {
+    "type": "ai-video",
+    "imageModel": "ultra",
+    "videoModel": "ultra",
+    "provided": [
+      {
+        "url": "https://example.com/reference-image.jpg",
+        "type": "image",
+        "title": "Character reference image"
+      }
+    ]
+  },
+  "characterIds": [
+    "REPLACE_WITH_CHARACTER_ID"
+  ],
+  "captions": {
+    "enabled": true,
+    "preset": "Wrap 1",
+    "position": "bottom"
+  },
+  "aspectRatio": "9 / 16"
+}

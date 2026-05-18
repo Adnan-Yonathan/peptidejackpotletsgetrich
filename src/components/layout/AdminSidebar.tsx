@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FlaskConical, Store, Settings2, Target, BarChart3 } from "lucide-react";
+import { LayoutDashboard, FlaskConical, Store, Settings2, Target, BarChart3, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ADMIN_NAV } from "@/lib/constants";
 
@@ -13,6 +13,7 @@ const iconMap: Record<string, React.ElementType> = {
   "settings-2": Settings2,
   target: Target,
   "bar-chart-3": BarChart3,
+  video: Video,
 };
 
 export function AdminSidebar() {

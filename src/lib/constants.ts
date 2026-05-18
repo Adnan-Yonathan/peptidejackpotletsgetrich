@@ -67,4 +67,5 @@ export const ADMIN_NAV = [
   { href: "/admin/rules", label: "Rules", icon: "settings-2" },
   { href: "/admin/goals", label: "Goals", icon: "target" },
   { href: "/admin/analytics", label: "Analytics", icon: "bar-chart-3" },
+  { href: "/admin/revid", label: "Revid", icon: "video" },
 ] as const;
