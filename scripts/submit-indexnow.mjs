@@ -37,7 +37,7 @@ const host = new URL(siteUrl).host;
 const key = (process.env.BING_WEBMASTER_KEY || process.env.INDEXNOW_KEY)?.trim();
 assert(key, "Missing BING_WEBMASTER_KEY or INDEXNOW_KEY. Add it to .env.local or your deployment environment.");
 
-const keyLocation = process.env.INDEXNOW_KEY_LOCATION || `${siteUrl}/${key}.txt`;
+const keyLocation = process.env.INDEXNOW_KEY_LOCATION?.trim();
 
 const sitemapResponse = await fetch(sitemapUrl, { redirect: "follow" });
 assert(sitemapResponse.ok, `${sitemapUrl} returned ${sitemapResponse.status}`);
@@ -73,13 +73,16 @@ assert(blocked.length === 0, `Refusing to submit blocked URLs: ${blocked.slice(0
 const payload = {
   host,
   key,
-  keyLocation,
   urlList: urls,
 };
 
+if (keyLocation) {
+  payload.keyLocation = keyLocation;
+}
+
 if (dryRun) {
   console.log(`IndexNow dry run: ${urls.length} URLs would be submitted to ${endpoint}.`);
-  console.log(`Key location: ${keyLocation}`);
+  console.log(keyLocation ? `Key location: ${keyLocation}` : "Key location: root key file");
   process.exit(0);
 }
 
