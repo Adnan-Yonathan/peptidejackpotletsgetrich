@@ -20,13 +20,13 @@ function loadLocalEnv() {
 
 loadLocalEnv();
 
-const key = process.env.INDEXNOW_KEY?.trim();
+const key = (process.env.BING_WEBMASTER_KEY || process.env.INDEXNOW_KEY)?.trim();
 
 if (!key) {
   if (existsSync(outputPath)) {
     rmSync(outputPath);
   }
-  console.warn("INDEXNOW_KEY is not set; skipping public/indexnow-key.txt generation.");
+  console.warn("BING_WEBMASTER_KEY or INDEXNOW_KEY is not set; skipping public/indexnow-key.txt generation.");
   process.exit(0);
 }
 
