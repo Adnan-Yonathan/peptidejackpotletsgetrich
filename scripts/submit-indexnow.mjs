@@ -1,11 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
-const siteUrl = (process.env.SEO_CANONICAL_URL || "https://peptidepros.io").replace(/\/$/, "");
-const sitemapUrl = process.env.INDEXNOW_SITEMAP_URL || `${siteUrl}/sitemap.xml`;
-const endpoint = process.env.INDEXNOW_ENDPOINT || "https://api.indexnow.org/indexnow";
-const host = new URL(siteUrl).host;
-const keyLocation = `${siteUrl}/indexnow-key.txt`;
 const dryRun = process.argv.includes("--dry-run");
 
 function loadLocalEnv() {
@@ -35,6 +30,11 @@ function extractSitemapUrls(xml) {
 
 loadLocalEnv();
 
+const siteUrl = (process.env.SEO_CANONICAL_URL || "https://peptidepros.io").replace(/\/$/, "");
+const sitemapUrl = process.env.INDEXNOW_SITEMAP_URL || `${siteUrl}/sitemap.xml`;
+const endpoint = process.env.INDEXNOW_ENDPOINT || "https://api.indexnow.org/indexnow";
+const host = new URL(siteUrl).host;
+const keyLocation = `${siteUrl}/indexnow-key.txt`;
 const key = process.env.INDEXNOW_KEY?.trim();
 assert(key, "Missing INDEXNOW_KEY. Add it to .env.local or your deployment environment.");
 
