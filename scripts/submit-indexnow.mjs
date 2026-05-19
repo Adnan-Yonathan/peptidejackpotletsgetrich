@@ -34,9 +34,10 @@ const siteUrl = (process.env.SEO_CANONICAL_URL || "https://peptidepros.io").repl
 const sitemapUrl = process.env.INDEXNOW_SITEMAP_URL || `${siteUrl}/sitemap.xml`;
 const endpoint = process.env.INDEXNOW_ENDPOINT || "https://api.indexnow.org/indexnow";
 const host = new URL(siteUrl).host;
-const keyLocation = `${siteUrl}/indexnow-key.txt`;
 const key = (process.env.BING_WEBMASTER_KEY || process.env.INDEXNOW_KEY)?.trim();
 assert(key, "Missing BING_WEBMASTER_KEY or INDEXNOW_KEY. Add it to .env.local or your deployment environment.");
+
+const keyLocation = process.env.INDEXNOW_KEY_LOCATION || `${siteUrl}/${key}.txt`;
 
 const sitemapResponse = await fetch(sitemapUrl, { redirect: "follow" });
 assert(sitemapResponse.ok, `${sitemapUrl} returned ${sitemapResponse.status}`);

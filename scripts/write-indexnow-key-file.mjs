@@ -1,8 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
-const outputPath = resolve("public/indexnow-key.txt");
-
 function loadLocalEnv() {
   const envPath = resolve(".env.local");
   if (!existsSync(envPath)) return;
@@ -21,6 +19,7 @@ function loadLocalEnv() {
 loadLocalEnv();
 
 const key = (process.env.BING_WEBMASTER_KEY || process.env.INDEXNOW_KEY)?.trim();
+const outputPath = key ? resolve(`public/${key}.txt`) : resolve("public/indexnow-key.txt");
 
 if (!key) {
   if (existsSync(outputPath)) {
@@ -37,4 +36,4 @@ if (!/^[A-Za-z0-9-]{8,128}$/.test(key)) {
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, `${key}\n`, { encoding: "utf8" });
 
-console.log("Wrote UTF-8 IndexNow key file to public/indexnow-key.txt.");
+console.log(`Wrote UTF-8 IndexNow key file to public/${key}.txt.`);

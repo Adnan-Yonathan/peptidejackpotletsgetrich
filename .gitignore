@@ -17,6 +17,7 @@
 /.next/
 /out/
 /public/indexnow-key.txt
+/public/*.txt
 
 # production
 /build
