@@ -20,24 +20,37 @@ const blockedPrefixes = [
 ];
 
 const representativePaths = [
+  "/peptides",
   "/peptides/bpc-157",
+  "/quiz",
+  "/stack-builder",
   "/blog/tirzepatide-vs-semaglutide-fat-loss",
   "/guides/how-to-read-a-coa",
   "/vendors/amino-club",
+  "/vendors/compare",
   "/goals/recovery-injury-support",
   "/tools/reconstitution/bpc-157",
   "/compare/peptides/semaglutide-vs-tirzepatide",
+  "/about",
+  "/privacy",
 ];
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-async function fetchText(path) {
+async function fetchPage(path) {
   const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
   const response = await fetch(url, { redirect: "follow" });
   assert(response.ok, `${url} returned ${response.status}`);
-  return response.text();
+  return {
+    html: await response.text(),
+    finalUrl: response.url,
+  };
+}
+
+async function fetchText(path) {
+  return (await fetchPage(path)).html;
 }
 
 function extractSitemapUrls(xml) {
@@ -50,6 +63,24 @@ function canonicalFor(html) {
 
 function ogTitleFor(html) {
   return html.match(/<meta property="og:title" content="([^"]+)"/)?.[1];
+}
+
+function pageTitleFor(html) {
+  return html.match(/<title>([^<]+)<\/title>/)?.[1];
+}
+
+function metaDescriptionFor(html) {
+  return html.match(/<meta name="description" content="([^"]+)"/)?.[1];
+}
+
+function decodeHtml(value) {
+  return value
+    ?.replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
 }
 
 async function main() {
@@ -67,12 +98,20 @@ async function main() {
   }
 
   for (const path of representativePaths) {
-    const html = await fetchText(path);
+    const { html, finalUrl } = await fetchPage(path);
+    const expectedPath = new URL(finalUrl).pathname;
     const canonical = canonicalFor(html);
-    const ogTitle = ogTitleFor(html);
+    const ogTitle = decodeHtml(ogTitleFor(html));
+    const pageTitle = decodeHtml(pageTitleFor(html));
+    const metaDescription = decodeHtml(metaDescriptionFor(html));
 
-    assert(canonical === `${canonicalBaseUrl}${path}`, `${path} canonical mismatch: ${canonical}`);
+    assert(canonical === `${canonicalBaseUrl}${expectedPath}`, `${path} canonical mismatch: ${canonical}`);
     assert(ogTitle && ogTitle !== "PeptidePros", `${path} has generic or missing og:title`);
+    assert(pageTitle && pageTitle.length >= 35, `${path} title is too short: ${pageTitle}`);
+    assert(
+      metaDescription && metaDescription.length >= 120,
+      `${path} meta description is too short: ${metaDescription}`,
+    );
     assert(!html.includes('href="/goals/recovery"'), `${path} links to broken /goals/recovery`);
   }
 

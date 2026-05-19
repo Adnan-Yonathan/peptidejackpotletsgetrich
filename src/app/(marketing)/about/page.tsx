@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = { title: "About" };
+const title = "About PeptidePros Research Platform";
+const description =
+  "Learn how PeptidePros turns peptide research, vendor comparisons, safety flags, and stack planning into practical decision tools.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: { canonical: "/about" },
+  ...buildSeoMetadata({
+    title,
+    description,
+    path: "/about",
+  }),
+};
 
 export default function AboutPage() {
   return (

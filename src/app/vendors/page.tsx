@@ -24,12 +24,22 @@ import {
 } from "@/lib/compare-vendors";
 import { getDefaultVendorReview } from "@/lib/editorial";
 import { buildOutboundVendorHref } from "@/lib/outbound-vendors";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 import landingHeroImage from "../../../images/idktoomany.png";
 
+const title = "Best Peptide Vendors and Trust Rankings";
+const description =
+  "Independent peptide vendor rankings based on trust signals, shipping clarity, documentation strength, COA access, and product-level coverage.";
+
 export const metadata: Metadata = {
-  title: "Best Peptide Vendors",
-  description:
-    "Independent peptide vendor rankings based on trust signals, shipping clarity, documentation strength, and product coverage.",
+  title,
+  description,
+  alternates: { canonical: "/vendors" },
+  ...buildSeoMetadata({
+    title,
+    description,
+    path: "/vendors",
+  }),
 };
 
 type ComparedVendor = {

@@ -102,12 +102,13 @@ export async function generateMetadata({
     ? `Trustpilot ${vendor.trustpilotRating}/5${vendor.trustpilotReviewCount ? ` from ${vendor.trustpilotReviewCount} reviews` : ""}. `
     : "";
   const description = `${vendor.description} ${ratingClause}Independent vendor profile covering documentation, COA access, shipping policy, and product coverage.`.trim();
+  const title = `${vendor.name} Peptide Vendor Review and Trust Profile`;
   return {
-    title: `${vendor.name} review`,
+    title,
     description,
     alternates: { canonical: `/vendors/${vendor.slug}` },
     ...buildSeoMetadata({
-      title: `${vendor.name} review`,
+      title,
       description,
       path: `/vendors/${vendor.slug}`,
       imagePath: `/vendors/${vendor.slug}/opengraph-image`,

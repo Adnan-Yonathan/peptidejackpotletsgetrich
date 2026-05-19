@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SITE_CANONICAL_URL, SITE_NAME } from "@/lib/constants";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
+
+const title = "Peptide Stack Builder and Compatibility Checker";
+const description =
+  "Build a peptide stack with live compatibility checks. Pathway overlaps, receptor competition, and dosing conflicts flagged in real time. Cost estimates from tracked vendor listings.";
 
 export const metadata: Metadata = {
-  title: "Peptide Stack Builder — Live Compatibility Checker",
-  description:
-    "Build a peptide stack with live compatibility checks. Pathway overlaps, receptor competition, and dosing conflicts flagged in real time. Cost estimates from tracked vendor listings.",
+  title,
+  description,
   alternates: { canonical: "/stack-builder" },
+  ...buildSeoMetadata({
+    title,
+    description,
+    path: "/stack-builder",
+  }),
 };
 
 const webAppLd = {

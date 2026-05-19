@@ -1,6 +1,20 @@
 import type { Metadata } from "next";
+import { buildSeoMetadata } from "@/lib/seo-metadata";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+const title = "Privacy Policy and Affiliate Disclosure";
+const description =
+  "Read how PeptidePros handles quiz responses, account data, saved plans, affiliate links, and educational peptide research information.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: { canonical: "/privacy" },
+  ...buildSeoMetadata({
+    title,
+    description,
+    path: "/privacy",
+  }),
+};
 
 export default function PrivacyPage() {
   return (

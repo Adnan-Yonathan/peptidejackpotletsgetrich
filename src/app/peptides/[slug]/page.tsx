@@ -55,15 +55,17 @@ export async function generateMetadata({
   const synonyms = peptide.synonyms.length ? ` (${peptide.synonyms.slice(0, 2).join(", ")})` : "";
   const title = `${peptide.name}${synonyms}`;
   const path = `/peptides/${peptide.slug}`;
+  const description =
+    `${peptide.shortDescription} Review evidence tier ${peptide.evidenceTier}, risk level ${peptide.riskLevel}, dosing references, regulatory flags, vendor coverage, and stack fit.`.slice(0, 300);
   return {
     title,
-    description: peptide.shortDescription,
+    description,
     alternates: {
       canonical: path,
     },
     ...buildSeoMetadata({
       title,
-      description: peptide.shortDescription,
+      description,
       path,
       imagePath: `${path}/opengraph-image`,
       imageAlt: `${peptide.name} peptide profile`,
